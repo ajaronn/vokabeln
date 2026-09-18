@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Karteikasten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #241A10;
+    --muted: #8A7F68;
+    --bg: #F0E5C8;
+    --rule-color: rgba(36,26,16,0.09);
+    --surface: #FBF6EA;
+    --border: #C9BB94;
+    --rust: #A8442E;
+    --rust-contrast: #FBF6EA;
+    --success: #2F6E5C;
+    --success-bg: #DCE8E2;
+    --error: #A8442E;
+    --error-bg: #F1DCD5;
+    --radius: 6px;
+    --hand: 'Caveat', 'Fraunces', cursive;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #EDE6D8;
+      --muted: #A69A82;
+      --bg: #1C1712;
+      --rule-color: rgba(255,255,255,0.07);
+      --surface: #241D16;
+      --border: #4A3F2E;
+      --rust: #C15A3E;
+      --rust-contrast: #1C1712;
+      --success: #4FA98A;
+      --success-bg: #223530;
+      --error: #C15A3E;
+      --error-bg: #3A2420;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #EDE6D8;
+    --muted: #A69A82;
+    --bg: #1C1712;
+    --rule-color: rgba(255,255,255,0.07);
+    --surface: #241D16;
+    --border: #4A3F2E;
+    --rust: #C15A3E;
+    --rust-contrast: #1C1712;
+    --success: #4FA98A;
+    --success-bg: #223530;
+    --error: #C15A3E;
+    --error-bg: #3A2420;
+  }
+
+  * { box-sizing: border-box; min-width: 0; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 34px,
+      var(--rule-color) 34px,
+      var(--rule-color) 35px
+    );
+    color: var(--ink);
+    font-family: var(--hand), 'Fraunces', Georgia, 'Times New Roman', serif;
+    font-size: 19px;
+    line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 28px 20px calc(32px + env(safe-area-inset-bottom));
+    min-height: 100vh;
+  }
+  .screen.hidden, .hidden { display: none; }
+
+  .app-header { margin-bottom: 22px; }
+  .header-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+  .app-title {
+    font-weight: 700;
+    font-size: 40px;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+  .header-lang { font-style: italic; font-size: 19px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .swap-icon-inline { color: var(--rust); font-style: normal; margin: 0 2px; }
+  .header-rule { height: 3px; background: var(--ink); margin: 16px 0 4px 0; }
+
+  .section-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 26px 0 10px 0;
+  }
+  section:first-of-type .section-label, .lists-section .section-label { margin-top: 20px; }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 19px;
+    font-family: inherit;
+  }
+  input[type="text"]:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--rust);
+    outline-offset: 2px;
+  }
+
+  /* Lists section */
+  .select-wrapper { position: relative; }
+  .select-wrapper select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--ink);
+    padding-right: 40px;
+    cursor: pointer;
+  }
+  .select-chevron {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .list-buttons { display: flex; gap: 12px; margin-top: 12px; }
+  .list-buttons .btn-outline { flex: 1; }
+
+  /* Buttons */
+  button { font-family: inherit; }
+  .btn-outline {
+    display: inline-block;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    min-height: 46px;
+    text-align: center;
+  }
+  .btn-outline.btn-rust { border-color: var(--rust); color: var(--rust); }
+  .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-primary {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 2px solid var(--ink);
+    color: var(--ink);
+    border-radius: var(--radius);
+    padding: 15px 20px;
+    font-size: 19px;
+    font-weight: 700;
+    cursor: pointer;
+    min-height: 52px;
+  }
+  .btn-primary:active { background: var(--ink); color: var(--bg); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-text {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 16px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 8px 4px;
+    text-decoration: underline;
+  }
+
+  /* Language picker (translator-app style) */
+  .lang-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .lang-picker-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: 600;
+    padding: 13px 10px;
+    cursor: pointer;
+    min-height: 48px;
+    text-align: center;
+  }
+  .lang-picker-btn .chev { color: var(--muted); font-size: 13px; font-family: Georgia, serif; }
+  .swap-btn {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1.5px solid var(--rust);
+    background: transparent;
+    color: var(--rust);
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Language select modal */
+  .lang-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+  }
+  .lang-modal-overlay.hidden { display: none; }
+  .lang-modal {
+    background: var(--bg);
+    width: 100%;
+    max-width: 480px;
+    max-height: 78vh;
+    border-radius: 14px 14px 0 0;
+    padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -6px 24px rgba(0,0,0,0.2);
+  }
+  .lang-modal-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+  }
+  #langSearchInput { margin-bottom: 12px; flex-shrink: 0; }
+  .lang-modal-list {
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+  }
+  .lang-option {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--rule-color);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 19px;
+    padding: 13px 4px;
+    cursor: pointer;
+  }
+  .lang-option:hover, .lang-option:focus-visible { color: var(--rust); }
+  .lang-modal-empty { color: var(--muted); font-size: 16px; padding: 14px 4px; }
+  .lang-modal-close {
+    margin-top: 12px;
+    flex-shrink: 0;
+  }
+
+  .setup-message { min-height: 18px; font-size: 15px; color: var(--rust); margin: 10px 0 0 0; }
+
+  /* Vocab table */
+  .vocab-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 30px;
+    gap: 10px;
+    background: var(--rust);
+    color: var(--rust-contrast);
+    padding: 11px 12px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+  .vocab-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 30px;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .vocab-row:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+  .vocab-row input {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 6px 0;
+    font-size: 18px;
+  }
+  .vocab-row input:focus-visible { outline: none; border-bottom: 2px solid var(--rust); }
+  .btn-delete {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 15px;
+    cursor: pointer;
+    line-height: 1;
+    font-family: inherit;
+  }
+  .btn-delete:hover { background: var(--error-bg); color: var(--error); }
+
+  .vocab-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 12px; }
+
+  details.bulk-import { margin-top: 16px; }
+  details.bulk-import summary {
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--rust);
+    font-weight: 700;
+    padding: 4px 0;
+  }
+  .hint { font-size: 15px; color: var(--muted); margin: 8px 0; }
+  .hint em { font-style: normal; color: var(--ink); }
+  textarea { resize: vertical; margin-bottom: 8px; }
+
+  /* Direction segmented control */
+  .segmented {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    padding: 4px;
+    border-radius: var(--radius);
+  }
+  .segment-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 10px 6px;
+    border-radius: 4px;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: normal;
+    line-height: 1.25;
+    min-height: 44px;
+  }
+  .segment-btn.active { background: var(--ink); color: var(--bg); font-weight: 700; }
+
+  .status-line { text-align: center; color: var(--muted); font-size: 15px; margin-top: 14px; }
+
+  /* Quiz screen */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .quiz-header #scoreLabel { font-weight: 700; color: var(--ink); }
+
+  .flashcard {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 40px 24px;
+    text-align: center;
+    margin-bottom: 24px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .card-tag {
+    display: inline-block;
+    background: var(--rust);
+    color: var(--rust-contrast);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  .card-word { font-weight: 700; font-size: 42px; word-break: break-word; }
+  .flashcard.correct { background: var(--success-bg); border-color: var(--success); animation: cardPulse 0.3s ease; }
+  .flashcard.incorrect { background: var(--error-bg); border-color: var(--error); animation: cardPulse 0.3s ease; }
+  @keyframes cardPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.025); }
+    100% { transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flashcard.correct, .flashcard.incorrect { animation: none; }
+  }
+
+  .answer-label { display: block; font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+  #answerInput { margin-bottom: 14px; }
+  #answerInput[readonly] { opacity: 0.7; }
+
+  .feedback {
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .feedback.correct { background: var(--success-bg); color: var(--success); }
+  .feedback.incorrect { background: var(--error-bg); color: var(--error); }
+
+  /* Results screen */
+  .result-hero { text-align: center; margin: 20px 0 32px; }
+  .result-fraction { font-weight: 700; font-size: 60px; line-height: 1; }
+  .result-percent { color: var(--muted); font-size: 16px; margin-top: 6px; }
+
+  .missed-section { margin-bottom: 28px; }
+  .missed-row { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 18px; }
+  .missed-empty { color: var(--muted); font-size: 16px; padding: 10px 0; }
+
+  .result-actions { display: flex; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="setup-screen" class="screen">
+    <header class="app-header">
+      <div class="header-row">
+        <h1 class="app-title">Karteikasten</h1>
+        <div class="header-lang">
+          <span id="headerLangSubtitleA">Deutsch</span><span class="swap-icon-inline">⇄</span><span id="headerLangSubtitleB">Englisch</span>
+        </div>
+      </div>
+      <div class="header-rule"></div>
+    </header>
+
+    <section class="lists-section">
+      <label class="section-label" for="listSelect">Meine Listen</label>
+      <div class="select-wrapper">
+        <select id="listSelect"></select>
+        <span class="select-chevron" aria-hidden="true">⌄</span>
+      </div>
+      <div class="list-buttons">
+        <button class="btn-outline" id="newListBtn" type="button">+ Neue Liste</button>
+        <button class="btn-outline btn-rust" id="deleteListBtn" type="button">Diese Liste löschen</button>
+      </div>
+    </section>
+
+    <section class="rename-section">
+      <label class="section-label" for="listNameInput">Listenname</label>
+      <input type="text" id="listNameInput" placeholder="Name der Liste">
+    </section>
+
+    <section class="lang-section">
+      <label class="section-label">Sprachen</label>
+      <div class="lang-row">
+        <button class="lang-picker-btn" id="langAPickerBtn" type="button" data-target="a">
+          <span id="langAPickerLabel">Deutsch</span><span class="chev">⌄</span>
+        </button>
+        <button class="swap-btn" id="swapLangBtn" type="button" aria-label="Sprachen tauschen">⇄</button>
+        <button class="lang-picker-btn" id="langBPickerBtn" type="button" data-target="b">
+          <span id="langBPickerLabel">Englisch</span><span class="chev">⌄</span>
+        </button>
+      </div>
+      <button class="btn-outline" id="saveListBtn" type="button">Liste speichern</button>
+      <p class="setup-message" id="setupMessage" aria-live="polite"></p>
+    </section>
+
+    <section class="vocab-section">
+      <label class="section-label">Vokabelliste</label>
+      <div class="vocab-header">
+        <span id="headerLangA">Deutsch</span>
+        <span id="headerLangB">Englisch</span>
+        <span></span>
+      </div>
+      <div id="vocabList" class="vocab-list"></div>
+
+      <div class="vocab-actions">
+        <button class="btn-outline" id="addRowBtn" type="button">+ Zeile hinzufügen</button>
+        <button class="btn-text" id="clearAllBtn" type="button">Vokabeln leeren</button>
+      </div>
+
+      <details class="bulk-import">
+        <summary>Mehrere Vokabeln auf einmal einfügen</summary>
+        <p class="hint">Ein Wortpaar pro Zeile, getrennt mit Semikolon, Komma oder Tab. Beispiel: <em>Haus; house</em></p>
+        <textarea id="bulkText" rows="4" placeholder="Haus; house
+Auto; car"></textarea>
+        <button class="btn-outline" id="bulkAddBtn" type="button">Einfügen</button>
+      </details>
+    </section>
+
+    <section class="direction-section">
+      <label class="section-label">Abfragerichtung</label>
+      <div class="segmented" role="group" aria-label="Abfragerichtung">
+        <button class="segment-btn" id="segAtoB" data-value="aToB" type="button">Sprache 1 → Sprache 2</button>
+        <button class="segment-btn" id="segBtoA" data-value="bToA" type="button">Sprache 2 → Sprache 1</button>
+        <button class="segment-btn active" id="segMixed" data-value="mixed" type="button">Gemischt</button>
+      </div>
+    </section>
+
+    <button class="btn-primary" id="startQuizBtn" type="button">Karteikasten starten</button>
+    <p class="status-line" id="statusLine" aria-live="polite"></p>
+  </div>
+
+  <div id="quiz-screen" class="screen hidden">
+    <div class="quiz-header">
+      <button class="btn-text" id="quitQuizBtn" type="button">← Abbrechen</button>
+      <span id="progressLabel">Frage 1 von 1</span>
+      <span id="scoreLabel">✓ 0</span>
+    </div>
+
+    <div class="flashcard" id="flashcard">
+      <div class="card-tag" id="directionTag">Sprache 1 → Sprache 2</div>
+      <div class="card-word" id="promptWord">Wort</div>
+    </div>
+
+    <label class="answer-label" id="answerLangLabel" for="answerInput">Antwort</label>
+    <input type="text" id="answerInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Antwort eingeben">
+    <div class="feedback hidden" id="feedback"></div>
+    <button class="btn-primary" id="actionBtn" type="button">Prüfen</button>
+  </div>
+
+  <div id="results-screen" class="screen hidden">
+    <div class="result-hero">
+      <div class="result-fraction" id="resultFraction">0 / 0</div>
+      <div class="result-percent" id="resultPercent">0 % richtig</div>
+    </div>
+
+    <div class="missed-section">
+      <label class="section-label">Zum Wiederholen</label>
+      <div id="missedList" class="missed-list"></div>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn-primary" id="retryMissedBtn" type="button">Nur Fehler wiederholen</button>
+      <button class="btn-outline" id="retryAllBtn" type="button">Alle nochmal</button>
+      <button class="btn-text" id="backToSetupBtn" type="button">Zurück zur Liste</button>
+    </div>
+  </div>
+
+  <div class="lang-modal-overlay hidden" id="langModalOverlay">
+    <div class="lang-modal">
+      <h2 class="lang-modal-title" id="langModalTitle">Sprache wählen</h2>
+      <input type="text" id="langSearchInput" placeholder="Sprache suchen…">
+      <div class="lang-modal-list" id="langModalList"></div>
+      <button class="btn-outline lang-modal-close" id="langModalClose" type="button">Schließen</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'karteikasten_lists_v1';
+  var lists = [];
+  var currentListId = null;
+  var saveTimeout = null;
+
+  var LANGUAGES = [
+    'Deutsch', 'Englisch', 'Französisch', 'Spanisch', 'Italienisch', 'Portugiesisch',
+    'Niederländisch', 'Schwedisch', 'Norwegisch', 'Dänisch', 'Finnisch', 'Isländisch',
+    'Polnisch', 'Tschechisch', 'Slowakisch', 'Ungarisch', 'Rumänisch', 'Bulgarisch',
+    'Griechisch', 'Russisch', 'Ukrainisch', 'Türkisch', 'Arabisch', 'Hebräisch',
+    'Persisch', 'Hindi', 'Urdu', 'Bengalisch', 'Chinesisch', 'Japanisch', 'Koreanisch',
+    'Vietnamesisch', 'Thailändisch', 'Indonesisch', 'Malaiisch', 'Suaheli', 'Latein',
+    'Katalanisch', 'Kroatisch', 'Serbisch', 'Slowenisch', 'Litauisch', 'Lettisch',
+    'Estnisch', 'Albanisch'
+  ];
+
+  var langModalTarget = null; // 'a' or 'b'
+
+  function generateId() {
+    return 'l_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  function getCurrentList() {
+    for (var i = 0; i < lists.length; i++) {
+      if (lists[i].id === currentListId) return lists[i];
+    }
+    return lists[0] || null;
+  }
+
+  function defaultList(name) {
+    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', vocab: [], direction: 'mixed' };
+  }
+
+  function loadAll() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.lists) && parsed.lists.length > 0) {
+          lists = parsed.lists;
+          var validId = false;
+          for (var i = 0; i < lists.length; i++) { if (lists[i].id === parsed.currentListId) validId = true; }
+          currentListId = validId ? parsed.currentListId : lists[0].id;
+          return;
+        }
+      }
+    } catch (e) { /* localStorage unavailable, fall through to seed */ }
+    var seed = defaultList('Liste 1');
+    seed.vocab = [
+      { a: 'Haus', b: 'house' },
+      { a: 'Auto', b: 'car' },
+      { a: 'Wasser', b: 'water' }
+    ];
+    lists = [seed];
+    currentListId = seed.id;
+  }
+
+  function saveAll() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ lists: lists, currentListId: currentListId }));
+    } catch (e) { /* storage unavailable, ignore */ }
+  }
+
+  function debouncedSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveAll, 400);
+  }
+
+  function showScreen(name) {
+    document.getElementById('setup-screen').classList.toggle('hidden', name !== 'setup');
+    document.getElementById('quiz-screen').classList.toggle('hidden', name !== 'quiz');
+    document.getElementById('results-screen').classList.toggle('hidden', name !== 'results');
+  }
+
+  function showSetupMessage(msg) {
+    document.getElementById('setupMessage').textContent = msg;
+  }
+
+  function renderListSelect() {
+    var select = document.getElementById('listSelect');
+    var html = '';
+    for (var i = 0; i < lists.length; i++) {
+      html += '<option value="' + lists[i].id + '"' + (lists[i].id === currentListId ? ' selected' : '') + '>' +
+        escapeHtml(lists[i].name || '(ohne Namen)') + '</option>';
+    }
+    select.innerHTML = html;
+  }
+
+  function updateHeaderSubtitle() {
+    var list = getCurrentList();
+    document.getElementById('headerLangSubtitleA').textContent = list.langA || 'Sprache 1';
+    document.getElementById('headerLangSubtitleB').textContent = list.langB || 'Sprache 2';
+  }
+
+  function updateLangHeadersAndPlaceholders() {
+    var list = getCurrentList();
+    var a = list.langA || 'Sprache 1';
+    var b = list.langB || 'Sprache 2';
+    document.getElementById('headerLangA').textContent = a;
+    document.getElementById('headerLangB').textContent = b;
+    var inputsA = document.querySelectorAll('.vocab-input[data-field="a"]');
+    for (var i = 0; i < inputsA.length; i++) inputsA[i].placeholder = a;
+    var inputsB = document.querySelectorAll('.vocab-input[data-field="b"]');
+    for (var j = 0; j < inputsB.length; j++) inputsB[j].placeholder = b;
+    document.getElementById('segAtoB').textContent = a + ' → ' + b;
+    document.getElementById('segBtoA').textContent = b + ' → ' + a;
+    updateHeaderSubtitle();
+  }
+
+  function updateLangPickerLabels() {
+    var list = getCurrentList();
+    document.getElementById('langAPickerLabel').textContent = list.langA || 'Sprache wählen';
+    document.getElementById('langBPickerLabel').textContent = list.langB || 'Sprache wählen';
+  }
+
+  function updateStartButtonState() {
+    var list = getCurrentList();
+    var validCount = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim(); }).length;
+    var btn = document.getElementById('startQuizBtn');
+    btn.disabled = validCount === 0;
+    var status = document.getElementById('statusLine');
+    status.textContent = validCount === 0
+      ? 'Noch keine vollständigen Vokabelpaare.'
+      : validCount + (validCount === 1 ? ' Vokabelpaar bereit.' : ' Vokabelpaare bereit.');
+  }
+
+  function renderVocabList() {
+    var list = getCurrentList();
+    var container = document.getElementById('vocabList');
+    var html = '';
+    for (var i = 0; i < list.vocab.length; i++) {
+      var pair = list.vocab[i];
+      html += '<div class="vocab-row">' +
+        '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="a" value="' + escapeHtml(pair.a) + '" placeholder="' + escapeHtml(list.langA) + '">' +
+        '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="b" value="' + escapeHtml(pair.b) + '" placeholder="' + escapeHtml(list.langB) + '">' +
+        '<button class="btn-delete" data-idx="' + i + '" type="button" aria-label="Zeile löschen">✕</button>' +
+        '</div>';
+    }
+    container.innerHTML = html;
+    updateLangHeadersAndPlaceholders();
+    updateStartButtonState();
+  }
+
+  function renderCurrentListIntoForm() {
+    var list = getCurrentList();
+    document.getElementById('listNameInput').value = list.name;
+    updateLangPickerLabels();
+    renderVocabList();
+    setActiveSegment(list.direction);
+  }
+
+  function addRow() {
+    getCurrentList().vocab.push({ a: '', b: '' });
+    renderVocabList();
+    saveAll();
+    var inputsA = document.querySelectorAll('.vocab-input[data-field="a"]');
+    if (inputsA.length) inputsA[inputsA.length - 1].focus();
+  }
+
+  function parseBulk() {
+    var list = getCurrentList();
+    var text = document.getElementById('bulkText').value;
+    var lines = text.split('\n');
+    var added = 0;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var parts = null;
+      if (line.indexOf('\t') !== -1) parts = line.split('\t');
+      else if (line.indexOf(';') !== -1) parts = line.split(';');
+      else if (line.indexOf(',') !== -1) parts = line.split(',');
+      if (!parts) continue;
+      var a = (parts[0] || '').trim();
+      var b = (parts[1] || '').trim();
+      if (a && b) {
+        list.vocab.push({ a: a, b: b });
+        added++;
+      }
+    }
+    document.getElementById('bulkText').value = '';
+    renderVocabList();
+    saveAll();
+    showSetupMessage(added > 0 ? added + ' Vokabelpaar(e) hinzugefügt.' : 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2');
+  }
+
+  function setActiveSegment(dir) {
+    var buttons = document.querySelectorAll('.segment-btn');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].classList.toggle('active', buttons[i].dataset.value === dir);
+    }
+  }
+
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  }
+
+  var quizQueue = [], quizIndex = 0, quizScore = 0, quizMissed = [], answered = false;
+  var quizSourceVocab = [], quizLangA = '', quizLangB = '', quizDirection = 'mixed';
+
+  function buildQueue(vocabList) {
+    var shuffled = shuffle(vocabList.slice());
+    return shuffled.map(function (item) {
+      var dir = quizDirection;
+      if (dir === 'mixed') dir = Math.random() < 0.5 ? 'aToB' : 'bToA';
+      return { a: item.a, b: item.b, dir: dir };
+    });
+  }
+
+  function beginQuizWith(vocabList) {
+    quizQueue = buildQueue(vocabList);
+    quizIndex = 0;
+    quizScore = 0;
+    quizMissed = [];
+    showScreen('quiz');
+    renderQuestion();
+  }
+
+  function startQuiz() {
+    var list = getCurrentList();
+    var validVocab = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim(); });
+    if (validVocab.length === 0) {
+      showSetupMessage('Bitte füge mindestens ein Vokabelpaar hinzu.');
+      return;
+    }
+    quizSourceVocab = validVocab.map(function (v) { return { a: v.a.trim(), b: v.b.trim() }; });
+    quizLangA = list.langA;
+    quizLangB = list.langB;
+    quizDirection = list.direction;
+    beginQuizWith(quizSourceVocab);
+  }
+
+  function renderQuestion() {
+    var item = quizQueue[quizIndex];
+    answered = false;
+    var promptWord = item.dir === 'aToB' ? item.a : item.b;
+    var promptLang = item.dir === 'aToB' ? quizLangA : quizLangB;
+    var answerLang = item.dir === 'aToB' ? quizLangB : quizLangA;
+
+    document.getElementById('directionTag').textContent = promptLang + ' → ' + answerLang;
+    document.getElementById('promptWord').textContent = promptWord;
+    document.getElementById('answerLangLabel').textContent = 'Antwort auf ' + answerLang;
+
+    var input = document.getElementById('answerInput');
+    input.value = '';
+    input.readOnly = false;
+
+    var feedback = document.getElementById('feedback');
+    feedback.className = 'feedback hidden';
+    feedback.textContent = '';
+
+    document.getElementById('actionBtn').textContent = 'Prüfen';
+    document.getElementById('progressLabel').textContent = 'Frage ' + (quizIndex + 1) + ' von ' + quizQueue.length;
+    document.getElementById('scoreLabel').textContent = '✓ ' + quizScore;
+
+    var card = document.getElementById('flashcard');
+    card.classList.remove('correct', 'incorrect');
+
+    input.focus();
+  }
+
+  function normalize(s) {
+    return s.trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  function checkAnswer() {
+    var item = quizQueue[quizIndex];
+    var correctRaw = item.dir === 'aToB' ? item.b : item.a;
+    var acceptable = correctRaw.split('/').map(normalize).filter(Boolean);
+    var userAnswer = normalize(document.getElementById('answerInput').value);
+    var isCorrect = userAnswer !== '' && acceptable.indexOf(userAnswer) !== -1;
+
+    var feedback = document.getElementById('feedback');
+    var card = document.getElementById('flashcard');
+
+    if (isCorrect) {
+      quizScore++;
+      feedback.textContent = 'Richtig.';
+      feedback.className = 'feedback correct';
+      card.classList.add('correct');
+    } else {
+      feedback.textContent = 'Richtig wäre: ' + correctRaw;
+      feedback.className = 'feedback incorrect';
+      card.classList.add('incorrect');
+      quizMissed.push(item);
+    }
+
+    document.getElementById('answerInput').readOnly = true;
+    document.getElementById('actionBtn').textContent = 'Weiter';
+    document.getElementById('scoreLabel').textContent = '✓ ' + quizScore;
+    answered = true;
+  }
+
+  function nextQuestion() {
+    quizIndex++;
+    if (quizIndex >= quizQueue.length) showResults();
+    else renderQuestion();
+  }
+
+  function showResults() {
+    showScreen('results');
+    var total = quizQueue.length;
+    var correct = quizScore;
+    var pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    document.getElementById('resultFraction').textContent = correct + ' / ' + total;
+    document.getElementById('resultPercent').textContent = pct + ' % richtig';
+
+    var list = document.getElementById('missedList');
+    if (quizMissed.length === 0) {
+      list.innerHTML = '<div class="missed-empty">Alles richtig. Keine Fehler.</div>';
+    } else {
+      var html = '';
+      for (var i = 0; i < quizMissed.length; i++) {
+        html += '<div class="missed-row">' + escapeHtml(quizMissed[i].a) + ' — ' + escapeHtml(quizMissed[i].b) + '</div>';
+      }
+      list.innerHTML = html;
+    }
+    document.getElementById('retryMissedBtn').style.display = quizMissed.length > 0 ? '' : 'none';
+  }
+
+  /* ---- language picker modal ---- */
+
+  function openLangModal(target) {
+    langModalTarget = target;
+    var list = getCurrentList();
+    var other = target === 'a' ? list.langB : list.langA;
+    document.getElementById('langModalTitle').textContent = target === 'a' ? 'Sprache 1 wählen' : 'Sprache 2 wählen';
+    document.getElementById('langSearchInput').value = '';
+    renderLangOptions('', other);
+    document.getElementById('langModalOverlay').classList.remove('hidden');
+    document.getElementById('langSearchInput').focus();
+  }
+
+  function closeLangModal() {
+    document.getElementById('langModalOverlay').classList.add('hidden');
+    langModalTarget = null;
+  }
+
+  function renderLangOptions(filterText, otherLang) {
+    var listEl = document.getElementById('langModalList');
+    var q = filterText.trim().toLowerCase();
+    var matches = LANGUAGES.filter(function (l) { return l.toLowerCase().indexOf(q) !== -1; });
+    if (matches.length === 0) {
+      listEl.innerHTML = '<div class="lang-modal-empty">Keine Sprache gefunden.</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < matches.length; i++) {
+      html += '<button class="lang-option" type="button" data-lang="' + escapeHtml(matches[i]) + '">' +
+        escapeHtml(matches[i]) + '</button>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  function chooseLang(langName) {
+    var list = getCurrentList();
+    if (langModalTarget === 'a') list.langA = langName;
+    else if (langModalTarget === 'b') list.langB = langName;
+    updateLangPickerLabels();
+    updateLangHeadersAndPlaceholders();
+    saveAll();
+    closeLangModal();
+  }
+
+  function attachEvents() {
+    document.getElementById('listSelect').addEventListener('change', function (e) {
+      currentListId = e.target.value;
+      renderCurrentListIntoForm();
+      saveAll();
+    });
+
+    document.getElementById('newListBtn').addEventListener('click', function () {
+      var n = lists.length + 1;
+      var newList = defaultList('Liste ' + n);
+      lists.push(newList);
+      currentListId = newList.id;
+      renderListSelect();
+      renderCurrentListIntoForm();
+      saveAll();
+      showSetupMessage('Neue Liste "' + newList.name + '" erstellt.');
+    });
+
+    var deleteListArmed = false;
+    var deleteListArmTimeout = null;
+    document.getElementById('deleteListBtn').addEventListener('click', function (e) {
+      if (!deleteListArmed) {
+        deleteListArmed = true;
+        e.target.textContent = 'Wirklich löschen?';
+        deleteListArmTimeout = setTimeout(function () {
+          deleteListArmed = false;
+          e.target.textContent = 'Diese Liste löschen';
+        }, 3000);
+        return;
+      }
+      clearTimeout(deleteListArmTimeout);
+      deleteListArmed = false;
+      e.target.textContent = 'Diese Liste löschen';
+      lists = lists.filter(function (l) { return l.id !== currentListId; });
+      if (lists.length === 0) lists.push(defaultList('Liste 1'));
+      currentListId = lists[0].id;
+      renderListSelect();
+      renderCurrentListIntoForm();
+      saveAll();
+    });
+
+    document.getElementById('listNameInput').addEventListener('input', function (e) {
+      var list = getCurrentList();
+      list.name = e.target.value;
+      var opt = document.querySelector('#listSelect option[value="' + list.id + '"]');
+      if (opt) opt.textContent = list.name || '(ohne Namen)';
+      debouncedSave();
+    });
+
+    document.getElementById('langAPickerBtn').addEventListener('click', function () { openLangModal('a'); });
+    document.getElementById('langBPickerBtn').addEventListener('click', function () { openLangModal('b'); });
+    document.getElementById('langModalClose').addEventListener('click', closeLangModal);
+    document.getElementById('langModalOverlay').addEventListener('click', function (e) {
+      if (e.target === e.currentTarget) closeLangModal();
+    });
+    document.getElementById('langSearchInput').addEventListener('input', function (e) {
+      var list = getCurrentList();
+      var other = langModalTarget === 'a' ? list.langB : list.langA;
+      renderLangOptions(e.target.value, other);
+    });
+    document.getElementById('langModalList').addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang-option');
+      if (btn) chooseLang(btn.dataset.lang);
+    });
+
+    document.getElementById('swapLangBtn').addEventListener('click', function () {
+      var list = getCurrentList();
+      var tmp = list.langA; list.langA = list.langB; list.langB = tmp;
+      list.vocab.forEach(function (v) { var t = v.a; v.a = v.b; v.b = t; });
+      if (list.direction === 'aToB') list.direction = 'bToA';
+      else if (list.direction === 'bToA') list.direction = 'aToB';
+      updateLangPickerLabels();
+      renderVocabList();
+      setActiveSegment(list.direction);
+      saveAll();
+    });
+
+    document.getElementById('saveListBtn').addEventListener('click', function () {
+      saveAll();
+      showSetupMessage('Liste "' + getCurrentList().name + '" gespeichert.');
+    });
+
+    document.getElementById('vocabList').addEventListener('input', function (e) {
+      if (e.target.classList.contains('vocab-input')) {
+        var idx = parseInt(e.target.dataset.idx, 10);
+        var field = e.target.dataset.field;
+        getCurrentList().vocab[idx][field] = e.target.value;
+        updateStartButtonState();
+        debouncedSave();
+      }
+    });
+    document.getElementById('vocabList').addEventListener('click', function (e) {
+      if (e.target.classList.contains('btn-delete')) {
+        var idx = parseInt(e.target.dataset.idx, 10);
+        getCurrentList().vocab.splice(idx, 1);
+        renderVocabList();
+        saveAll();
+      }
+    });
+
+    document.getElementById('addRowBtn').addEventListener('click', addRow);
+
+    var clearArmed = false;
+    var clearArmTimeout = null;
+    document.getElementById('clearAllBtn').addEventListener('click', function (e) {
+      if (getCurrentList().vocab.length === 0) return;
+      if (!clearArmed) {
+        clearArmed = true;
+        e.target.textContent = 'Wirklich? Nochmal tippen';
+        clearArmTimeout = setTimeout(function () {
+          clearArmed = false;
+          e.target.textContent = 'Vokabeln leeren';
+        }, 3000);
+        return;
+      }
+      clearTimeout(clearArmTimeout);
+      clearArmed = false;
+      e.target.textContent = 'Vokabeln leeren';
+      getCurrentList().vocab = [];
+      renderVocabList();
+      saveAll();
+    });
+    document.getElementById('bulkAddBtn').addEventListener('click', parseBulk);
+
+    var segments = document.querySelectorAll('.segment-btn');
+    for (var i = 0; i < segments.length; i++) {
+      segments[i].addEventListener('click', function (e) {
+        getCurrentList().direction = e.currentTarget.dataset.value;
+        setActiveSegment(getCurrentList().direction);
+        saveAll();
+      });
+    }
+
+    document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
+
+    document.getElementById('actionBtn').addEventListener('click', function () {
+      if (!answered) checkAnswer();
+      else nextQuestion();
+    });
+    document.getElementById('answerInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('actionBtn').click();
+      }
+    });
+    document.getElementById('quitQuizBtn').addEventListener('click', function () {
+      showScreen('setup');
+    });
+
+    document.getElementById('retryAllBtn').addEventListener('click', function () {
+      beginQuizWith(quizSourceVocab);
+    });
+    document.getElementById('retryMissedBtn').addEventListener('click', function () {
+      var source = quizMissed.map(function (m) { return { a: m.a, b: m.b }; });
+      beginQuizWith(source);
+    });
+    document.getElementById('backToSetupBtn').addEventListener('click', function () {
+      showScreen('setup');
+    });
+  }
+
+  function init() {
+    loadAll();
+    renderListSelect();
+    renderCurrentListIntoForm();
+    attachEvents();
+    showScreen('setup');
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
