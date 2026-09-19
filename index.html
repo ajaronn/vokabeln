@@ -419,6 +419,7 @@
     text-align: left;
   }
   .btn-alt-add:hover { color: var(--rust); border-color: var(--rust); }
+  .alt-phon-input { font-size: 14px; padding: 6px 10px; }
 
   .vocab-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 12px; }
 
@@ -718,7 +719,7 @@
       <details class="bulk-import">
         <summary>Mehrere Vokabeln auf einmal einfügen</summary>
         <p class="hint">Ein Wortpaar pro Zeile, getrennt mit Semikolon, Komma oder Tab. Beispiel: <em>Haus; house</em></p>
-        <p class="hint">Lautschrift schreibst du in eckigen Klammern, an beliebiger Stelle der Zeile, so wie im Schulbuch: <em>Haus; house [haʊs]</em>. Alternativ als drittes Feld: <em>Haus; house; haʊs</em>. Mit dem Knopf „Lautschrift-Tastatur“ unten tippst du die Zeichen und sie werden als [ … ] an die Cursor-Stelle eingefügt.</p>
+        <p class="hint">Lautschrift schreibst du in eckigen Klammern, an beliebiger Stelle der Zeile, so wie im Schulbuch: <em>Haus; house [haʊs]</em>. Alternativ als drittes Feld: <em>Haus; house; haʊs</em>. Mit dem Knopf „Lautschrift-Tastatur“ unten tippst du die Zeichen und sie werden als [ … ] an die Cursor-Stelle eingefügt. Auch Alternativen können eine eigene Lautschrift haben: Schreibe sie direkt hinter die Alternative, in eckigen Klammern: <em>Haus; house [haʊs] / apartment [əˈpɑːtmənt]</em> (ein Sternchen zur Markierung als halber Fehler darf davor stehen, siehe unten: <em>apartment* [əˈpɑːtmənt]</em>)</p>
         <p class="hint">Alternativen gehen direkt mit einem Schrägstrich <strong>/</strong>: Das erste Wort ist die Hauptantwort, die weiteren sind Alternativen (auf beiden Seiten möglich). Ein <strong>*</strong> direkt hinter einer Alternative markiert sie als halben Fehler: Wer sie eintippt, bekommt nur einen halben Fehler („besser wäre …“). Beispiele: <em>Haus; house / home*</em> (bei „home“ gibt es nur einen halben Fehler) oder <em>Auto / Wagen; car / automobile</em></p>
         <p class="hint">Einen Beispielsatz setzt du in Anführungszeichen ("…" oder „…“), ebenfalls an beliebiger Stelle der Zeile. Schreibe ihn in der Sprache, die du lernst. Mit Sternchen markierst du ein Wort im Satz: <em>"The *house* is big."</em> Der Satz darf auch Kommas oder Semikolons enthalten: <em>Haus; house "The house is big."</em></p>
         <textarea id="bulkText" rows="4" placeholder="Haus; house / home* &quot;The *house* is big.&quot;
@@ -737,7 +738,7 @@ Wasser; water"></textarea>
           <button class="btn-outline" id="copyListBtn" type="button">Text kopieren</button>
         </div>
         <p class="hint" id="shareMessage" aria-live="polite"></p>
-        <p class="hint">Die Datei hat pro Zeile ein Wortpaar (<em>Haus; house / home*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Eine eingetragene Lautschrift wird mitgeteilt und steht in eckigen Klammern als drittes Feld hinter dem Wortpaar (<em>Haus; house; [haʊs]</em>). Ein Beispielsatz steht in Anführungszeichen am Zeilenende (<em>Haus; house "The house is big."</em>). Lernstufen werden nicht mitgespeichert.</p>
+        <p class="hint">Die Datei hat pro Zeile ein Wortpaar (<em>Haus; house / home*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Eine eingetragene Lautschrift wird mitgeteilt und steht in eckigen Klammern als drittes Feld hinter dem Wortpaar (<em>Haus; house; [haʊs]</em>). Ein Beispielsatz steht in Anführungszeichen am Zeilenende (<em>Haus; house "The house is big."</em>). Die Lautschrift einer Alternative steht direkt hinter ihr (<em>Haus; house / apartment* [əˈpɑːtmənt]</em>). Lernstufen werden nicht mitgespeichert.</p>
       </div>
     </section>
 
@@ -867,6 +868,7 @@ Wasser; water"></textarea>
   ];
 
   var langModalTarget = null; // 'a' or 'b'
+  var TOKEN_RE = /\uE000(\d+)\uE001/g; // Platzhalter für [Lautschrift] beim Einfügen
 
   function generateId() {
     return 'l_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
@@ -890,6 +892,22 @@ Wasser; water"></textarea>
 
   function gameField(altField) { return altField === 'aAlts' ? 'aGame' : 'bGame'; }
   function halfField(altField) { return altField === 'aAlts' ? 'aHalf' : 'bHalf'; }
+  function altPhonField(altField) { return altField === 'aAlts' ? 'aAltPhon' : 'bAltPhon'; }
+
+  // Lautschrift der Alternativen: { "Alternative": "Lautschrift" }
+  function cleanPhonMap(obj, alts) {
+    var res = {};
+    if (!obj || typeof obj !== 'object') return res;
+    (alts || []).forEach(function (a) {
+      if (typeof obj[a] === 'string' && obj[a].trim()) res[a] = obj[a].trim();
+    });
+    return res;
+  }
+
+  function getAltPhon(v, dir, alt) {
+    var map = v[dir === 'aToB' ? 'bAltPhon' : 'aAltPhon'] || {};
+    return map[alt] || '';
+  }
 
   function normalizeVocab(v) {
     if (!v.id) v.id = generateVocabId();
@@ -907,6 +925,8 @@ Wasser; water"></textarea>
     v.bGame = cleanAltList(v.bGame);
     v.aHalf = cleanAltList(v.aHalf);
     v.bHalf = cleanAltList(v.bHalf);
+    v.aAltPhon = cleanPhonMap(v.aAltPhon, v.aAlts);
+    v.bAltPhon = cleanPhonMap(v.bAltPhon, v.bAlts);
     if (typeof v.phon !== 'string') v.phon = '';
     if (typeof v.ex !== 'string') v.ex = '';
     if (typeof v.created !== 'number') v.created = Date.now();
@@ -1064,6 +1084,8 @@ Wasser; water"></textarea>
     var alts = pair[field] || [];
     var gameList = pair[gameField(field)] || [];
     var halfList = pair[halfField(field)] || [];
+    var phonMap = pair[altPhonField(field)] || {};
+    var showPhon = !!getCurrentList().showPhon;
     var h = '<div class="alt-col"><span class="alt-col-label">Alternativen · <span class="' + langClass + '">' + escapeHtml(langName) + '</span></span>';
     for (var k = 0; k < alts.length; k++) {
       var isGame = alts[k] !== '' && gameList.indexOf(alts[k]) !== -1;
@@ -1074,7 +1096,9 @@ Wasser; water"></textarea>
         '<input type="text" class="alt-input" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" value="' + escapeHtml(alts[k]) + '" placeholder="Alternative" autocomplete="off">' +
         '<button class="btn-alt-half' + (isHalf ? ' on' : '') + '" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" type="button" aria-pressed="' + (isHalf ? 'true' : 'false') + '" title="Als halben Fehler markieren: Diese Antwort zählt dann nur als halber Fehler" aria-label="Alternative als halben Fehler markieren">½</button>' +
         '<button class="btn-alt-remove" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" type="button" aria-label="Alternative entfernen">✕</button>' +
-        '</div></div>';
+        '</div>' +
+        (showPhon ? '<input type="text" class="phon-input alt-phon-input" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" readonly inputmode="none" value="' + escapeHtml(phonMap[alts[k]] || '') + '" placeholder="Lautschrift (antippen)">' : '') +
+        '</div>';
     }
     h += '<button class="btn-alt-add" data-idx="' + idx + '" data-field="' + field + '" type="button">+ Alternative hinzufügen</button>';
     h += '</div>';
@@ -1232,29 +1256,45 @@ Wasser; water"></textarea>
   }
 
   // "Auto / Wagen" -> Hauptwort "Auto", Alternativen ["Wagen"]
-  function splitAlternatives(text) {
-    var pieces = String(text || '').split('/').map(function (x) { return x.trim(); }).filter(Boolean);
-    var isHalf = pieces.map(function (x) { return /\*$/.test(x); });
-    pieces = pieces.map(function (x) { return x.replace(/\s*\*+$/, '').trim(); });
-    var main = pieces.length ? pieces[0] : '';
+  // Lautschrift steht als Platzhalter im Text (siehe parseBulk) und wird dem jeweiligen Wort zugeordnet
+  function splitAlternatives(text, brackets) {
+    brackets = brackets || [];
+    var items = [];
+    String(text || '').split('/').forEach(function (piece) {
+      var ph = [];
+      var t = piece.replace(TOKEN_RE, function (m, n) {
+        var val = brackets[parseInt(n, 10)];
+        if (val) ph.push(val);
+        return ' ';
+      }).replace(/\s+/g, ' ').trim();
+      if (!t) return;
+      var isHalf = /\*+$/.test(t);
+      t = t.replace(/\s*\*+$/, '').trim();
+      items.push({ text: t, half: isHalf, phon: ph.length ? ph[0] : '' });
+    });
+    var main = items.length ? items[0].text : '';
+    var mainPhon = items.length ? items[0].phon : '';
     var alts = [];
     var half = [];
+    var altPhon = {};
     var seen = {};
     seen[main.toLowerCase()] = true;
-    for (var i = 1; i < pieces.length; i++) {
-      if (!pieces[i]) continue;
-      var key = pieces[i].toLowerCase();
+    for (var i = 1; i < items.length; i++) {
+      if (!items[i].text) continue;
+      var key = items[i].text.toLowerCase();
       if (!seen[key]) {
         seen[key] = true;
-        alts.push(pieces[i]);
-        if (isHalf[i]) half.push(pieces[i]);
+        alts.push(items[i].text);
+        if (items[i].half) half.push(items[i].text);
+        if (items[i].phon) altPhon[items[i].text] = items[i].phon;
       }
     }
-    return { main: main, alts: alts, half: half };
+    return { main: main, alts: alts, half: half, altPhon: altPhon, mainPhon: mainPhon };
   }
 
   // ---- Lautschrift ----
   var phonEditIdx = null;
+  var phonAltRef = null;
   var PHON_SECTIONS = [
     { title: 'Vokale', keys: ['ə', 'ɜ', 'ɪ', 'ʊ', 'ɛ', 'æ', 'ɑ', 'ɒ', 'ɔ', 'ʌ', 'ɐ', 'ɚ', 'ø', 'œ', 'ʏ', 'ɑ\u0303', 'ɔ\u0303', 'ɛ\u0303', 'œ\u0303'] },
     { title: 'Konsonanten', keys: ['θ', 'ð', 'ʃ', 'ʒ', 'ŋ', 'ɹ', 'ɡ', 'ʔ', 'ç', 'ʁ', 'ɲ', 'ʎ', 'ɫ', 'tʃ', 'dʒ', 'ts', 'pf'] },
@@ -1325,6 +1365,24 @@ Wasser; water"></textarea>
     input.setSelectionRange(input.value.length, input.value.length);
   }
 
+  function openPhonModalAlt(idx, field, altIdx) {
+    var pair = getCurrentList().vocab[idx];
+    if (!pair) return;
+    var altText = pair[field][altIdx];
+    if (!altText || !altText.trim()) {
+      showSetupMessage('Bitte trage zuerst die Alternative ein.');
+      return;
+    }
+    phonEditIdx = 'alt';
+    phonAltRef = { idx: idx, field: field, text: altText };
+    document.getElementById('phonModalWord').textContent = 'Alternative: ' + altText;
+    var input = document.getElementById('phonSheetInput');
+    input.value = (pair[altPhonField(field)] || {})[altText] || '';
+    document.getElementById('phonModalOverlay').classList.remove('hidden');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+
   // Tastatur für das Mehrfach-Textfeld: Ergebnis wird als [ … ] an der Cursor-Stelle eingefügt
   function openPhonModalBulk() {
     phonEditIdx = 'bulk';
@@ -1351,9 +1409,24 @@ Wasser; water"></textarea>
   function closePhonModal() {
     document.getElementById('phonModalOverlay').classList.add('hidden');
     phonEditIdx = null;
+    phonAltRef = null;
   }
 
   function savePhonModal() {
+    if (phonEditIdx === 'alt' && phonAltRef) {
+      var pv = getCurrentList().vocab[phonAltRef.idx];
+      if (pv) {
+        var apf = altPhonField(phonAltRef.field);
+        if (!pv[apf]) pv[apf] = {};
+        var newVal = document.getElementById('phonSheetInput').value.trim();
+        if (newVal) pv[apf][phonAltRef.text] = newVal;
+        else delete pv[apf][phonAltRef.text];
+        saveAll();
+      }
+      closePhonModal();
+      renderVocabList();
+      return;
+    }
     if (phonEditIdx === 'bulk') {
       var val = document.getElementById('phonSheetInput').value.trim();
       if (val) insertIntoBulk('[' + val + ']');
@@ -1379,7 +1452,12 @@ Wasser; water"></textarea>
     return (arr || []).some(function (y) { return String(y).trim().toLowerCase() === n; });
   }
 
-  function exportSide(main, alts, half) {
+  function exportBracket(p) {
+    var t = String(p || '').replace(/[;\t\r\n]+/g, ' ').replace(/^\s*\[(.*)\]\s*$/, '$1').replace(/[\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    return t ? '[' + t + ']' : '';
+  }
+
+  function exportSide(main, alts, half, altPhon) {
     var parts = [exportClean(main)];
     var seen = {};
     seen[parts[0].toLowerCase()] = true;
@@ -1387,7 +1465,8 @@ Wasser; water"></textarea>
       var c = exportClean(alt);
       if (!c || seen[c.toLowerCase()]) return;
       seen[c.toLowerCase()] = true;
-      parts.push(c + (inListNorm(half, alt) ? '*' : ''));
+      var pb = exportBracket((altPhon || {})[alt]);
+      parts.push(c + (inListNorm(half, alt) ? '*' : '') + (pb ? ' ' + pb : ''));
     });
     return parts.join(' / ');
   }
@@ -1399,7 +1478,7 @@ Wasser; water"></textarea>
       var phonExport = String(v.phon || '').replace(/[;\t\r\n]+/g, ' ').trim();
       if (phonExport && !/^\[.*\]$/.test(phonExport)) phonExport = '[' + phonExport + ']';
       var exExport = String(v.ex || '').replace(/["„“”\t\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
-      lines.push(exportSide(v.a, v.aAlts, v.aHalf) + '; ' + exportSide(v.b, v.bAlts, v.bHalf) + (phonExport ? '; ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : ''));
+      lines.push(exportSide(v.a, v.aAlts, v.aHalf, v.aAltPhon) + '; ' + exportSide(v.b, v.bAlts, v.bHalf, v.bAltPhon) + (phonExport ? '; ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : ''));
     });
     return lines.join('\n');
   }
@@ -1494,11 +1573,11 @@ Wasser; water"></textarea>
         return ' ';
       }).replace(/ {2,}/g, ' ').trim();
       if (!line) continue;
-      // Lautschrift in eckigen Klammern (überall in der Zeile) herausnehmen
-      var bracketPhon = '';
+      // Lautschrift in eckigen Klammern durch Platzhalter ersetzen (wird danach dem Wort bzw. der Alternative zugeordnet)
+      var brackets = [];
       line = line.replace(/\[([^\]]*)\]/g, function (m, inner) {
-        if (!bracketPhon && inner.trim()) bracketPhon = inner.trim();
-        return ' ';
+        brackets.push(inner.trim());
+        return ' \uE000' + (brackets.length - 1) + '\uE001 ';
       }).replace(/ {2,}/g, ' ').trim();
       if (!line) continue;
       var parts = null;
@@ -1507,12 +1586,15 @@ Wasser; water"></textarea>
       else if (line.indexOf(';') !== -1) parts = line.split(';');
       else if (line.indexOf(',') !== -1) { parts = line.split(','); commaSep = true; }
       if (!parts) continue;
-      var sideA = splitAlternatives(parts[0]);
-      var sideB = splitAlternatives(parts[1]);
+      var sideA = splitAlternatives(parts[0], brackets);
+      var sideB = splitAlternatives(parts[1], brackets);
       if (sideA.main && sideB.main) {
-        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, ex: exText, phon: bracketPhon || (commaSep ? '' : String(parts[2] || '').trim()) });
+        var thirdPhon = '';
+        if (!commaSep) thirdPhon = String(parts[2] || '').replace(TOKEN_RE, function (m, n) { return brackets[parseInt(n, 10)] || ''; }).replace(/\s+/g, ' ').trim();
+        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, aAltPhon: sideA.altPhon, bAltPhon: sideB.altPhon, ex: exText, phon: sideA.mainPhon || sideB.mainPhon || thirdPhon });
         list.vocab.push(newPair);
-        if (newPair.phon) { list.showPhon = true; phonCount++; }
+        var altPhonN = Object.keys(newPair.aAltPhon).length + Object.keys(newPair.bAltPhon).length;
+        if (newPair.phon || altPhonN > 0) { list.showPhon = true; phonCount++; }
         if (newPair.ex) exCount++;
         added++;
         altCount += sideA.alts.length + sideB.alts.length;
@@ -1840,6 +1922,10 @@ Wasser; water"></textarea>
     var phonVocab = findVocab(item.vocabId);
     document.getElementById('phonLine').textContent = phonVocab ? phonDisplay(phonVocab.phon) : '';
     document.getElementById('cardBoxBadge').textContent = boxAfter;
+    if (altIdx !== -1 && phonVocab) {
+      var altPhMc = getAltPhon(phonVocab, item.dir, altsRaw[altIdx]);
+      if (altPhMc) document.getElementById('phonLine').textContent = phonDisplay(altPhMc);
+    }
     document.getElementById('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
     answered = true;
     updateProgressLabel();
@@ -2140,6 +2226,8 @@ Wasser; water"></textarea>
     document.getElementById('cardBoxBadge').textContent = boxAfter;
 
     var altRaw = matchedAltIdx > 0 ? acceptableRaw[matchedAltIdx] : null;
+    var altPh = (altRaw && phonVocab) ? getAltPhon(phonVocab, item.dir, altRaw) : '';
+    if (altPh) document.getElementById('phonLine').textContent = phonDisplay(altPh);
     lastResult = { credit: credit, boxBefore: boxBefore, prevMissed: prevMissed, typed: typedRaw, altRaw: altRaw, isHalfAlt: isHalfAlt && altRaw !== null, hinted: hintUsed };
     // "Als Alternative speichern": nur bei Fehlern, die noch keine gespeicherte Alternative waren
     document.getElementById('markCorrectBtn').classList.toggle('hidden', !(credit < 1 && typedRaw !== '' && altRaw === null && !(isExact || isTypo)));
@@ -2251,6 +2339,7 @@ Wasser; water"></textarea>
       removeNormalized(vocab[altField], norm);
       removeNormalized(vocab[gameField(altField)], norm);
       removeNormalized(vocab[halfField(altField)], norm);
+      if (vocab[altPhonField(altField)]) delete vocab[altPhonField(altField)][removedText];
     }
     lastResult.altRaw = null;
     lastResult.isHalfAlt = false;
@@ -2461,6 +2550,7 @@ Wasser; water"></textarea>
         var tb = v.boxAB; v.boxAB = v.boxBA; v.boxBA = tb;
         var tg = v.aGame; v.aGame = v.bGame; v.bGame = tg;
         var th = v.aHalf; v.aHalf = v.bHalf; v.bHalf = th;
+        var tap = v.aAltPhon; v.aAltPhon = v.bAltPhon; v.bAltPhon = tap;
       });
       if (list.direction === 'aToB') list.direction = 'bToA';
       else if (list.direction === 'bToA') list.direction = 'aToB';
@@ -2498,6 +2588,11 @@ Wasser; water"></textarea>
         var hl2 = halfField(field2);
         var hi2 = vAlt[hl2].indexOf(oldVal);
         if (oldVal !== '' && hi2 !== -1) vAlt[hl2][hi2] = e.target.value;
+        var apl = altPhonField(field2);
+        if (oldVal !== '' && vAlt[apl] && Object.prototype.hasOwnProperty.call(vAlt[apl], oldVal)) {
+          if (e.target.value !== '') vAlt[apl][e.target.value] = vAlt[apl][oldVal];
+          if (e.target.value !== oldVal) delete vAlt[apl][oldVal];
+        }
         debouncedSave();
       }
     });
@@ -2511,6 +2606,9 @@ Wasser; water"></textarea>
         getCurrentList().vocab.splice(idx, 1);
         renderVocabList();
         saveAll();
+      } else if (e.target.closest('.alt-phon-input')) {
+        var apIn = e.target.closest('.alt-phon-input');
+        openPhonModalAlt(parseInt(apIn.dataset.idx, 10), apIn.dataset.field, parseInt(apIn.dataset.alt, 10));
       } else if (e.target.closest('.phon-input')) {
         openPhonModal(parseInt(e.target.closest('.phon-input').dataset.idx, 10));
       } else if (e.target.closest('.ex-mark-btn')) {
@@ -2565,6 +2663,8 @@ Wasser; water"></textarea>
         var hlr = halfField(fieldRem);
         var hir = vRem[hlr].indexOf(removed);
         if (hir !== -1) vRem[hlr].splice(hir, 1);
+        var aprm = altPhonField(fieldRem);
+        if (vRem[aprm]) delete vRem[aprm][removed];
         renderVocabList();
         saveAll();
       }
