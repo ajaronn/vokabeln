@@ -70,7 +70,25 @@
 
   * { box-sizing: border-box; min-width: 0; }
   html, body { margin: 0; padding: 0; }
+  html { background-color: var(--bg); }
   body {
+    position: relative;
+    z-index: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--hand), 'Fraunces', Georgia, 'Times New Roman', serif;
+    font-size: 19px;
+    line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Papier + Linien als eigene Ebene: bleibt auch dann beige, wenn eine Vorschau den body-Hintergrund überschreibt */
+  body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-color: var(--bg);
     background-image: repeating-linear-gradient(
       to bottom,
@@ -79,11 +97,6 @@
       var(--rule-color) 34px,
       var(--rule-color) 35px
     );
-    color: var(--ink);
-    font-family: var(--hand), 'Fraunces', Georgia, 'Times New Roman', serif;
-    font-size: 19px;
-    line-height: 1.4;
-    -webkit-tap-highlight-color: transparent;
   }
   .app {
     max-width: 480px;
@@ -289,7 +302,7 @@
   /* Vocab table */
   .vocab-header {
     display: grid;
-    grid-template-columns: 1fr 1fr 28px 28px;
+    grid-template-columns: 1fr 1fr 48px 28px;
     gap: 10px;
     background: var(--rust);
     color: var(--rust-contrast);
@@ -307,7 +320,7 @@
   .vocab-card:last-child { border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
   .vocab-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 28px 28px;
+    grid-template-columns: 1fr 1fr 48px 28px;
     gap: 10px;
     align-items: center;
     padding: 9px 12px;
@@ -320,9 +333,10 @@
     font-size: 18px;
   }
   .vocab-row input:focus-visible { outline: none; border-bottom: 2px solid var(--rust); }
-  .btn-delete, .btn-alt-toggle {
+  .btn-delete, .btn-alt-remove {
     width: 26px;
     height: 26px;
+    flex: none;
     border-radius: 50%;
     border: none;
     background: transparent;
@@ -333,8 +347,7 @@
     font-family: inherit;
     padding: 0;
   }
-  .btn-delete:hover { background: var(--error-bg); color: var(--error); }
-  .btn-alt-toggle:hover, .btn-alt-toggle.open { background: var(--warn-bg); color: var(--warn); }
+  .btn-delete:hover, .btn-alt-remove:hover { background: var(--error-bg); color: var(--error); }
 
   .box-badge {
     display: inline-block;
@@ -347,6 +360,8 @@
     margin-left: 6px;
     vertical-align: middle;
   }
+  .box-badges { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+  .vocab-row .box-badge { margin-left: 0; text-align: center; white-space: nowrap; }
 
   .alt-panel {
     display: grid;
@@ -354,23 +369,62 @@
     gap: 10px;
     padding: 0 12px 12px 12px;
   }
-  .alt-panel.hidden { display: none; }
-  .alt-field label {
-    display: block;
+  .alt-col { display: flex; flex-direction: column; gap: 6px; }
+  .alt-col-label {
     font-size: 12px;
     color: var(--muted);
-    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-  .alt-field input {
+  .alt-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .game-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--rust);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .alt-item.game input { border-color: var(--rust); }
+  .alt-item { display: flex; align-items: center; gap: 4px; }
+  .alt-item input {
+    flex: 1;
+    width: auto;
     font-size: 16px;
     padding: 8px 10px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg);
   }
-  .alt-hint { grid-column: 1 / -1; font-size: 13px; color: var(--muted); margin: 0; }
+  .btn-alt-half {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    font-family: inherit;
+    padding: 0;
+  }
+  .btn-alt-half.on { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
+  .btn-alt-add {
+    align-self: flex-start;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    color: var(--muted);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    min-height: 38px;
+    text-align: left;
+  }
+  .btn-alt-add:hover { color: var(--rust); border-color: var(--rust); }
 
   .vocab-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; gap: 12px; }
 
@@ -412,6 +466,47 @@
   }
   .segment-btn.active { background: var(--ink); color: var(--bg); font-weight: 700; }
 
+  /* Study time */
+  .minutes-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
+  .minutes-seconds { font-size: 17px; color: var(--muted); }
+  .minutes-row input {
+    width: 110px;
+    flex: none;
+    text-align: center;
+    font-weight: 700;
+    font-size: 24px;
+    border: 2px solid var(--ink);
+  }
+  .minutes-unit { font-size: 19px; font-weight: 600; color: var(--muted); }
+
+  .toggle-row { display: flex; align-items: center; gap: 12px; margin-top: 22px; cursor: pointer; font-size: 19px; font-weight: 600; }
+  .toggle-row input { width: 24px; height: 24px; flex: none; accent-color: var(--rust); cursor: pointer; }
+  .share-actions { display: flex; gap: 12px; margin-top: 16px; }
+  .share-actions .btn-outline { flex: 1; }
+  .hint-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 14px; }
+  .hint-btn { padding: 4px 0; }
+  .hint-line { white-space: pre-wrap; font-weight: 700; font-size: 20px; color: var(--rust); word-break: break-word; }
+  .hint-line:empty { display: none; }
+  .bulk-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .toggle-row.small { margin-top: 12px; font-size: 17px; }
+  .phon-row { display: flex; align-items: center; gap: 10px; padding: 0 12px 10px; }
+  .phon-label { flex: none; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .phon-input, .phon-line, #phonSheetInput, .phon-key {
+    font-family: 'Noto Sans', 'Segoe UI', 'DejaVu Sans', 'Lucida Sans Unicode', 'Arial Unicode MS', 'Helvetica Neue', Arial, sans-serif;
+  }
+  .phon-input { flex: 1; font-size: 16px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--bg); cursor: pointer; }
+  .phon-line { font-size: 18px; font-weight: 600; margin-top: 4px; }
+  .phon-line:empty { display: none; }
+  .phon-modal { max-height: 88vh; }
+  #phonSheetInput { font-size: 22px; margin-bottom: 10px; flex-shrink: 0; }
+  .phon-keys-wrap { overflow-y: auto; border-top: 1px solid var(--border); padding-top: 4px; margin-bottom: 12px; min-height: 0; }
+  .phon-section-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 10px 0 6px; }
+  .phon-keys { display: flex; flex-wrap: wrap; gap: 6px; }
+  .phon-key { min-width: 44px; height: 44px; padding: 0 8px; font-size: 20px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+  .phon-key:active { background: var(--ink); color: var(--bg); }
+  .phon-key.wide { min-width: 96px; font-size: 16px; }
+  .phon-actions { display: flex; gap: 12px; flex-shrink: 0; }
+  .phon-actions .btn-outline, .phon-actions .btn-primary { flex: 1; width: auto; }
   .status-line { text-align: center; color: var(--muted); font-size: 15px; margin-top: 14px; }
 
   /* Quiz screen */
@@ -419,10 +514,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     margin-bottom: 26px;
     font-size: 16px;
     color: var(--muted);
   }
+  .quiz-header #progressLabel { flex: 1; text-align: center; }
   .quiz-header #scoreLabel { font-weight: 700; color: var(--ink); }
 
   .flashcard {
@@ -449,6 +546,7 @@
   .flashcard.correct { background: var(--success-bg); border-color: var(--success); animation: cardPulse 0.3s ease; }
   .flashcard.almost { background: var(--warn-bg); border-color: var(--warn); animation: cardPulse 0.3s ease; }
   .flashcard.incorrect { background: var(--error-bg); border-color: var(--error); animation: cardPulse 0.3s ease; }
+  .flashcard.half { background: var(--warn-bg); border-color: var(--warn); border-style: dashed; animation: cardPulse 0.3s ease; }
   @keyframes cardPulse {
     0% { transform: scale(1); }
     40% { transform: scale(1.025); }
@@ -472,6 +570,13 @@
   .feedback.correct { background: var(--success-bg); color: var(--success); }
   .feedback.almost { background: var(--warn-bg); color: var(--warn); }
   .feedback.incorrect { background: var(--error-bg); color: var(--error); }
+  .feedback.half { background: var(--warn-bg); color: var(--warn); border: 1.5px dashed var(--warn); }
+  .level-line { font-size: 15px; font-weight: 600; margin-top: 4px; opacity: 0.9; }
+  .level-line:empty { display: none; }
+  .mark-correct-btn { width: 100%; margin-bottom: 10px; color: var(--rust); border-color: var(--rust); }
+  .mark-correct-btn.subtle { color: var(--muted); border-color: var(--border); }
+  .mark-correct-btn.hidden { display: none; }
+  .half-tag { color: var(--warn); font-size: 15px; }
 
   /* Results screen */
   .result-hero { text-align: center; margin: 20px 0 32px; }
@@ -533,7 +638,8 @@
 
     <section class="vocab-section">
       <label class="section-label">Vokabelliste</label>
-      <p class="hint">Tipp: Klick auf <strong>≈</strong> bei einer Zeile, um weitere akzeptierte Antworten zu hinterlegen. Die Zahl zeigt die Lernstufe (1–5) — je niedriger, desto öfter wird die Karte abgefragt.</p>
+      <p class="hint">Tipp: Unter jedem Wort kannst du mit <strong>+ Alternative hinzufügen</strong> weitere akzeptierte Antworten hinterlegen. Alternativen, die beim Lernen hinzugefügt wurden, sind markiert. Mit dem <strong>½</strong>-Knopf neben einer Alternative markierst du sie als halben Fehler: Antwortest du damit, gibt es nur einen halben Fehler und den Hinweis „besser wäre …“. Die zwei Zahlen zeigen die Lernstufen (1–5) pro Richtung: → Sprache 1 zu Sprache 2, ← Sprache 2 zu Sprache 1. Je niedriger, desto öfter wird die Karte abgefragt.</p>
+      <label class="toggle-row small"><input type="checkbox" id="showPhonCheck"><span>Lautschrift-Spalte anzeigen (optional)</span></label>
       <div class="vocab-header">
         <span id="headerLangA">Deutsch</span>
         <span id="headerLangB">Englisch</span>
@@ -550,10 +656,26 @@
       <details class="bulk-import">
         <summary>Mehrere Vokabeln auf einmal einfügen</summary>
         <p class="hint">Ein Wortpaar pro Zeile, getrennt mit Semikolon, Komma oder Tab. Beispiel: <em>Haus; house</em></p>
-        <textarea id="bulkText" rows="4" placeholder="Haus; house
-Auto; car"></textarea>
-        <button class="btn-outline" id="bulkAddBtn" type="button">Einfügen</button>
+        <p class="hint">Lautschrift schreibst du in eckige Klammern, an beliebiger Stelle der Zeile, so wie im Schulbuch: <em>Haus; house [haʊs]</em>. Alternativ als drittes Feld: <em>Haus; house; haʊs</em>. Mit dem Knopf „Lautschrift-Tastatur“ unten tippst du die Zeichen und sie werden als [ … ] an die Cursor-Stelle eingefügt.</p>
+        <p class="hint">Alternativen gehen direkt mit einem Schrägstrich <strong>/</strong>: Das erste Wort ist die Hauptantwort, die weiteren sind Alternativen (auf beiden Seiten möglich). Ein <strong>*</strong> direkt hinter einer Alternative markiert sie als halben Fehler: Wer sie eintippt, bekommt nur einen halben Fehler („besser wäre …“). Beispiele: <em>Haus; house / home*</em> (bei „home“ gibt es nur einen halben Fehler) oder <em>Auto / Wagen; car / automobile</em></p>
+        <textarea id="bulkText" rows="4" placeholder="Haus; house / home*
+Auto / Wagen; car
+Wasser; water"></textarea>
+        <div class="bulk-actions">
+          <button class="btn-outline" id="bulkAddBtn" type="button">Einfügen</button>
+          <button class="btn-outline" id="bulkPhonBtn" type="button">Lautschrift-Tastatur</button>
+        </div>
+        <p class="hint" id="bulkMessage" aria-live="polite"></p>
       </details>
+
+      <div class="share-block">
+        <div class="share-actions">
+          <button class="btn-outline" id="shareListBtn" type="button">Liste teilen / speichern</button>
+          <button class="btn-outline" id="copyListBtn" type="button">Text kopieren</button>
+        </div>
+        <p class="hint" id="shareMessage" aria-live="polite"></p>
+        <p class="hint">Die Datei hat pro Zeile ein Wortpaar (<em>Haus; house / home*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Eine eingetragene Lautschrift wird mitgeteilt und steht in eckigen Klammern als drittes Feld hinter dem Wortpaar (<em>Haus; house; [haʊs]</em>). Lernstufen werden nicht mitgespeichert.</p>
+      </div>
     </section>
 
     <section class="direction-section">
@@ -565,6 +687,21 @@ Auto; car"></textarea>
       </div>
     </section>
 
+    <section class="time-section">
+      <label class="section-label" for="minutesInput">Lernzeit</label>
+      <div class="minutes-row">
+        <input type="text" id="minutesInput" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="10" aria-label="Lernzeit in Minuten">
+        <span class="minutes-unit">Minuten</span>
+        <span class="minutes-seconds" id="minutesSeconds" aria-live="polite"></span>
+      </div>
+      <p class="hint">Kommazahlen sind möglich (0,5 = 30 Sekunden). Es wird so lange abgefragt, Karten dürfen sich wiederholen. Jedes Wort kommt aber mindestens einmal in jeder gewählten Richtung dran (bei „Gemischt“ also in beide Richtungen) – auch wenn die Zeit dafür kurz überschritten wird.</p>
+    </section>
+
+    <section class="weak-section">
+      <label class="toggle-row"><input type="checkbox" id="weakOnlyCheck"><span>Nur schwache Wörter üben (Lernstufe 1–2)</span></label>
+      <p class="hint" id="weakInfo"></p>
+    </section>
+
     <button class="btn-primary" id="startQuizBtn" type="button">Karteikasten starten</button>
     <p class="status-line" id="statusLine" aria-live="polite"></p>
   </div>
@@ -572,7 +709,7 @@ Auto; car"></textarea>
   <div id="quiz-screen" class="screen hidden">
     <div class="quiz-header">
       <button class="btn-text" id="quitQuizBtn" type="button">← Abbrechen</button>
-      <span id="progressLabel">Frage 1 von 1</span>
+      <span id="progressLabel">Frage 1</span>
       <span id="scoreLabel">✓ 0</span>
     </div>
 
@@ -584,7 +721,14 @@ Auto; car"></textarea>
 
     <label class="answer-label" id="answerLangLabel" for="answerInput">Antwort</label>
     <input type="text" id="answerInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Antwort eingeben">
-    <div class="feedback hidden" id="feedback"></div>
+    <div class="hint-row">
+      <button class="btn-text hint-btn" id="hintBtn" type="button">Hinweis anzeigen (kostet ½ Punkt)</button>
+      <span class="hint-line" id="hintLine" aria-live="polite"></span>
+    </div>
+    <div class="feedback hidden" id="feedback"><div id="feedbackText"></div><div class="phon-line" id="phonLine"></div><div class="level-line" id="levelLine"></div></div>
+    <button class="btn-outline mark-correct-btn hidden" id="markCorrectBtn" type="button">Als Alternative speichern</button>
+    <button class="btn-outline mark-correct-btn hidden" id="fullCorrectBtn" type="button">Als komplett richtig markieren</button>
+    <button class="btn-outline mark-correct-btn subtle hidden" id="removeAltBtn" type="button">Alternative entfernen</button>
     <button class="btn-primary" id="actionBtn" type="button">Prüfen</button>
   </div>
 
@@ -606,6 +750,19 @@ Auto; car"></textarea>
     </div>
   </div>
 
+  <div class="lang-modal-overlay hidden" id="phonModalOverlay">
+    <div class="lang-modal phon-modal">
+      <h2 class="lang-modal-title">Lautschrift-Tastatur</h2>
+      <p class="hint" id="phonModalWord"></p>
+      <input type="text" id="phonSheetInput" inputmode="none" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Lautschrift">
+      <div class="phon-keys-wrap" id="phonKeys"></div>
+      <div class="phon-actions">
+        <button class="btn-outline" id="phonCancelBtn" type="button">Abbrechen</button>
+        <button class="btn-primary" id="phonDoneBtn" type="button">Fertig</button>
+      </div>
+    </div>
+  </div>
+
   <div class="lang-modal-overlay hidden" id="langModalOverlay">
     <div class="lang-modal">
       <h2 class="lang-modal-title" id="langModalTitle">Sprache wählen</h2>
@@ -623,6 +780,8 @@ Auto; car"></textarea>
 
   var STORAGE_KEY = 'karteikasten_lists_v2';
   var STORAGE_KEY_OLD = 'karteikasten_lists_v1';
+  var DEFAULT_MINUTES = 10;
+  var MAX_MINUTES = 999;
   var lists = [];
   var currentListId = null;
   var saveTimeout = null;
@@ -639,7 +798,6 @@ Auto; car"></textarea>
   ];
 
   var langModalTarget = null; // 'a' or 'b'
-  var openAltPanels = {}; // idx -> true, tracks which alt panels are expanded in the current render
 
   function generateId() {
     return 'l_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
@@ -656,12 +814,31 @@ Auto; car"></textarea>
 
   /* ---- vocab pair helpers (box = Leitner-Stufe 1..5, alts = weitere akzeptierte Antworten) ---- */
 
+  function cleanAltList(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(function (x) { return typeof x === 'string' && x.trim() !== ''; });
+  }
+
+  function gameField(altField) { return altField === 'aAlts' ? 'aGame' : 'bGame'; }
+  function halfField(altField) { return altField === 'aAlts' ? 'aHalf' : 'bHalf'; }
+
   function normalizeVocab(v) {
     if (!v.id) v.id = generateVocabId();
-    if (typeof v.box !== 'number' || v.box < 1) v.box = 1;
-    if (v.box > 5) v.box = 5;
+    var oldBox = (typeof v.box === 'number') ? v.box : 1;
+    if (typeof v.boxAB !== 'number') v.boxAB = oldBox;
+    if (typeof v.boxBA !== 'number') v.boxBA = oldBox;
+    v.boxAB = Math.max(1, Math.min(5, v.boxAB));
+    v.boxBA = Math.max(1, Math.min(5, v.boxBA));
+    delete v.box;
     if (!Array.isArray(v.aAlts)) v.aAlts = [];
     if (!Array.isArray(v.bAlts)) v.bAlts = [];
+    v.aAlts = cleanAltList(v.aAlts);
+    v.bAlts = cleanAltList(v.bAlts);
+    v.aGame = cleanAltList(v.aGame);
+    v.bGame = cleanAltList(v.bGame);
+    v.aHalf = cleanAltList(v.aHalf);
+    v.bHalf = cleanAltList(v.bHalf);
+    if (typeof v.phon !== 'string') v.phon = '';
     return v;
   }
 
@@ -673,7 +850,7 @@ Auto; car"></textarea>
   }
 
   function defaultList(name) {
-    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', vocab: [], direction: 'mixed' };
+    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false };
   }
 
   function loadAll() {
@@ -687,6 +864,10 @@ Auto; car"></textarea>
           lists.forEach(function (l) {
             if (!Array.isArray(l.vocab)) l.vocab = [];
             l.vocab.forEach(normalizeVocab);
+            if (typeof l.showPhon !== 'boolean') l.showPhon = l.vocab.some(function (v) { return v.phon; });
+            if (l.minutes !== null && (typeof l.minutes !== 'number' || isNaN(l.minutes) || l.minutes < 0)) {
+              l.minutes = DEFAULT_MINUTES;
+            }
           });
           var validId = false;
           for (var i = 0; i < lists.length; i++) { if (lists[i].id === parsed.currentListId) validId = true; }
@@ -752,6 +933,10 @@ Auto; car"></textarea>
     for (var i = 0; i < inputsA.length; i++) inputsA[i].placeholder = a;
     var inputsB = document.querySelectorAll('.vocab-input[data-field="b"]');
     for (var j = 0; j < inputsB.length; j++) inputsB[j].placeholder = b;
+    var altLangA = document.querySelectorAll('.alt-lang-a');
+    for (var k = 0; k < altLangA.length; k++) altLangA[k].textContent = a;
+    var altLangB = document.querySelectorAll('.alt-lang-b');
+    for (var m = 0; m < altLangB.length; m++) altLangB[m].textContent = b;
     document.getElementById('segAtoB').textContent = a + ' → ' + b;
     document.getElementById('segBtoA').textContent = b + ' → ' + a;
     updateHeaderSubtitle();
@@ -772,6 +957,50 @@ Auto; car"></textarea>
     status.textContent = validCount === 0
       ? 'Noch keine vollständigen Vokabelpaare.'
       : validCount + (validCount === 1 ? ' Vokabelpaar bereit.' : ' Vokabelpaare bereit.');
+    updateWeakInfo();
+  }
+
+  // Karten = Wort x Richtung. Schwach = Lernstufe 1–2 in dieser Richtung.
+  function countWeakCards(list) {
+    var dirs = list.direction === 'aToB' ? ['aToB'] : list.direction === 'bToA' ? ['bToA'] : ['aToB', 'bToA'];
+    var total = 0, weak = 0;
+    list.vocab.forEach(function (v) {
+      if (!(v.a.trim() && v.b.trim())) return;
+      dirs.forEach(function (d) {
+        total++;
+        var box = d === 'aToB' ? v.boxAB : v.boxBA;
+        if ((box || 1) <= 2) weak++;
+      });
+    });
+    return { weak: weak, total: total };
+  }
+
+  function updateWeakInfo() {
+    var c = countWeakCards(getCurrentList());
+    document.getElementById('weakInfo').textContent = c.total === 0
+      ? ''
+      : c.weak + ' von ' + c.total + (c.total === 1 ? ' Karte' : ' Karten') + ' in Lernstufe 1–2 (bei der gewählten Abfragerichtung).';
+  }
+
+  function altColumnHtml(pair, idx, field, langClass, langName) {
+    var alts = pair[field] || [];
+    var gameList = pair[gameField(field)] || [];
+    var halfList = pair[halfField(field)] || [];
+    var h = '<div class="alt-col"><span class="alt-col-label">Alternativen · <span class="' + langClass + '">' + escapeHtml(langName) + '</span></span>';
+    for (var k = 0; k < alts.length; k++) {
+      var isGame = alts[k] !== '' && gameList.indexOf(alts[k]) !== -1;
+      var isHalf = alts[k] !== '' && halfList.indexOf(alts[k]) !== -1;
+      h += '<div class="alt-wrap">' +
+        (isGame ? '<span class="game-tag" title="Beim Lernen über „Als Alternative speichern“ hinzugefügt">im Spiel hinzugefügt</span>' : '') +
+        '<div class="alt-item' + (isGame ? ' game' : '') + '">' +
+        '<input type="text" class="alt-input" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" value="' + escapeHtml(alts[k]) + '" placeholder="Alternative" autocomplete="off">' +
+        '<button class="btn-alt-half' + (isHalf ? ' on' : '') + '" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" type="button" aria-pressed="' + (isHalf ? 'true' : 'false') + '" title="Als halben Fehler markieren: Diese Antwort zählt dann nur als halber Fehler" aria-label="Alternative als halben Fehler markieren">½</button>' +
+        '<button class="btn-alt-remove" data-idx="' + idx + '" data-field="' + field + '" data-alt="' + k + '" type="button" aria-label="Alternative entfernen">✕</button>' +
+        '</div></div>';
+    }
+    h += '<button class="btn-alt-add" data-idx="' + idx + '" data-field="' + field + '" type="button">+ Alternative hinzufügen</button>';
+    h += '</div>';
+    return h;
   }
 
   function renderVocabList() {
@@ -780,33 +1009,52 @@ Auto; car"></textarea>
     var html = '';
     for (var i = 0; i < list.vocab.length; i++) {
       var pair = list.vocab[i];
-      var isOpen = !!openAltPanels[pair.id];
       html += '<div class="vocab-card">';
       html += '<div class="vocab-row">' +
         '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="a" value="' + escapeHtml(pair.a) + '" placeholder="' + escapeHtml(list.langA) + '">' +
         '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="b" value="' + escapeHtml(pair.b) + '" placeholder="' + escapeHtml(list.langB) + '">' +
-        '<button class="btn-alt-toggle' + (isOpen ? ' open' : '') + '" data-idx="' + i + '" type="button" title="Weitere Antworten" aria-label="Weitere Antworten">≈<span class="box-badge">' + pair.box + '</span></button>' +
+        '<span class="box-badges"><span class="box-badge" title="Lernstufe Sprache 1 → Sprache 2">→ ' + pair.boxAB + '</span>' +
+        '<span class="box-badge" title="Lernstufe Sprache 2 → Sprache 1">← ' + pair.boxBA + '</span></span>' +
         '<button class="btn-delete" data-idx="' + i + '" type="button" aria-label="Zeile löschen">✕</button>' +
         '</div>';
-      html += '<div class="alt-panel' + (isOpen ? '' : ' hidden') + '" data-idx="' + i + '">' +
-        '<div class="alt-field"><label>Weitere ' + escapeHtml(list.langA) + '-Antworten</label>' +
-        '<input type="text" class="alt-input" data-idx="' + i + '" data-field="aAlts" value="' + escapeHtml((pair.aAlts || []).join(', ')) + '" placeholder="Komma-getrennt"></div>' +
-        '<div class="alt-field"><label>Weitere ' + escapeHtml(list.langB) + '-Antworten</label>' +
-        '<input type="text" class="alt-input" data-idx="' + i + '" data-field="bAlts" value="' + escapeHtml((pair.bAlts || []).join(', ')) + '" placeholder="Komma-getrennt"></div>' +
-        '<p class="alt-hint">Alle diese Varianten gelten beim Abfragen als richtig.</p>' +
+      if (list.showPhon) {
+        html += '<div class="phon-row"><span class="phon-label">Lautschrift</span>' +
+          '<input type="text" class="phon-input" data-idx="' + i + '" readonly inputmode="none" value="' + escapeHtml(pair.phon || '') + '" placeholder="antippen zum Eingeben"></div>';
+      }
+      html += '<div class="alt-panel">' +
+        altColumnHtml(pair, i, 'aAlts', 'alt-lang-a', list.langA) +
+        altColumnHtml(pair, i, 'bAlts', 'alt-lang-b', list.langB) +
         '</div>';
       html += '</div>';
     }
     container.innerHTML = html;
+    document.getElementById('showPhonCheck').checked = !!list.showPhon;
     updateLangHeadersAndPlaceholders();
     updateStartButtonState();
+  }
+
+  function updateMinutesSeconds() {
+    var el = document.getElementById('minutesSeconds');
+    var n = getCurrentList().minutes;
+    if (typeof n !== 'number' || isNaN(n) || n <= 0 || Math.abs(n - Math.round(n)) < 1e-9) {
+      el.textContent = '';
+      return;
+    }
+    var totalSec = Math.round(n * 600) / 10;
+    var txt = '= ' + String(totalSec).replace('.', ',') + ' Sek.';
+    if (totalSec >= 60 && totalSec === Math.floor(totalSec)) {
+      txt += ' (' + Math.floor(totalSec / 60) + ' Min. ' + (totalSec % 60) + ' Sek.)';
+    }
+    el.textContent = txt;
   }
 
   function renderCurrentListIntoForm() {
     var list = getCurrentList();
     document.getElementById('listNameInput').value = list.name;
+    document.getElementById('weakOnlyCheck').checked = !!list.weakOnly;
+    document.getElementById('minutesInput').value = (list.minutes === null || list.minutes === undefined) ? '' : String(list.minutes).replace('.', ',');
+    updateMinutesSeconds();
     updateLangPickerLabels();
-    openAltPanels = {};
     renderVocabList();
     setActiveSegment(list.direction);
   }
@@ -819,30 +1067,296 @@ Auto; car"></textarea>
     if (inputsA.length) inputsA[inputsA.length - 1].focus();
   }
 
+  // "Auto / Wagen" -> Hauptwort "Auto", Alternativen ["Wagen"]
+  function splitAlternatives(text) {
+    var pieces = String(text || '').split('/').map(function (x) { return x.trim(); }).filter(Boolean);
+    var isHalf = pieces.map(function (x) { return /\*$/.test(x); });
+    pieces = pieces.map(function (x) { return x.replace(/\s*\*+$/, '').trim(); });
+    var main = pieces.length ? pieces[0] : '';
+    var alts = [];
+    var half = [];
+    var seen = {};
+    seen[main.toLowerCase()] = true;
+    for (var i = 1; i < pieces.length; i++) {
+      if (!pieces[i]) continue;
+      var key = pieces[i].toLowerCase();
+      if (!seen[key]) {
+        seen[key] = true;
+        alts.push(pieces[i]);
+        if (isHalf[i]) half.push(pieces[i]);
+      }
+    }
+    return { main: main, alts: alts, half: half };
+  }
+
+  // ---- Lautschrift ----
+  var phonEditIdx = null;
+  var PHON_SECTIONS = [
+    { title: 'Vokale', keys: ['ə', 'ɜ', 'ɪ', 'ʊ', 'ɛ', 'æ', 'ɑ', 'ɒ', 'ɔ', 'ʌ', 'ɐ', 'ɚ', 'ø', 'œ', 'ʏ', 'ɑ\u0303', 'ɔ\u0303', 'ɛ\u0303', 'œ\u0303'] },
+    { title: 'Konsonanten', keys: ['θ', 'ð', 'ʃ', 'ʒ', 'ŋ', 'ɹ', 'ɡ', 'ʔ', 'ç', 'ʁ', 'ɲ', 'ʎ', 'ɫ', 'tʃ', 'dʒ', 'ts', 'pf'] },
+    { title: 'Zeichen', keys: ['ˈ', 'ˌ', 'ː', ':', "'", '.', '(', ')', '[', ']', '/', '-', 'ʰ', '\u0303'] },
+    { title: 'Buchstaben', keys: 'abcdefghijklmnopqrstuvwxyz'.split('') }
+  ];
+
+  function buildPhonKeys() {
+    var html = '';
+    PHON_SECTIONS.forEach(function (sec) {
+      html += '<div class="phon-section-title">' + sec.title + '</div><div class="phon-keys">';
+      sec.keys.forEach(function (k) {
+        var label = /^[\u0300-\u036f]$/.test(k) ? '◌' + k : k;
+        html += '<button class="phon-key" type="button" data-ins="' + escapeHtml(k) + '">' + escapeHtml(label) + '</button>';
+      });
+      html += '</div>';
+    });
+    html += '<div class="phon-section-title">Bearbeiten</div><div class="phon-keys">' +
+      '<button class="phon-key wide" type="button" data-act="space">Leerzeichen</button>' +
+      '<button class="phon-key wide" type="button" data-act="back">⌫ Löschen</button>' +
+      '<button class="phon-key wide" type="button" data-act="clear">Alles leeren</button>' +
+      '</div>';
+    document.getElementById('phonKeys').innerHTML = html;
+  }
+
+  function phonDisplay(phon) {
+    var t = String(phon || '').trim();
+    if (!t) return '';
+    if (!/^[\[\/]/.test(t)) t = '[' + t + ']';
+    return 'Lautschrift: ' + t;
+  }
+
+  function phonInsert(text) {
+    var input = document.getElementById('phonSheetInput');
+    var start = input.selectionStart;
+    var end = input.selectionEnd;
+    if (typeof start !== 'number') { start = input.value.length; end = start; }
+    input.value = input.value.slice(0, start) + text + input.value.slice(end);
+    var pos = start + text.length;
+    input.setSelectionRange(pos, pos);
+    input.focus();
+  }
+
+  function phonBackspace() {
+    var input = document.getElementById('phonSheetInput');
+    var start = input.selectionStart;
+    var end = input.selectionEnd;
+    if (typeof start !== 'number') { start = input.value.length; end = start; }
+    if (start !== end) {
+      input.value = input.value.slice(0, start) + input.value.slice(end);
+      input.setSelectionRange(start, start);
+    } else if (start > 0) {
+      input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+      input.setSelectionRange(start - 1, start - 1);
+    }
+    input.focus();
+  }
+
+  function openPhonModal(idx) {
+    var pair = getCurrentList().vocab[idx];
+    if (!pair) return;
+    phonEditIdx = idx;
+    document.getElementById('phonModalWord').textContent = (pair.a || '…') + '  ↔  ' + (pair.b || '…');
+    var input = document.getElementById('phonSheetInput');
+    input.value = pair.phon || '';
+    document.getElementById('phonModalOverlay').classList.remove('hidden');
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+
+  // Tastatur für das Mehrfach-Textfeld: Ergebnis wird als [ … ] an der Cursor-Stelle eingefügt
+  function openPhonModalBulk() {
+    phonEditIdx = 'bulk';
+    document.getElementById('phonModalWord').textContent = 'Wird als [ … ] an der Cursor-Stelle in das Textfeld eingefügt.';
+    var input = document.getElementById('phonSheetInput');
+    input.value = '';
+    document.getElementById('phonModalOverlay').classList.remove('hidden');
+    input.focus();
+  }
+
+  function insertIntoBulk(text) {
+    var ta = document.getElementById('bulkText');
+    var start = ta.selectionStart;
+    var end = ta.selectionEnd;
+    if (typeof start !== 'number') { start = ta.value.length; end = start; }
+    var before = ta.value.slice(0, start);
+    var after = ta.value.slice(end);
+    var insert = (before && !/\s$/.test(before) ? ' ' : '') + text;
+    ta.value = before + insert + after;
+    var pos = before.length + insert.length;
+    ta.setSelectionRange(pos, pos);
+  }
+
+  function closePhonModal() {
+    document.getElementById('phonModalOverlay').classList.add('hidden');
+    phonEditIdx = null;
+  }
+
+  function savePhonModal() {
+    if (phonEditIdx === 'bulk') {
+      var val = document.getElementById('phonSheetInput').value.trim();
+      if (val) insertIntoBulk('[' + val + ']');
+      closePhonModal();
+      return;
+    }
+    if (phonEditIdx !== null) {
+      var pair = getCurrentList().vocab[phonEditIdx];
+      if (pair) pair.phon = document.getElementById('phonSheetInput').value.trim();
+      saveAll();
+    }
+    closePhonModal();
+    renderVocabList();
+  }
+
+  // ---- Liste teilen / speichern (Format = Mehrfach-Import) ----
+  function exportClean(t) {
+    return String(t || '').replace(/[;\/\t\r\n]+/g, ' ').replace(/\s+/g, ' ').replace(/\s*\*+$/, '').trim();
+  }
+
+  function inListNorm(arr, x) {
+    var n = String(x).trim().toLowerCase();
+    return (arr || []).some(function (y) { return String(y).trim().toLowerCase() === n; });
+  }
+
+  function exportSide(main, alts, half) {
+    var parts = [exportClean(main)];
+    var seen = {};
+    seen[parts[0].toLowerCase()] = true;
+    (alts || []).forEach(function (alt) {
+      var c = exportClean(alt);
+      if (!c || seen[c.toLowerCase()]) return;
+      seen[c.toLowerCase()] = true;
+      parts.push(c + (inListNorm(half, alt) ? '*' : ''));
+    });
+    return parts.join(' / ');
+  }
+
+  function buildExportText(list) {
+    var lines = [];
+    list.vocab.forEach(function (v) {
+      if (!exportClean(v.a) || !exportClean(v.b)) return;
+      var phonExport = String(v.phon || '').replace(/[;\t\r\n]+/g, ' ').trim();
+      if (phonExport && !/^\[.*\]$/.test(phonExport)) phonExport = '[' + phonExport + ']';
+      lines.push(exportSide(v.a, v.aAlts, v.aHalf) + '; ' + exportSide(v.b, v.bAlts, v.bHalf) + (phonExport ? '; ' + phonExport : ''));
+    });
+    return lines.join('\n');
+  }
+
+  function safeFileName(name) {
+    var n = String(name || 'Vokabeln').replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return (n || 'Vokabeln') + '.txt';
+  }
+
+  function showShareMessage(msg) {
+    document.getElementById('shareMessage').textContent = msg;
+  }
+
+  function downloadTextFile(text, fileName) {
+    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function shareList() {
+    var list = getCurrentList();
+    var text = buildExportText(list);
+    if (!text) { showShareMessage('Die Liste hat noch keine vollständigen Vokabelpaare.'); return; }
+    var fileName = safeFileName(list.name);
+    var file = null;
+    try { file = new File([text], fileName, { type: 'text/plain' }); } catch (e) { file = null; }
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: list.name }).then(function () {
+        showShareMessage('Liste geteilt.');
+      }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        downloadTextFile(text, fileName);
+        showShareMessage('Datei „' + fileName + '“ gespeichert.');
+      });
+    } else {
+      downloadTextFile(text, fileName);
+      showShareMessage('Datei „' + fileName + '“ gespeichert.');
+    }
+  }
+
+  function copyListText() {
+    var text = buildExportText(getCurrentList());
+    if (!text) { showShareMessage('Die Liste hat noch keine vollständigen Vokabelpaare.'); return; }
+    var okMsg = 'Text kopiert. Du kannst ihn bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen.';
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      showShareMessage(ok ? okMsg : 'Kopieren nicht möglich – nutze bitte „Liste teilen / speichern“.');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { showShareMessage(okMsg); }).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  function showBulkMessage(msg) {
+    showSetupMessage(msg);
+    document.getElementById('bulkMessage').textContent = msg;
+  }
+
   function parseBulk() {
     var list = getCurrentList();
     var text = document.getElementById('bulkText').value;
     var lines = text.split('\n');
     var added = 0;
+    var altCount = 0;
+    var halfCount = 0;
+    var phonCount = 0;
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
+      // Lautschrift in eckigen Klammern (überall in der Zeile) herausnehmen
+      var bracketPhon = '';
+      line = line.replace(/\[([^\]]*)\]/g, function (m, inner) {
+        if (!bracketPhon && inner.trim()) bracketPhon = inner.trim();
+        return ' ';
+      }).replace(/ {2,}/g, ' ').trim();
+      if (!line) continue;
       var parts = null;
+      var commaSep = false;
       if (line.indexOf('\t') !== -1) parts = line.split('\t');
       else if (line.indexOf(';') !== -1) parts = line.split(';');
-      else if (line.indexOf(',') !== -1) parts = line.split(',');
+      else if (line.indexOf(',') !== -1) { parts = line.split(','); commaSep = true; }
       if (!parts) continue;
-      var a = (parts[0] || '').trim();
-      var b = (parts[1] || '').trim();
-      if (a && b) {
-        list.vocab.push(normalizeVocab({ a: a, b: b }));
+      var sideA = splitAlternatives(parts[0]);
+      var sideB = splitAlternatives(parts[1]);
+      if (sideA.main && sideB.main) {
+        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, phon: bracketPhon || (commaSep ? '' : String(parts[2] || '').trim()) });
+        list.vocab.push(newPair);
+        if (newPair.phon) { list.showPhon = true; phonCount++; }
         added++;
+        altCount += sideA.alts.length + sideB.alts.length;
+        halfCount += sideA.half.length + sideB.half.length;
       }
     }
     document.getElementById('bulkText').value = '';
     renderVocabList();
     saveAll();
-    showSetupMessage(added > 0 ? added + ' Vokabelpaar(e) hinzugefügt.' : 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2');
+    var bulkMsg;
+    if (added > 0) {
+      var extras = [];
+      if (altCount > 0) extras.push(altCount + (altCount === 1 ? ' Alternative' : ' Alternativen') + (halfCount > 0 ? ' (davon ' + halfCount + ' als halber Fehler)' : ''));
+      if (phonCount > 0) extras.push(phonCount + ' mit Lautschrift');
+      bulkMsg = added + ' Vokabelpaar(e) hinzugefügt' + (extras.length ? ' – ' + extras.join(', ') : '') + '.';
+    } else {
+      bulkMsg = 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2';
+    }
+    showBulkMessage(bulkMsg);
   }
 
   function setActiveSegment(dir) {
@@ -850,14 +1364,6 @@ Auto; car"></textarea>
     for (var i = 0; i < buttons.length; i++) {
       buttons[i].classList.toggle('active', buttons[i].dataset.value === dir);
     }
-  }
-
-  function shuffle(arr) {
-    for (var i = arr.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-    }
-    return arr;
   }
 
   /* ---- Levenshtein distance for typo tolerance ---- */
@@ -884,46 +1390,140 @@ Auto; car"></textarea>
     return prev[bl];
   }
 
-  /* ---- Leitner-style spaced repetition: weighted queue, lower box = higher chance ---- */
+  /* ---- Leitner-style spaced repetition: weighted pick, lower box = higher chance ---- */
   var BOX_WEIGHT = { 1: 10, 2: 6, 3: 3, 4: 2, 5: 1 };
 
-  function weightedShuffleQueue(vocabList) {
-    var pool = vocabList.slice();
-    var result = [];
-    while (pool.length > 0) {
-      var total = 0;
-      for (var i = 0; i < pool.length; i++) total += BOX_WEIGHT[pool[i].box || 1] || 1;
-      var r = Math.random() * total;
-      var acc = 0, pick = pool.length - 1;
-      for (i = 0; i < pool.length; i++) {
-        acc += BOX_WEIGHT[pool[i].box || 1] || 1;
-        if (r <= acc) { pick = i; break; }
-      }
-      result.push(pool[pick]);
-      pool.splice(pick, 1);
-    }
-    return result;
-  }
-
-  var quizQueue = [], quizIndex = 0, quizScore = 0, quizMissed = [], answered = false;
+  /* ---- Quiz state ----
+     quizPool: every (word, direction) combination that is part of this session.
+     quizDone: which combinations have been asked at least once.
+     The quiz ends when the time is up AND every combination has been asked once. */
+  var quizPool = [], quizDone = {}, quizAsked = 0, quizScore = 0;
+  var quizMissed = [], quizMissedKeys = {}; // Werte: 'half' | 'full'
+  var answered = false, currentItem = null, lastVocabId = null, lastResult = null, hintUsed = false;
+  var quizEndTime = null, quizMinutes = 0, quizTimer = null, quizWeakOnly = false;
   var quizSourceVocab = [], quizLangA = '', quizLangB = '', quizDirection = 'mixed', quizListRef = null;
 
-  function buildQueue(vocabList) {
-    var ordered = weightedShuffleQueue(vocabList);
-    return ordered.map(function (item) {
-      var dir = quizDirection;
-      if (dir === 'mixed') dir = Math.random() < 0.5 ? 'aToB' : 'bToA';
-      return { vocabId: item.id, a: item.a, b: item.b, aAlts: item.aAlts || [], bAlts: item.bAlts || [], dir: dir };
-    });
+  function formatScore(n) {
+    var whole = Math.floor(n + 1e-9);
+    var isHalf = Math.abs(n - whole - 0.5) < 1e-9;
+    if (isHalf) return whole > 0 ? whole + '½' : '½';
+    return String(whole);
   }
 
-  function beginQuizWith(vocabList) {
-    quizQueue = buildQueue(vocabList);
-    quizIndex = 0;
+  function stripAccents(text) {
+    return text.normalize ? text.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : text;
+  }
+
+  function simplifyAnswer(text) {
+    return stripAccents(text).replace(/'/g, '');
+  }
+
+  function levelText(before, after) {
+    if (after === before) return 'Lernstufe bleibt: ' + after + ' von 5';
+    return 'Neue Lernstufe: ' + after + ' von 5 (vorher ' + before + ')';
+  }
+
+  function findVocab(vocabId) {
+    if (!quizListRef) return null;
+    for (var i = 0; i < quizListRef.vocab.length; i++) {
+      if (quizListRef.vocab[i].id === vocabId) return quizListRef.vocab[i];
+    }
+    return null;
+  }
+
+  function buildPool(vocabList, requiredKeys, weakOnly) {
+    var pool = [];
+    vocabList.forEach(function (v) {
+      var dirs = quizDirection === 'mixed' ? ['aToB', 'bToA'] : [quizDirection];
+      dirs.forEach(function (d) {
+        var key = v.id + '|' + d;
+        if (requiredKeys && !requiredKeys[key]) return;
+        if (weakOnly && getVocabBox(v.id, d) > 2) return;
+        pool.push({ key: key, vocabId: v.id, a: v.a, b: v.b, aAlts: v.aAlts || [], bAlts: v.bAlts || [], aHalf: v.aHalf || [], bHalf: v.bHalf || [], dir: d });
+      });
+    });
+    return pool;
+  }
+
+  function weightedPick(cards) {
+    var total = 0, i;
+    for (i = 0; i < cards.length; i++) total += BOX_WEIGHT[getVocabBox(cards[i].vocabId, cards[i].dir)] || 1;
+    var r = Math.random() * total;
+    var acc = 0;
+    for (i = 0; i < cards.length; i++) {
+      acc += BOX_WEIGHT[getVocabBox(cards[i].vocabId, cards[i].dir)] || 1;
+      if (r <= acc) return cards[i];
+    }
+    return cards[cards.length - 1];
+  }
+
+  function isTimeUp() {
+    return quizEndTime === null || Date.now() >= quizEndTime;
+  }
+
+  function pendingCards() {
+    return quizPool.filter(function (c) { return !quizDone[c.key]; });
+  }
+
+  function pickNext() {
+    var pending = pendingCards();
+    if (pending.length === 0 && isTimeUp()) return null;
+    // Required combinations first; once all were asked, keep going with the whole pool until time is up.
+    var candidates = pending.length > 0 ? pending : quizPool;
+    var others = candidates.filter(function (c) { return c.vocabId !== lastVocabId; });
+    if (others.length > 0) candidates = others;
+    return weightedPick(candidates);
+  }
+
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function updateProgressLabel() {
+    var parts = [];
+    var timeUp = isTimeUp();
+    if (quizEndTime !== null) {
+      if (!timeUp) {
+        var s = Math.ceil((quizEndTime - Date.now()) / 1000);
+        parts.push('⏱ ' + Math.floor(s / 60) + ':' + pad2(s % 60));
+      } else {
+        parts.push('Zeit um');
+      }
+    }
+    var n = answered ? quizAsked : quizAsked + 1;
+    parts.push('Frage ' + n);
+    if (timeUp) parts.push('noch ' + pendingCards().length + ' offen');
+    document.getElementById('progressLabel').textContent = parts.join(' · ');
+  }
+
+  function stopTimer() {
+    if (quizTimer) { clearInterval(quizTimer); quizTimer = null; }
+  }
+
+  function startTimer() {
+    stopTimer();
+    quizTimer = setInterval(updateProgressLabel, 500);
+  }
+
+  function beginQuizWith(vocabList, opts) {
+    opts = opts || {};
+    quizWeakOnly = !!opts.weakOnly;
+    quizPool = buildPool(vocabList, opts.requiredKeys || null, quizWeakOnly);
+    if (quizPool.length === 0 && quizWeakOnly) {
+      quizWeakOnly = false;
+      quizPool = buildPool(vocabList, opts.requiredKeys || null, false);
+    }
+    if (quizPool.length === 0) { showScreen('setup'); renderVocabList(); return; }
+    quizDone = {};
+    quizAsked = 0;
     quizScore = 0;
     quizMissed = [];
+    quizMissedKeys = {};
+    lastVocabId = null;
+    lastResult = null;
+    quizMinutes = opts.minutes || 0;
+    quizEndTime = quizMinutes > 0 ? Date.now() + quizMinutes * 60000 : null;
     showScreen('quiz');
-    renderQuestion();
+    startTimer();
+    advance();
   }
 
   function startQuiz() {
@@ -933,23 +1533,51 @@ Auto; car"></textarea>
       showSetupMessage('Bitte füge mindestens ein Vokabelpaar hinzu.');
       return;
     }
+    var minutes = list.minutes;
+    if (typeof minutes !== 'number' || isNaN(minutes) || minutes <= 0) {
+      showSetupMessage('Bitte gib die Lernzeit in Minuten ein (z. B. 10 oder 0,5).');
+      document.getElementById('minutesInput').focus();
+      return;
+    }
+    showSetupMessage('');
+    list.vocab.forEach(function (v) {
+      v.aAlts = cleanAltList(v.aAlts);
+      v.bAlts = cleanAltList(v.bAlts);
+    });
+    saveAll();
     quizListRef = list;
     quizSourceVocab = validVocab;
     quizLangA = list.langA;
     quizLangB = list.langB;
     quizDirection = list.direction;
-    beginQuizWith(quizSourceVocab);
+    var weakOnly = !!list.weakOnly;
+    if (weakOnly && countWeakCards(list).weak === 0) {
+      document.getElementById('statusLine').textContent = 'Keine schwachen Wörter: Alle Karten sind schon in Lernstufe 3 oder höher. Schalte „Nur schwache Wörter“ aus, um alles zu üben.';
+      return;
+    }
+    beginQuizWith(quizSourceVocab, { minutes: minutes, weakOnly: weakOnly });
+  }
+
+  function advance() {
+    var next = pickNext();
+    if (!next) { showResults(); return; }
+    currentItem = next;
+    renderQuestion();
   }
 
   function renderQuestion() {
-    var item = quizQueue[quizIndex];
+    var item = currentItem;
     answered = false;
+    lastResult = null;
+    hintUsed = false;
+    document.getElementById('hintLine').textContent = '';
+    document.getElementById('hintBtn').classList.remove('hidden');
     var promptWord = item.dir === 'aToB' ? item.a : item.b;
     var promptLang = item.dir === 'aToB' ? quizLangA : quizLangB;
     var answerLang = item.dir === 'aToB' ? quizLangB : quizLangA;
 
     document.getElementById('directionTag').textContent = promptLang + ' → ' + answerLang;
-    document.getElementById('cardBoxBadge').textContent = getVocabBox(item.vocabId);
+    document.getElementById('cardBoxBadge').textContent = getVocabBox(item.vocabId, item.dir);
     document.getElementById('promptWord').textContent = promptWord;
     document.getElementById('answerLangLabel').textContent = 'Antwort auf ' + answerLang;
 
@@ -957,16 +1585,17 @@ Auto; car"></textarea>
     input.value = '';
     input.readOnly = false;
 
-    var feedback = document.getElementById('feedback');
-    feedback.className = 'feedback hidden';
-    feedback.textContent = '';
+    document.getElementById('feedback').className = 'feedback hidden';
+    document.getElementById('feedbackText').textContent = '';
+    document.getElementById('phonLine').textContent = '';
+    document.getElementById('levelLine').textContent = '';
+    hideActionButtons();
 
     document.getElementById('actionBtn').textContent = 'Prüfen';
-    document.getElementById('progressLabel').textContent = 'Frage ' + (quizIndex + 1) + ' von ' + quizQueue.length;
-    document.getElementById('scoreLabel').textContent = '✓ ' + quizScore;
+    document.getElementById('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
+    updateProgressLabel();
 
-    var card = document.getElementById('flashcard');
-    card.classList.remove('correct', 'almost', 'incorrect');
+    document.getElementById('flashcard').classList.remove('correct', 'almost', 'incorrect', 'half');
 
     input.focus();
   }
@@ -980,93 +1609,328 @@ Auto; car"></textarea>
       .replace(/\s+/g, ' ');
   }
 
-  function updateVocabBox(vocabId, delta) {
-    if (!quizListRef) return;
-    for (var i = 0; i < quizListRef.vocab.length; i++) {
-      if (quizListRef.vocab[i].id === vocabId) {
-        var box = quizListRef.vocab[i].box || 1;
-        box = delta > 0 ? Math.min(5, box + 1) : 1;
-        quizListRef.vocab[i].box = box;
-        saveAll();
-        return;
-      }
+  function boxField(dir) { return dir === 'aToB' ? 'boxAB' : 'boxBA'; }
+
+  function getVocabBox(vocabId, dir) {
+    var v = findVocab(vocabId);
+    return v ? (v[boxField(dir)] || 1) : 1;
+  }
+
+  function setVocabBox(vocabId, dir, box) {
+    var v = findVocab(vocabId);
+    if (!v) return;
+    v[boxField(dir)] = Math.max(1, Math.min(5, box));
+    saveAll();
+  }
+
+  function updateVocabBox(vocabId, dir, delta) {
+    var box = getVocabBox(vocabId, dir);
+    setVocabBox(vocabId, dir, delta > 0 ? box + 1 : 1);
+  }
+
+  function markMissed(item, level) {
+    var prev = quizMissedKeys[item.key];
+    if (!prev) {
+      quizMissed.push(item);
+      quizMissedKeys[item.key] = level;
+    } else if (level === 'full') {
+      quizMissedKeys[item.key] = 'full';
     }
   }
 
-  function getVocabBox(vocabId) {
-    if (!quizListRef) return 1;
-    for (var i = 0; i < quizListRef.vocab.length; i++) {
-      if (quizListRef.vocab[i].id === vocabId) return quizListRef.vocab[i].box || 1;
-    }
-    return 1;
+  function showFeedback(cls, text, levelLineText) {
+    var feedback = document.getElementById('feedback');
+    feedback.className = 'feedback ' + cls;
+    document.getElementById('feedbackText').textContent = text;
+    document.getElementById('levelLine').textContent = levelLineText;
+  }
+
+  // Hinweis: erster Buchstabe jedes Wortes + Länge, Rest als Striche
+  function buildHint(word) {
+    var out = [];
+    var letters = 0;
+    var atWordStart = true;
+    Array.from(String(word)).forEach(function (ch) {
+      if (/\s/.test(ch)) { out.push(' '); atWordStart = true; }
+      else if (/[\p{L}\p{N}]/u.test(ch)) { letters++; out.push(atWordStart ? ch : '_'); atWordStart = false; }
+      else { out.push(ch); }
+    });
+    return out.join(' ') + '   (' + letters + (letters === 1 ? ' Buchstabe' : ' Buchstaben') + ')';
+  }
+
+  function showHint() {
+    if (answered || hintUsed || !currentItem) return;
+    hintUsed = true;
+    var word = currentItem.dir === 'aToB' ? currentItem.b : currentItem.a;
+    document.getElementById('hintLine').textContent = buildHint(word);
+    document.getElementById('hintBtn').classList.add('hidden');
+    document.getElementById('answerInput').focus();
   }
 
   function checkAnswer() {
-    var item = quizQueue[quizIndex];
+    var item = currentItem;
     var correctRaw = item.dir === 'aToB' ? item.b : item.a;
     var altsRaw = item.dir === 'aToB' ? item.bAlts : item.aAlts;
-    var acceptableRaw = [correctRaw].concat(altsRaw || []).filter(Boolean);
+    var acceptableRaw = [correctRaw].concat(altsRaw || []).filter(function (s) { return s && String(s).trim(); });
     var acceptable = acceptableRaw.map(normalizeAnswer);
-    var userAnswer = normalizeAnswer(document.getElementById('answerInput').value);
-
-    var feedback = document.getElementById('feedback');
+    var typedRaw = document.getElementById('answerInput').value.trim();
+    var userAnswer = normalizeAnswer(typedRaw);
     var card = document.getElementById('flashcard');
 
-    var isExact = userAnswer !== '' && acceptable.indexOf(userAnswer) !== -1;
+    // Welche Alternativen zählen nur als halber Fehler?
+    var halfNorm = ((item.dir === 'aToB' ? item.bHalf : item.aHalf) || []).map(normalizeAnswer);
+    var acceptableHalf = acceptable.map(function (x, idx) {
+      return idx > 0 && x !== acceptable[0] && halfNorm.indexOf(x) !== -1;
+    });
+
+    var isExact = false;
+    var isHalfAlt = false;
+    var isAccent = false;
+    var accentReason = 'Akzent';
     var isTypo = false;
     var matchedRaw = correctRaw;
-    if (!isExact && userAnswer.length > 2) {
-      var bestDist = null;
-      for (var i = 0; i < acceptable.length; i++) {
-        if (acceptable[i].length > 2) {
-          var d = levenshtein(userAnswer, acceptable[i]);
-          if (d === 1 && (bestDist === null || d < bestDist)) {
-            bestDist = d;
-            matchedRaw = acceptableRaw[i];
-            isTypo = true;
-          }
+    var matchedAltIdx = -1; // Index (in acceptable) der getroffenen Alternative, -1 = Hauptwort/keine
+    var i;
+
+    if (userAnswer !== '') {
+      var halfExact = false;
+      var halfExactIdx = -1;
+      for (i = 0; i < acceptable.length; i++) {
+        if (acceptable[i] === userAnswer) {
+          if (!acceptableHalf[i]) { isExact = true; if (i > 0) matchedAltIdx = i; break; }
+          if (!halfExact) halfExactIdx = i;
+          halfExact = true;
         }
       }
+      if (!isExact && halfExact) { isHalfAlt = true; matchedAltIdx = halfExactIdx; }
     }
 
-    if (isExact || isTypo) {
-      quizScore++;
-      if (isTypo) {
-        feedback.textContent = 'Fast richtig! Kleiner Tippfehler — richtig wäre: ' + matchedRaw;
-        feedback.className = 'feedback almost';
-        card.classList.add('almost');
-      } else {
-        feedback.textContent = 'Richtig.';
-        feedback.className = 'feedback correct';
-        card.classList.add('correct');
+    // Nur Akzente/Umlaute/Apostrophe falsch -> halber Fehler
+    if (!isExact && !isHalfAlt && userAnswer !== '') {
+      var simplUser = simplifyAnswer(userAnswer);
+      var halfAccentMatch = false;
+      var halfAccentIdx = -1;
+      for (i = 0; i < acceptable.length; i++) {
+        if (simplifyAnswer(acceptable[i]) === simplUser) {
+          if (acceptableHalf[i]) { if (!halfAccentMatch) halfAccentIdx = i; halfAccentMatch = true; continue; }
+          isAccent = true;
+          matchedRaw = acceptableRaw[i];
+          if (stripAccents(acceptable[i]) === stripAccents(userAnswer)) accentReason = 'Akzent';
+          else if (acceptable[i].replace(/'/g, '') === userAnswer.replace(/'/g, '')) accentReason = 'Apostroph';
+          else accentReason = 'Akzent/Apostroph';
+          break;
+        }
       }
-      updateVocabBox(item.vocabId, +1);
-    } else {
-      feedback.textContent = 'Richtig wäre: ' + correctRaw;
-      feedback.className = 'feedback incorrect';
-      card.classList.add('incorrect');
-      quizMissed.push(item);
-      updateVocabBox(item.vocabId, -1);
+      if (!isAccent && halfAccentMatch) { isHalfAlt = true; matchedAltIdx = halfAccentIdx; }
     }
+
+    // Kleiner Tippfehler (1 Zeichen) -> zählt als richtig (bei Halbfehler-Alternativen nur als halber Fehler)
+    if (!isExact && !isHalfAlt && !isAccent && userAnswer.length > 2) {
+      var halfTypoMatch = false;
+      var halfTypoIdx = -1;
+      for (i = 0; i < acceptable.length; i++) {
+        if (acceptable[i].length > 2 && levenshtein(userAnswer, acceptable[i]) === 1) {
+          if (acceptableHalf[i]) { if (!halfTypoMatch) halfTypoIdx = i; halfTypoMatch = true; }
+          else if (!isTypo) { isTypo = true; matchedRaw = acceptableRaw[i]; }
+        }
+      }
+      if (!isTypo && halfTypoMatch) { isHalfAlt = true; matchedAltIdx = halfTypoIdx; }
+    }
+
+    var boxBefore = getVocabBox(item.vocabId, item.dir);
+    var prevMissed = quizMissedKeys[item.key];
+    var credit, cls, text;
+
+    quizAsked++;
+    quizDone[item.key] = true;
+    lastVocabId = item.vocabId;
+
+    if (isExact || isTypo) {
+      if (hintUsed) {
+        credit = 0.5;
+        cls = 'half';
+        text = 'Richtig, aber mit Hinweis — nur ein halber Punkt.' + (isTypo ? ' (Tippfehler, richtig: ' + matchedRaw + ')' : '');
+        markMissed(item, 'hint');
+        // Lernstufe bleibt unverändert
+      } else {
+        credit = 1;
+        if (isTypo) {
+          cls = 'almost';
+          text = 'Fast richtig! Kleiner Tippfehler — richtig wäre: ' + matchedRaw;
+        } else {
+          cls = 'correct';
+          text = 'Richtig.';
+        }
+        updateVocabBox(item.vocabId, item.dir, +1);
+      }
+    } else if (isHalfAlt) {
+      credit = 0.5;
+      cls = 'half';
+      text = 'Halber Fehler, besser wäre: ' + correctRaw;
+      markMissed(item, 'half');
+      // Lernstufe bleibt unverändert
+    } else if (isAccent) {
+      credit = 0.5;
+      cls = 'half';
+      text = 'Halber Fehler (' + accentReason + ') — richtig wäre: ' + matchedRaw;
+      markMissed(item, 'half');
+      // Lernstufe bleibt unverändert
+    } else {
+      credit = 0;
+      cls = 'incorrect';
+      text = 'Richtig wäre: ' + correctRaw;
+      markMissed(item, 'full');
+      updateVocabBox(item.vocabId, item.dir, -1);
+    }
+
+    quizScore += credit;
+    var boxAfter = getVocabBox(item.vocabId, item.dir);
+    card.classList.add(cls);
+    showFeedback(cls, text, levelText(boxBefore, boxAfter));
+    var phonVocab = findVocab(item.vocabId);
+    document.getElementById('phonLine').textContent = phonVocab ? phonDisplay(phonVocab.phon) : '';
+    document.getElementById('cardBoxBadge').textContent = boxAfter;
+
+    var altRaw = matchedAltIdx > 0 ? acceptableRaw[matchedAltIdx] : null;
+    lastResult = { credit: credit, boxBefore: boxBefore, prevMissed: prevMissed, typed: typedRaw, altRaw: altRaw, isHalfAlt: isHalfAlt && altRaw !== null, hinted: hintUsed };
+    // "Als Alternative speichern": nur bei Fehlern, die noch keine gespeicherte Alternative waren
+    document.getElementById('markCorrectBtn').classList.toggle('hidden', !(credit < 1 && typedRaw !== '' && altRaw === null && !(isExact || isTypo)));
+    // Bei halb-markierter Alternative: komplett richtig markieren
+    document.getElementById('fullCorrectBtn').classList.toggle('hidden', !lastResult.isHalfAlt);
+    // Bei jeder Antwort, die eine Alternative war: Alternative entfernen
+    document.getElementById('removeAltBtn').classList.toggle('hidden', altRaw === null);
 
     document.getElementById('answerInput').readOnly = true;
     document.getElementById('actionBtn').textContent = 'Weiter';
-    document.getElementById('scoreLabel').textContent = '✓ ' + quizScore;
+    document.getElementById('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
     answered = true;
+    document.getElementById('hintBtn').classList.add('hidden');
+    updateProgressLabel();
   }
 
-  function nextQuestion() {
-    quizIndex++;
-    if (quizIndex >= quizQueue.length) showResults();
-    else renderQuestion();
+  function hideActionButtons() {
+    ['markCorrectBtn', 'fullCorrectBtn', 'removeAltBtn'].forEach(function (id) {
+      document.getElementById(id).classList.add('hidden');
+    });
+  }
+
+  function removeNormalized(arr, norm) {
+    if (!Array.isArray(arr)) return;
+    for (var i = arr.length - 1; i >= 0; i--) {
+      if (normalizeAnswer(arr[i]) === norm) arr.splice(i, 1);
+    }
+  }
+
+  // Wertung nachträglich auf "komplett richtig" heben: Punkt vergeben, Fehler zurücknehmen, Lernstufe +1
+  function upgradeToCorrect(message) {
+    var item = currentItem;
+    var hinted = !!lastResult.hinted;
+    var target = hinted ? 0.5 : 1; // mit Hinweis gibt es höchstens einen halben Punkt
+    quizScore += target - lastResult.credit;
+    var newBox;
+    if (hinted) {
+      quizMissedKeys[item.key] = lastResult.prevMissed || 'hint';
+      if (!quizMissed.some(function (m) { return m.key === item.key; })) quizMissed.push(item);
+      newBox = lastResult.boxBefore;
+    } else {
+      if (lastResult.prevMissed) {
+        quizMissedKeys[item.key] = lastResult.prevMissed;
+      } else {
+        delete quizMissedKeys[item.key];
+        quizMissed = quizMissed.filter(function (m) { return m.key !== item.key; });
+      }
+      newBox = Math.min(5, lastResult.boxBefore + 1);
+    }
+    setVocabBox(item.vocabId, item.dir, newBox);
+    lastResult.credit = target;
+
+    var card = document.getElementById('flashcard');
+    card.classList.remove('incorrect', 'half', 'almost', 'correct');
+    card.classList.add(hinted ? 'half' : 'correct');
+    showFeedback(hinted ? 'half' : 'correct', message + (hinted ? ' Mit Hinweis zählt nur ein halber Punkt.' : ''), levelText(lastResult.boxBefore, newBox));
+    document.getElementById('cardBoxBadge').textContent = newBox;
+    document.getElementById('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
+    saveAll();
+  }
+
+  // "Als Alternative speichern"
+  function markAnswerCorrect() {
+    if (!answered || !lastResult || lastResult.credit >= 1 || !lastResult.typed) return;
+    var item = currentItem;
+    var typed = lastResult.typed;
+    var altField = item.dir === 'aToB' ? 'bAlts' : 'aAlts';
+    var vocab = findVocab(item.vocabId);
+    if (vocab) {
+      if (!Array.isArray(vocab[altField])) vocab[altField] = [];
+      var already = vocab[altField].some(function (s) { return normalizeAnswer(s) === normalizeAnswer(typed); });
+      if (!already) {
+        vocab[altField].push(typed);
+        var gf = gameField(altField);
+        if (!Array.isArray(vocab[gf])) vocab[gf] = [];
+        vocab[gf].push(typed);
+      }
+      quizPool.forEach(function (c) {
+        if (c.vocabId === item.vocabId) c[altField] = vocab[altField];
+      });
+    }
+    upgradeToCorrect('Als Alternative gespeichert — „' + typed + '“ zählt jetzt als richtig.');
+    lastResult.altRaw = typed; // kann direkt wieder entfernt werden
+    document.getElementById('markCorrectBtn').classList.add('hidden');
+    document.getElementById('removeAltBtn').classList.remove('hidden');
+  }
+
+  // "Als komplett richtig markieren": ½-Markierung der Alternative aufheben
+  function markFullyCorrect() {
+    if (!answered || !lastResult || !lastResult.isHalfAlt || !lastResult.altRaw || lastResult.credit >= 1) return;
+    var item = currentItem;
+    var altField = item.dir === 'aToB' ? 'bAlts' : 'aAlts';
+    var vocab = findVocab(item.vocabId);
+    if (vocab) removeNormalized(vocab[halfField(altField)], normalizeAnswer(lastResult.altRaw));
+    upgradeToCorrect('Als komplett richtig markiert — „' + lastResult.altRaw + '“ zählt künftig voll.');
+    lastResult.isHalfAlt = false;
+    document.getElementById('fullCorrectBtn').classList.add('hidden');
+  }
+
+  // "Alternative entfernen": die getroffene Alternative dauerhaft löschen, die Antwort zählt als falsch
+  function removeAlternativeAnswer() {
+    if (!answered || !lastResult || !lastResult.altRaw) return;
+    var item = currentItem;
+    var altField = item.dir === 'aToB' ? 'bAlts' : 'aAlts';
+    var vocab = findVocab(item.vocabId);
+    var removedText = lastResult.altRaw;
+    var norm = normalizeAnswer(removedText);
+    if (vocab) {
+      removeNormalized(vocab[altField], norm);
+      removeNormalized(vocab[gameField(altField)], norm);
+      removeNormalized(vocab[halfField(altField)], norm);
+    }
+    lastResult.altRaw = null;
+    lastResult.isHalfAlt = false;
+    hideActionButtons();
+
+    // Die Antwort zählt jetzt als komplett falsch
+    quizScore -= lastResult.credit;
+    lastResult.credit = 0;
+    markMissed(item, 'full');
+    setVocabBox(item.vocabId, item.dir, 1);
+    var card = document.getElementById('flashcard');
+    card.classList.remove('correct', 'almost', 'half');
+    card.classList.add('incorrect');
+    var correctRaw = item.dir === 'aToB' ? item.b : item.a;
+    showFeedback('incorrect', 'Alternative „' + removedText + '“ entfernt — zählt als falsch. Richtig wäre: ' + correctRaw, levelText(lastResult.boxBefore, 1));
+    document.getElementById('cardBoxBadge').textContent = 1;
+    document.getElementById('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
+    if (lastResult.typed) document.getElementById('markCorrectBtn').classList.remove('hidden');
+    saveAll();
   }
 
   function showResults() {
+    stopTimer();
     showScreen('results');
-    var total = quizQueue.length;
+    var total = quizAsked;
     var correct = quizScore;
     var pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-    document.getElementById('resultFraction').textContent = correct + ' / ' + total;
+    document.getElementById('resultFraction').textContent = formatScore(correct) + ' / ' + total;
     document.getElementById('resultPercent').textContent = pct + ' % richtig';
 
     var list = document.getElementById('missedList');
@@ -1075,7 +1939,9 @@ Auto; car"></textarea>
     } else {
       var html = '';
       for (var i = 0; i < quizMissed.length; i++) {
-        html += '<div class="missed-row">' + escapeHtml(quizMissed[i].a) + ' — ' + escapeHtml(quizMissed[i].b) + '</div>';
+        var m = quizMissed[i];
+        html += '<div class="missed-row">' + escapeHtml(m.a) + ' — ' + escapeHtml(m.b) +
+          (quizMissedKeys[m.key] === 'half' ? ' <span class="half-tag">(halber Fehler)</span>' : quizMissedKeys[m.key] === 'hint' ? ' <span class="half-tag">(mit Hinweis)</span>' : '') + '</div>';
       }
       list.innerHTML = html;
     }
@@ -1176,6 +2042,25 @@ Auto; car"></textarea>
       debouncedSave();
     });
 
+    document.getElementById('minutesInput').addEventListener('input', function (e) {
+      var raw = e.target.value.replace(/[^0-9.,]/g, '');
+      var sep = raw.search(/[.,]/);
+      if (sep !== -1) {
+        raw = raw.slice(0, sep + 1) + raw.slice(sep + 1).replace(/[.,]/g, '');
+        raw = raw.slice(0, sep + 3); // max. 2 Nachkommastellen
+      }
+      var n = parseFloat(raw.replace(',', '.'));
+      if (isNaN(n)) n = null;
+      else if (n > MAX_MINUTES) { n = MAX_MINUTES; raw = String(MAX_MINUTES); }
+      e.target.value = raw;
+      getCurrentList().minutes = n;
+      updateMinutesSeconds();
+      debouncedSave();
+    });
+    document.getElementById('minutesInput').addEventListener('focus', function (e) {
+      e.target.select();
+    });
+
     document.getElementById('langAPickerBtn').addEventListener('click', function () { openLangModal('a'); });
     document.getElementById('langBPickerBtn').addEventListener('click', function () { openLangModal('b'); });
     document.getElementById('langModalClose').addEventListener('click', closeLangModal);
@@ -1198,6 +2083,9 @@ Auto; car"></textarea>
       list.vocab.forEach(function (v) {
         var t = v.a; v.a = v.b; v.b = t;
         var ta = v.aAlts; v.aAlts = v.bAlts; v.bAlts = ta;
+        var tb = v.boxAB; v.boxAB = v.boxBA; v.boxBA = tb;
+        var tg = v.aGame; v.aGame = v.bGame; v.bGame = tg;
+        var th = v.aHalf; v.aHalf = v.bHalf; v.bHalf = th;
       });
       if (list.direction === 'aToB') list.direction = 'bToA';
       else if (list.direction === 'bToA') list.direction = 'aToB';
@@ -1222,8 +2110,16 @@ Auto; car"></textarea>
       } else if (e.target.classList.contains('alt-input')) {
         var idx2 = parseInt(e.target.dataset.idx, 10);
         var field2 = e.target.dataset.field;
-        var raw = e.target.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        getCurrentList().vocab[idx2][field2] = raw;
+        var altIdx = parseInt(e.target.dataset.alt, 10);
+        var vAlt = getCurrentList().vocab[idx2];
+        var oldVal = vAlt[field2][altIdx];
+        vAlt[field2][altIdx] = e.target.value;
+        var gl = gameField(field2);
+        var gi = vAlt[gl].indexOf(oldVal);
+        if (oldVal !== '' && gi !== -1) vAlt[gl][gi] = e.target.value; // Markierung bleibt beim Umformulieren
+        var hl2 = halfField(field2);
+        var hi2 = vAlt[hl2].indexOf(oldVal);
+        if (oldVal !== '' && hi2 !== -1) vAlt[hl2][hi2] = e.target.value;
         debouncedSave();
       }
     });
@@ -1234,13 +2130,48 @@ Auto; car"></textarea>
         getCurrentList().vocab.splice(idx, 1);
         renderVocabList();
         saveAll();
-      } else if (e.target.closest('.btn-alt-toggle')) {
-        var btnAlt = e.target.closest('.btn-alt-toggle');
-        var idx2 = parseInt(btnAlt.dataset.idx, 10);
-        var pair = getCurrentList().vocab[idx2];
-        if (openAltPanels[pair.id]) delete openAltPanels[pair.id];
-        else openAltPanels[pair.id] = true;
+      } else if (e.target.closest('.phon-input')) {
+        openPhonModal(parseInt(e.target.closest('.phon-input').dataset.idx, 10));
+      } else if (e.target.closest('.btn-alt-add')) {
+        var btnAdd = e.target.closest('.btn-alt-add');
+        var idxAdd = parseInt(btnAdd.dataset.idx, 10);
+        var fieldAdd = btnAdd.dataset.field;
+        getCurrentList().vocab[idxAdd][fieldAdd].push('');
         renderVocabList();
+        var altInputs = document.querySelectorAll('.alt-input[data-idx="' + idxAdd + '"][data-field="' + fieldAdd + '"]');
+        if (altInputs.length) altInputs[altInputs.length - 1].focus();
+      } else if (e.target.closest('.btn-alt-half')) {
+        var btnHalf = e.target.closest('.btn-alt-half');
+        var vHalf = getCurrentList().vocab[parseInt(btnHalf.dataset.idx, 10)];
+        var fieldHalf = btnHalf.dataset.field;
+        var altValHalf = vHalf[fieldHalf][parseInt(btnHalf.dataset.alt, 10)];
+        if (!altValHalf || !altValHalf.trim()) {
+          showSetupMessage('Bitte trage zuerst die Alternative ein.');
+        } else {
+          var hlh = halfField(fieldHalf);
+          var hih = vHalf[hlh].indexOf(altValHalf);
+          if (hih === -1) vHalf[hlh].push(altValHalf);
+          else vHalf[hlh].splice(hih, 1);
+          var nowOn = hih === -1;
+          btnHalf.classList.toggle('on', nowOn);
+          btnHalf.setAttribute('aria-pressed', nowOn ? 'true' : 'false');
+          saveAll();
+        }
+      } else if (e.target.closest('.btn-alt-remove')) {
+        var btnRem = e.target.closest('.btn-alt-remove');
+        var idxRem = parseInt(btnRem.dataset.idx, 10);
+        var fieldRem = btnRem.dataset.field;
+        var altRem = parseInt(btnRem.dataset.alt, 10);
+        var vRem = getCurrentList().vocab[idxRem];
+        var removed = vRem[fieldRem].splice(altRem, 1)[0];
+        var glr = gameField(fieldRem);
+        var gir = vRem[glr].indexOf(removed);
+        if (gir !== -1) vRem[glr].splice(gir, 1);
+        var hlr = halfField(fieldRem);
+        var hir = vRem[hlr].indexOf(removed);
+        if (hir !== -1) vRem[hlr].splice(hir, 1);
+        renderVocabList();
+        saveAll();
       }
     });
 
@@ -1273,15 +2204,48 @@ Auto; car"></textarea>
       segments[i].addEventListener('click', function (e) {
         getCurrentList().direction = e.currentTarget.dataset.value;
         setActiveSegment(getCurrentList().direction);
+        updateWeakInfo();
         saveAll();
       });
     }
 
+    document.getElementById('weakOnlyCheck').addEventListener('change', function (e) {
+      getCurrentList().weakOnly = e.target.checked;
+      updateWeakInfo();
+      saveAll();
+    });
+    document.getElementById('showPhonCheck').addEventListener('change', function (e) {
+      getCurrentList().showPhon = e.target.checked;
+      renderVocabList();
+      saveAll();
+    });
+    document.getElementById('phonKeys').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    document.getElementById('phonKeys').addEventListener('click', function (e) {
+      var b = e.target.closest('.phon-key');
+      if (!b) return;
+      var act = b.dataset.act;
+      if (act === 'back') phonBackspace();
+      else if (act === 'space') phonInsert(' ');
+      else if (act === 'clear') { var inp = document.getElementById('phonSheetInput'); inp.value = ''; inp.setSelectionRange(0, 0); inp.focus(); }
+      else phonInsert(b.dataset.ins);
+    });
+    document.getElementById('phonDoneBtn').addEventListener('click', savePhonModal);
+    document.getElementById('bulkPhonBtn').addEventListener('click', openPhonModalBulk);
+    document.getElementById('phonCancelBtn').addEventListener('click', closePhonModal);
+    document.getElementById('phonModalOverlay').addEventListener('click', function (e) {
+      if (e.target === e.currentTarget) closePhonModal();
+    });
+    document.getElementById('shareListBtn').addEventListener('click', shareList);
+    document.getElementById('copyListBtn').addEventListener('click', copyListText);
+    document.getElementById('hintBtn').addEventListener('click', showHint);
+    document.getElementById('markCorrectBtn').addEventListener('click', markAnswerCorrect);
+    document.getElementById('fullCorrectBtn').addEventListener('click', markFullyCorrect);
+    document.getElementById('removeAltBtn').addEventListener('click', removeAlternativeAnswer);
     document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
 
     document.getElementById('actionBtn').addEventListener('click', function () {
       if (!answered) checkAnswer();
-      else nextQuestion();
+      else advance();
     });
     document.getElementById('answerInput').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
@@ -1290,18 +2254,19 @@ Auto; car"></textarea>
       }
     });
     document.getElementById('quitQuizBtn').addEventListener('click', function () {
+      stopTimer();
       showScreen('setup');
       renderVocabList();
     });
 
     document.getElementById('retryAllBtn').addEventListener('click', function () {
-      beginQuizWith(quizSourceVocab);
+      beginQuizWith(quizSourceVocab, { minutes: quizMinutes, weakOnly: quizWeakOnly });
     });
     document.getElementById('retryMissedBtn').addEventListener('click', function () {
-      var ids = {};
-      quizMissed.forEach(function (m) { ids[m.vocabId] = true; });
-      var source = quizSourceVocab.filter(function (v) { return ids[v.id]; });
-      beginQuizWith(source);
+      var keys = {};
+      Object.keys(quizMissedKeys).forEach(function (k) { keys[k] = true; });
+      // Fehler-Wiederholung: ohne Zeitlimit, jede falsche Karte einmal
+      beginQuizWith(quizSourceVocab, { requiredKeys: keys, minutes: 0 });
     });
     document.getElementById('backToSetupBtn').addEventListener('click', function () {
       showScreen('setup');
@@ -1311,6 +2276,7 @@ Auto; car"></textarea>
 
   function init() {
     loadAll();
+    buildPhonKeys();
     renderListSelect();
     renderCurrentListIntoForm();
     attachEvents();
