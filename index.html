@@ -82,7 +82,6 @@
     line-height: 1.4;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Papier + Linien als eigene Ebene: bleibt auch dann beige, wenn eine Vorschau den body-Hintergrund überschreibt */
   body::before {
     content: '';
     position: absolute;
@@ -104,7 +103,7 @@
     padding: 28px 20px calc(32px + env(safe-area-inset-bottom));
     min-height: 100vh;
   }
-  .screen.hidden, .hidden { display: none; }
+  .screen.hidden, .hidden { display: none !important; }
 
   .app-header { margin-bottom: 22px; }
   .header-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
@@ -144,7 +143,6 @@
     outline-offset: 2px;
   }
 
-  /* Lists section */
   .select-wrapper { position: relative; }
   .select-wrapper select {
     appearance: none;
@@ -165,7 +163,6 @@
   .list-buttons { display: flex; gap: 12px; margin-top: 12px; }
   .list-buttons .btn-outline { flex: 1; }
 
-  /* Buttons */
   button { font-family: inherit; }
   .btn-outline {
     display: inline-block;
@@ -210,7 +207,6 @@
     text-decoration: underline;
   }
 
-  /* Language picker (translator-app style) */
   .lang-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .lang-picker-btn {
     flex: 1;
@@ -246,7 +242,6 @@
     justify-content: center;
   }
 
-  /* Language select modal */
   .lang-modal-overlay {
     position: fixed;
     inset: 0;
@@ -299,7 +294,6 @@
 
   .setup-message { min-height: 18px; font-size: 15px; color: var(--rust); margin: 10px 0 0 0; }
 
-  /* Vocab table */
   .vocab-header {
     display: grid;
     grid-template-columns: 1fr 1fr 48px 28px;
@@ -440,7 +434,6 @@
   .hint em { font-style: normal; color: var(--ink); }
   textarea { resize: vertical; margin-bottom: 8px; }
 
-  /* Direction segmented control */
   .segmented {
     display: flex;
     gap: 4px;
@@ -466,7 +459,6 @@
   }
   .segment-btn.active { background: var(--ink); color: var(--bg); font-weight: 700; }
 
-  /* Study time */
   .minutes-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; }
   .minutes-seconds { font-size: 17px; color: var(--muted); }
   .minutes-row input {
@@ -507,9 +499,23 @@
   .phon-key.wide { min-width: 96px; font-size: 16px; }
   .phon-actions { display: flex; gap: 12px; flex-shrink: 0; }
   .phon-actions .btn-outline, .phon-actions .btn-primary { flex: 1; width: auto; }
+  .vocab-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 6px; }
+  #vocabSearch { flex: 2 1 170px; font-size: 17px; padding: 11px 14px; }
+  .sort-wrapper { flex: 1 1 160px; }
+  .sort-wrapper select { font-size: 16px; padding: 11px 36px 11px 12px; }
+  .vocab-empty { color: var(--muted); font-size: 16px; padding: 16px 12px; background: var(--surface); border-radius: 0 0 var(--radius) var(--radius); }
+  .ex-row { display: flex; align-items: center; gap: 10px; padding: 0 12px 10px; }
+  .ex-label { flex: none; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .ex-row .ex-input { flex: 1; font-size: 16px; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+  .ex-mark-btn { flex: none; background: transparent; border: 1.5px dashed var(--border); color: var(--muted); border-radius: var(--radius); padding: 7px 10px; font-size: 14px; font-weight: 700; cursor: pointer; min-height: 38px; }
+  .ex-mark-btn:hover { color: var(--rust); border-color: var(--rust); }
+  .ex-row.marking { flex-wrap: wrap; }
+  .ex-row.marking .ex-mark-btn { flex: 1 1 100%; text-align: left; border-style: solid; border-color: var(--rust); color: var(--rust); line-height: 1.3; }
+  mark.ex-mark { background: transparent; color: inherit; font-style: normal; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+  .ex-line { font-size: 17px; font-weight: 600; font-style: italic; margin-top: 6px; word-break: break-word; }
+  .ex-line:empty { display: none; }
   .status-line { text-align: center; color: var(--muted); font-size: 15px; margin-top: 14px; }
 
-  /* Quiz screen */
   .quiz-header {
     display: flex;
     justify-content: space-between;
@@ -560,6 +566,29 @@
   #answerInput { margin-bottom: 14px; }
   #answerInput[readonly] { opacity: 0.7; }
 
+  .mc-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .mc-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 19px;
+    padding: 13px 16px;
+    cursor: pointer;
+    min-height: 48px;
+  }
+  .mc-option:active { background: var(--ink); color: var(--bg); }
+  .mc-option:disabled { cursor: default; }
+  .mc-option.selected-correct { background: var(--success-bg); border-color: var(--success); color: var(--success); opacity: 1; }
+  .mc-option.selected-incorrect { background: var(--error-bg); border-color: var(--error); color: var(--error); opacity: 1; }
+  .mc-option.reveal-correct { border-color: var(--success); color: var(--success); }
+  .mc-option:disabled:not(.selected-correct):not(.selected-incorrect):not(.reveal-correct) { opacity: 0.55; }
+  .mc-option.mc-eliminated { opacity: 0.35; text-decoration: line-through; cursor: not-allowed; }
+
   .feedback {
     padding: 12px 14px;
     border-radius: var(--radius);
@@ -578,7 +607,6 @@
   .mark-correct-btn.hidden { display: none; }
   .half-tag { color: var(--warn); font-size: 15px; }
 
-  /* Results screen */
   .result-hero { text-align: center; margin: 20px 0 32px; }
   .result-fraction { font-weight: 700; font-size: 60px; line-height: 1; }
   .result-percent { color: var(--muted); font-size: 16px; margin-top: 6px; }
@@ -588,6 +616,25 @@
   .missed-empty { color: var(--muted); font-size: 16px; padding: 10px 0; }
 
   .result-actions { display: flex; flex-direction: column; gap: 10px; }
+
+  .confetti-piece {
+    position: fixed;
+    top: -20px;
+    width: 8px;
+    height: 14px;
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: 100;
+    animation-name: confettiFall;
+    animation-timing-function: cubic-bezier(0.4, 0.1, 0.6, 1);
+    animation-fill-mode: forwards;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(112vh) rotate(600deg); opacity: 0.4; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .confetti-piece { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -640,6 +687,21 @@
       <label class="section-label">Vokabelliste</label>
       <p class="hint">Tipp: Unter jedem Wort kannst du mit <strong>+ Alternative hinzufügen</strong> weitere akzeptierte Antworten hinterlegen. Alternativen, die beim Lernen hinzugefügt wurden, sind markiert. Mit dem <strong>½</strong>-Knopf neben einer Alternative markierst du sie als halben Fehler: Antwortest du damit, gibt es nur einen halben Fehler und den Hinweis „besser wäre …“. Die zwei Zahlen zeigen die Lernstufen (1–5) pro Richtung: → Sprache 1 zu Sprache 2, ← Sprache 2 zu Sprache 1. Je niedriger, desto öfter wird die Karte abgefragt.</p>
       <label class="toggle-row small"><input type="checkbox" id="showPhonCheck"><span>Lautschrift-Spalte anzeigen (optional)</span></label>
+      <div class="vocab-toolbar">
+        <input type="text" id="vocabSearch" placeholder="Suchen (beide Sprachen)…" autocomplete="off" aria-label="Vokabeln suchen">
+        <div class="select-wrapper sort-wrapper">
+          <select id="vocabSort" aria-label="Sortierung">
+            <option value="created_asc">Älteste zuerst</option>
+            <option value="created_desc">Neueste zuerst</option>
+            <option value="a_az">Sprache 1 A–Z</option>
+            <option value="b_az">Sprache 2 A–Z</option>
+            <option value="level_asc">Lernstufe: niedrig zuerst</option>
+            <option value="level_desc">Lernstufe: hoch zuerst</option>
+          </select>
+          <span class="select-chevron" aria-hidden="true">⌄</span>
+        </div>
+      </div>
+      <p class="hint" id="vocabCount" aria-live="polite"></p>
       <div class="vocab-header">
         <span id="headerLangA">Deutsch</span>
         <span id="headerLangB">Englisch</span>
@@ -656,9 +718,10 @@
       <details class="bulk-import">
         <summary>Mehrere Vokabeln auf einmal einfügen</summary>
         <p class="hint">Ein Wortpaar pro Zeile, getrennt mit Semikolon, Komma oder Tab. Beispiel: <em>Haus; house</em></p>
-        <p class="hint">Lautschrift schreibst du in eckige Klammern, an beliebiger Stelle der Zeile, so wie im Schulbuch: <em>Haus; house [haʊs]</em>. Alternativ als drittes Feld: <em>Haus; house; haʊs</em>. Mit dem Knopf „Lautschrift-Tastatur“ unten tippst du die Zeichen und sie werden als [ … ] an die Cursor-Stelle eingefügt.</p>
+        <p class="hint">Lautschrift schreibst du in eckigen Klammern, an beliebiger Stelle der Zeile, so wie im Schulbuch: <em>Haus; house [haʊs]</em>. Alternativ als drittes Feld: <em>Haus; house; haʊs</em>. Mit dem Knopf „Lautschrift-Tastatur“ unten tippst du die Zeichen und sie werden als [ … ] an die Cursor-Stelle eingefügt.</p>
         <p class="hint">Alternativen gehen direkt mit einem Schrägstrich <strong>/</strong>: Das erste Wort ist die Hauptantwort, die weiteren sind Alternativen (auf beiden Seiten möglich). Ein <strong>*</strong> direkt hinter einer Alternative markiert sie als halben Fehler: Wer sie eintippt, bekommt nur einen halben Fehler („besser wäre …“). Beispiele: <em>Haus; house / home*</em> (bei „home“ gibt es nur einen halben Fehler) oder <em>Auto / Wagen; car / automobile</em></p>
-        <textarea id="bulkText" rows="4" placeholder="Haus; house / home*
+        <p class="hint">Einen Beispielsatz setzt du in Anführungszeichen ("…" oder „…“), ebenfalls an beliebiger Stelle der Zeile. Schreibe ihn in der Sprache, die du lernst. Mit Sternchen markierst du ein Wort im Satz: <em>"The *house* is big."</em> Der Satz darf auch Kommas oder Semikolons enthalten: <em>Haus; house "The house is big."</em></p>
+        <textarea id="bulkText" rows="4" placeholder="Haus; house / home* &quot;The *house* is big.&quot;
 Auto / Wagen; car
 Wasser; water"></textarea>
         <div class="bulk-actions">
@@ -674,7 +737,7 @@ Wasser; water"></textarea>
           <button class="btn-outline" id="copyListBtn" type="button">Text kopieren</button>
         </div>
         <p class="hint" id="shareMessage" aria-live="polite"></p>
-        <p class="hint">Die Datei hat pro Zeile ein Wortpaar (<em>Haus; house / home*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Eine eingetragene Lautschrift wird mitgeteilt und steht in eckigen Klammern als drittes Feld hinter dem Wortpaar (<em>Haus; house; [haʊs]</em>). Lernstufen werden nicht mitgespeichert.</p>
+        <p class="hint">Die Datei hat pro Zeile ein Wortpaar (<em>Haus; house / home*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Eine eingetragene Lautschrift wird mitgeteilt und steht in eckigen Klammern als drittes Feld hinter dem Wortpaar (<em>Haus; house; [haʊs]</em>). Ein Beispielsatz steht in Anführungszeichen am Zeilenende (<em>Haus; house "The house is big."</em>). Lernstufen werden nicht mitgespeichert.</p>
       </div>
     </section>
 
@@ -702,6 +765,11 @@ Wasser; water"></textarea>
       <p class="hint" id="weakInfo"></p>
     </section>
 
+    <section class="mc-section">
+      <label class="toggle-row"><input type="checkbox" id="multipleChoiceCheck"><span>Multiple-Choice-Modus (Antwort auswählen statt tippen)</span></label>
+      <p class="hint">Du wählst die richtige Übersetzung aus mehreren Möglichkeiten aus, statt sie zu tippen. Praktisch für den Einstieg oder bei schwierigen Schriften. Braucht mindestens zwei verschiedene Vokabelpaare.</p>
+    </section>
+
     <button class="btn-primary" id="startQuizBtn" type="button">Karteikasten starten</button>
     <p class="status-line" id="statusLine" aria-live="polite"></p>
   </div>
@@ -721,11 +789,12 @@ Wasser; water"></textarea>
 
     <label class="answer-label" id="answerLangLabel" for="answerInput">Antwort</label>
     <input type="text" id="answerInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Antwort eingeben">
+    <div class="mc-options hidden" id="mcOptions"></div>
     <div class="hint-row">
       <button class="btn-text hint-btn" id="hintBtn" type="button">Hinweis anzeigen (kostet ½ Punkt)</button>
       <span class="hint-line" id="hintLine" aria-live="polite"></span>
     </div>
-    <div class="feedback hidden" id="feedback"><div id="feedbackText"></div><div class="phon-line" id="phonLine"></div><div class="level-line" id="levelLine"></div></div>
+    <div class="feedback hidden" id="feedback"><div id="feedbackText"></div><div class="phon-line" id="phonLine"></div><div class="ex-line" id="exLine"></div><div class="level-line" id="levelLine"></div></div>
     <button class="btn-outline mark-correct-btn hidden" id="markCorrectBtn" type="button">Als Alternative speichern</button>
     <button class="btn-outline mark-correct-btn hidden" id="fullCorrectBtn" type="button">Als komplett richtig markieren</button>
     <button class="btn-outline mark-correct-btn subtle hidden" id="removeAltBtn" type="button">Alternative entfernen</button>
@@ -839,6 +908,8 @@ Wasser; water"></textarea>
     v.aHalf = cleanAltList(v.aHalf);
     v.bHalf = cleanAltList(v.bHalf);
     if (typeof v.phon !== 'string') v.phon = '';
+    if (typeof v.ex !== 'string') v.ex = '';
+    if (typeof v.created !== 'number') v.created = Date.now();
     return v;
   }
 
@@ -850,7 +921,7 @@ Wasser; water"></textarea>
   }
 
   function defaultList(name) {
-    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false };
+    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false, multipleChoice: false, sortBy: 'created_asc' };
   }
 
   function loadAll() {
@@ -863,8 +934,11 @@ Wasser; water"></textarea>
           lists = parsed.lists;
           lists.forEach(function (l) {
             if (!Array.isArray(l.vocab)) l.vocab = [];
+            l.vocab.forEach(function (v, i) { if (typeof v.created !== 'number') v.created = i + 1; });
             l.vocab.forEach(normalizeVocab);
+            if (typeof l.sortBy !== 'string') l.sortBy = 'created_asc';
             if (typeof l.showPhon !== 'boolean') l.showPhon = l.vocab.some(function (v) { return v.phon; });
+            if (typeof l.multipleChoice !== 'boolean') l.multipleChoice = false;
             if (l.minutes !== null && (typeof l.minutes !== 'number' || isNaN(l.minutes) || l.minutes < 0)) {
               l.minutes = DEFAULT_MINUTES;
             }
@@ -939,6 +1013,10 @@ Wasser; water"></textarea>
     for (var m = 0; m < altLangB.length; m++) altLangB[m].textContent = b;
     document.getElementById('segAtoB').textContent = a + ' → ' + b;
     document.getElementById('segBtoA').textContent = b + ' → ' + a;
+    var oa = document.querySelector('#vocabSort option[value="a_az"]');
+    if (oa) oa.textContent = a + ' A–Z';
+    var ob = document.querySelector('#vocabSort option[value="b_az"]');
+    if (ob) ob.textContent = b + ' A–Z';
     updateHeaderSubtitle();
   }
 
@@ -1003,11 +1081,51 @@ Wasser; water"></textarea>
     return h;
   }
 
+  var vocabSearchText = '';
+
+  function textCmp(x, y) {
+    if (!x && !y) return 0;
+    if (!x) return 1;
+    if (!y) return -1;
+    return x.localeCompare(y, 'de', { sensitivity: 'base' });
+  }
+
+  function vocabMatches(v, q) {
+    var fields = [v.a, v.b].concat(v.aAlts || [], v.bAlts || []);
+    return fields.some(function (f) { return simplifyAnswer(String(f).toLowerCase()).indexOf(q) !== -1; });
+  }
+
+  // Gibt die Indizes (in list.vocab) gefiltert und sortiert zurück
+  function getVocabOrder(list) {
+    var q = simplifyAnswer(vocabSearchText.trim().toLowerCase());
+    var idxs = [];
+    list.vocab.forEach(function (v, i) { if (!q || vocabMatches(v, q)) idxs.push(i); });
+    var by = list.sortBy || 'created_asc';
+    var vs = list.vocab;
+    function lvl(v) { return (v.boxAB + v.boxBA) / 2; }
+    idxs.sort(function (x, y) {
+      var r = 0;
+      if (by === 'created_asc') r = vs[x].created - vs[y].created || x - y;
+      else if (by === 'created_desc') r = vs[y].created - vs[x].created || y - x;
+      else if (by === 'a_az') r = textCmp(vs[x].a.trim(), vs[y].a.trim());
+      else if (by === 'b_az') r = textCmp(vs[x].b.trim(), vs[y].b.trim());
+      else if (by === 'level_asc') r = lvl(vs[x]) - lvl(vs[y]);
+      else if (by === 'level_desc') r = lvl(vs[y]) - lvl(vs[x]);
+      return r || x - y;
+    });
+    return idxs;
+  }
+
   function renderVocabList() {
     var list = getCurrentList();
     var container = document.getElementById('vocabList');
     var html = '';
-    for (var i = 0; i < list.vocab.length; i++) {
+    var order = getVocabOrder(list);
+    var countEl = document.getElementById('vocabCount');
+    countEl.textContent = vocabSearchText.trim() ? order.length + ' von ' + list.vocab.length + ' Vokabeln gefunden.' : '';
+    document.getElementById('vocabSort').value = list.sortBy || 'created_asc';
+    for (var oi = 0; oi < order.length; oi++) {
+      var i = order[oi];
       var pair = list.vocab[i];
       html += '<div class="vocab-card">';
       html += '<div class="vocab-row">' +
@@ -1021,12 +1139,16 @@ Wasser; water"></textarea>
         html += '<div class="phon-row"><span class="phon-label">Lautschrift</span>' +
           '<input type="text" class="phon-input" data-idx="' + i + '" readonly inputmode="none" value="' + escapeHtml(pair.phon || '') + '" placeholder="antippen zum Eingeben"></div>';
       }
+      html += '<div class="ex-row"><span class="ex-label">Beispiel</span>' +
+        '<input type="text" class="ex-input" data-idx="' + i + '" value="' + escapeHtml(pair.ex || '') + '" placeholder="Beispielsatz (optional)" autocomplete="off">' +
+        '<button class="ex-mark-btn" data-idx="' + i + '" type="button" title="Wörter im Beispielsatz markieren">Markieren</button></div>';
       html += '<div class="alt-panel">' +
         altColumnHtml(pair, i, 'aAlts', 'alt-lang-a', list.langA) +
         altColumnHtml(pair, i, 'bAlts', 'alt-lang-b', list.langB) +
         '</div>';
       html += '</div>';
     }
+    if (order.length === 0 && list.vocab.length > 0) html = '<div class="vocab-empty">Keine Treffer.</div>';
     container.innerHTML = html;
     document.getElementById('showPhonCheck').checked = !!list.showPhon;
     updateLangHeadersAndPlaceholders();
@@ -1051,7 +1173,10 @@ Wasser; water"></textarea>
   function renderCurrentListIntoForm() {
     var list = getCurrentList();
     document.getElementById('listNameInput').value = list.name;
+    vocabSearchText = '';
+    document.getElementById('vocabSearch').value = '';
     document.getElementById('weakOnlyCheck').checked = !!list.weakOnly;
+    document.getElementById('multipleChoiceCheck').checked = !!list.multipleChoice;
     document.getElementById('minutesInput').value = (list.minutes === null || list.minutes === undefined) ? '' : String(list.minutes).replace('.', ',');
     updateMinutesSeconds();
     updateLangPickerLabels();
@@ -1059,12 +1184,51 @@ Wasser; water"></textarea>
     setActiveSegment(list.direction);
   }
 
+  // ---- Wörter im Beispielsatz markieren (Antippen-Modus) ----
+  var MARK_HINT_TEXT = 'Klicke auf das Wort / die Wörter, die du markieren möchtest';
+
+  function endMarking(row) {
+    var btn = row.querySelector('.ex-mark-btn');
+    var inp = row.querySelector('.ex-input');
+    row.classList.remove('marking');
+    if (inp) inp.readOnly = false;
+    if (btn) btn.textContent = 'Markieren';
+  }
+
+  function toggleWordAt(inp) {
+    var v = inp.value;
+    var pos = inp.selectionStart;
+    if (typeof pos !== 'number') return;
+    function isW(c) { return !!c && /[\p{L}\p{N}'’-]/u.test(c); }
+    var s = pos, e = pos;
+    while (s > 0 && isW(v.charAt(s - 1))) s--;
+    while (e < v.length && isW(v.charAt(e))) e++;
+    if (s === e) return;
+    var nv, caret;
+    if (v.charAt(s - 1) === '*' && v.charAt(e) === '*') {
+      nv = v.slice(0, s - 1) + v.slice(s, e) + v.slice(e + 1);
+      caret = e - 1;
+    } else {
+      nv = v.slice(0, s) + '*' + v.slice(s, e) + '*' + v.slice(e);
+      caret = e + 2;
+    }
+    inp.value = nv;
+    inp.setSelectionRange(caret, caret);
+    getCurrentList().vocab[parseInt(inp.dataset.idx, 10)].ex = nv;
+    debouncedSave();
+    var markBtn = inp.parentNode.querySelector('.ex-mark-btn');
+    if (markBtn) markBtn.textContent = /\*[^*\s][^*]*\*/.test(nv) ? 'Fertig' : MARK_HINT_TEXT;
+  }
+
   function addRow() {
-    getCurrentList().vocab.push(normalizeVocab({ a: '', b: '' }));
+    var list = getCurrentList();
+    vocabSearchText = '';
+    document.getElementById('vocabSearch').value = '';
+    list.vocab.push(normalizeVocab({ a: '', b: '' }));
     renderVocabList();
     saveAll();
-    var inputsA = document.querySelectorAll('.vocab-input[data-field="a"]');
-    if (inputsA.length) inputsA[inputsA.length - 1].focus();
+    var newInput = document.querySelector('.vocab-input[data-idx="' + (list.vocab.length - 1) + '"][data-field="a"]');
+    if (newInput) newInput.focus();
   }
 
   // "Auto / Wagen" -> Hauptwort "Auto", Alternativen ["Wagen"]
@@ -1234,7 +1398,8 @@ Wasser; water"></textarea>
       if (!exportClean(v.a) || !exportClean(v.b)) return;
       var phonExport = String(v.phon || '').replace(/[;\t\r\n]+/g, ' ').trim();
       if (phonExport && !/^\[.*\]$/.test(phonExport)) phonExport = '[' + phonExport + ']';
-      lines.push(exportSide(v.a, v.aAlts, v.aHalf) + '; ' + exportSide(v.b, v.bAlts, v.bHalf) + (phonExport ? '; ' + phonExport : ''));
+      var exExport = String(v.ex || '').replace(/["„“”\t\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+      lines.push(exportSide(v.a, v.aAlts, v.aHalf) + '; ' + exportSide(v.b, v.bAlts, v.bHalf) + (phonExport ? '; ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : ''));
     });
     return lines.join('\n');
   }
@@ -1317,8 +1482,17 @@ Wasser; water"></textarea>
     var altCount = 0;
     var halfCount = 0;
     var phonCount = 0;
+    var exCount = 0;
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
+      if (!line) continue;
+      // Beispielsatz in Anführungszeichen (überall in der Zeile) herausnehmen: "…", „…“ oder “…”
+      var exText = '';
+      line = line.replace(/"([^"]*)"|„([^„“”"]*)[“”"]|“([^“”]*)”/g, function (m, q1, q2, q3) {
+        var inner = q1 || q2 || q3 || '';
+        if (!exText && inner.trim()) exText = inner.trim();
+        return ' ';
+      }).replace(/ {2,}/g, ' ').trim();
       if (!line) continue;
       // Lautschrift in eckigen Klammern (überall in der Zeile) herausnehmen
       var bracketPhon = '';
@@ -1336,9 +1510,10 @@ Wasser; water"></textarea>
       var sideA = splitAlternatives(parts[0]);
       var sideB = splitAlternatives(parts[1]);
       if (sideA.main && sideB.main) {
-        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, phon: bracketPhon || (commaSep ? '' : String(parts[2] || '').trim()) });
+        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, ex: exText, phon: bracketPhon || (commaSep ? '' : String(parts[2] || '').trim()) });
         list.vocab.push(newPair);
         if (newPair.phon) { list.showPhon = true; phonCount++; }
+        if (newPair.ex) exCount++;
         added++;
         altCount += sideA.alts.length + sideB.alts.length;
         halfCount += sideA.half.length + sideB.half.length;
@@ -1352,6 +1527,7 @@ Wasser; water"></textarea>
       var extras = [];
       if (altCount > 0) extras.push(altCount + (altCount === 1 ? ' Alternative' : ' Alternativen') + (halfCount > 0 ? ' (davon ' + halfCount + ' als halber Fehler)' : ''));
       if (phonCount > 0) extras.push(phonCount + ' mit Lautschrift');
+      if (exCount > 0) extras.push(exCount + ' mit Beispielsatz');
       bulkMsg = added + ' Vokabelpaar(e) hinzugefügt' + (extras.length ? ' – ' + extras.join(', ') : '') + '.';
     } else {
       bulkMsg = 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2';
@@ -1402,6 +1578,7 @@ Wasser; water"></textarea>
   var answered = false, currentItem = null, lastVocabId = null, lastResult = null, hintUsed = false;
   var quizEndTime = null, quizMinutes = 0, quizTimer = null, quizWeakOnly = false;
   var quizSourceVocab = [], quizLangA = '', quizLangB = '', quizDirection = 'mixed', quizListRef = null;
+  var quizMultipleChoice = false, mcActiveForCurrent = false;
 
   function formatScore(n) {
     var whole = Math.floor(n + 1e-9);
@@ -1506,6 +1683,7 @@ Wasser; water"></textarea>
   function beginQuizWith(vocabList, opts) {
     opts = opts || {};
     quizWeakOnly = !!opts.weakOnly;
+    quizMultipleChoice = !!opts.multipleChoice;
     quizPool = buildPool(vocabList, opts.requiredKeys || null, quizWeakOnly);
     if (quizPool.length === 0 && quizWeakOnly) {
       quizWeakOnly = false;
@@ -1555,7 +1733,7 @@ Wasser; water"></textarea>
       document.getElementById('statusLine').textContent = 'Keine schwachen Wörter: Alle Karten sind schon in Lernstufe 3 oder höher. Schalte „Nur schwache Wörter“ aus, um alles zu üben.';
       return;
     }
-    beginQuizWith(quizSourceVocab, { minutes: minutes, weakOnly: weakOnly });
+    beginQuizWith(quizSourceVocab, { minutes: minutes, weakOnly: weakOnly, multipleChoice: !!list.multipleChoice });
   }
 
   function advance() {
@@ -1563,6 +1741,122 @@ Wasser; water"></textarea>
     if (!next) { showResults(); return; }
     currentItem = next;
     renderQuestion();
+  }
+
+  /* ---- Multiple-Choice-Optionen ---- */
+
+  function shuffleArray(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function buildDistractorPool(item) {
+    var field = item.dir === 'aToB' ? 'b' : 'a';
+    var correctNorm = normalizeAnswer(item.dir === 'aToB' ? item.b : item.a);
+    var seen = {};
+    seen[correctNorm] = true;
+    var pool = [];
+    quizSourceVocab.forEach(function (v) {
+      var val = v[field];
+      if (!val) return;
+      var norm = normalizeAnswer(val);
+      if (seen[norm]) return;
+      seen[norm] = true;
+      pool.push(val);
+    });
+    return pool;
+  }
+
+  // Gibt die tatsächliche Anzahl der gerenderten Optionen zurück, damit die Anzeige
+  // des Hinweis-Buttons nie von der real gerenderten Optionsliste abweichen kann.
+  function renderMcOptions(item, distractorPool) {
+    var correctRaw = item.dir === 'aToB' ? item.b : item.a;
+    var distractors = shuffleArray(distractorPool).slice(0, 4);
+    var options = shuffleArray([correctRaw].concat(distractors));
+    var wrap = document.getElementById('mcOptions');
+    var html = '';
+    for (var i = 0; i < options.length; i++) {
+      html += '<button class="mc-option" type="button" data-answer="' + escapeHtml(options[i]) + '">' + escapeHtml(options[i]) + '</button>';
+    }
+    wrap.innerHTML = html;
+    return options.length;
+  }
+
+  function checkAnswerMc(item, selectedRaw) {
+    var correctRaw = item.dir === 'aToB' ? item.b : item.a;
+    var altsRaw = (item.dir === 'aToB' ? item.bAlts : item.aAlts) || [];
+    var halfRaw = (item.dir === 'aToB' ? item.bHalf : item.aHalf) || [];
+    var selNorm = normalizeAnswer(selectedRaw);
+    var isMain = selNorm === normalizeAnswer(correctRaw);
+    var altIdx = -1;
+    if (!isMain) {
+      for (var i = 0; i < altsRaw.length; i++) {
+        if (normalizeAnswer(altsRaw[i]) === selNorm) { altIdx = i; break; }
+      }
+    }
+    var isHalf = altIdx !== -1 && halfRaw.some(function (h) { return normalizeAnswer(h) === selNorm; });
+
+    var boxBefore = getVocabBox(item.vocabId, item.dir);
+    var credit, cls, text;
+
+    quizAsked++;
+    quizDone[item.key] = true;
+    lastVocabId = item.vocabId;
+
+    if (isMain || (altIdx !== -1 && !isHalf)) {
+      if (hintUsed) {
+        credit = 0.5;
+        cls = 'half';
+        text = 'Richtig, aber mit Hinweis — nur ein halber Punkt.';
+        markMissed(item, 'hint');
+        // Lernstufe bleibt unverändert
+      } else {
+        credit = 1;
+        cls = 'correct';
+        text = 'Richtig.';
+        updateVocabBox(item.vocabId, item.dir, +1);
+      }
+    } else if (isHalf) {
+      credit = 0.5;
+      cls = 'half';
+      text = 'Halber Fehler, besser wäre: ' + correctRaw;
+      markMissed(item, 'half');
+    } else {
+      credit = 0;
+      cls = 'incorrect';
+      text = 'Richtig wäre: ' + correctRaw;
+      markMissed(item, 'full');
+      updateVocabBox(item.vocabId, item.dir, -1);
+    }
+
+    quizScore += credit;
+    var boxAfter = getVocabBox(item.vocabId, item.dir);
+    document.getElementById('flashcard').classList.add(cls);
+    showFeedback(cls, text, levelText(boxBefore, boxAfter));
+    var phonVocab = findVocab(item.vocabId);
+    document.getElementById('phonLine').textContent = phonVocab ? phonDisplay(phonVocab.phon) : '';
+    document.getElementById('cardBoxBadge').textContent = boxAfter;
+    document.getElementById('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
+    answered = true;
+    updateProgressLabel();
+
+    var correctNorm = normalizeAnswer(correctRaw);
+    var buttons = document.querySelectorAll('#mcOptions .mc-option');
+    for (var k = 0; k < buttons.length; k++) {
+      var btn = buttons[k];
+      btn.disabled = true;
+      var bNorm = normalizeAnswer(btn.dataset.answer);
+      if (bNorm === selNorm) btn.classList.add(cls === 'incorrect' ? 'selected-incorrect' : 'selected-correct');
+      else if (bNorm === correctNorm) btn.classList.add('reveal-correct');
+    }
+
+    document.getElementById('actionBtn').textContent = 'Weiter';
+    document.getElementById('actionBtn').classList.remove('hidden');
+    saveAll();
   }
 
   function renderQuestion() {
@@ -1588,6 +1882,7 @@ Wasser; water"></textarea>
     document.getElementById('feedback').className = 'feedback hidden';
     document.getElementById('feedbackText').textContent = '';
     document.getElementById('phonLine').textContent = '';
+    document.getElementById('exLine').textContent = '';
     document.getElementById('levelLine').textContent = '';
     hideActionButtons();
 
@@ -1597,7 +1892,39 @@ Wasser; water"></textarea>
 
     document.getElementById('flashcard').classList.remove('correct', 'almost', 'incorrect', 'half');
 
-    input.focus();
+    var answerLabel = document.getElementById('answerLangLabel');
+    var mcWrap = document.getElementById('mcOptions');
+    var hintRow = document.querySelector('.hint-row');
+    var hintBtnEl = document.getElementById('hintBtn');
+    var actionBtn = document.getElementById('actionBtn');
+    var distractorPool = quizMultipleChoice ? buildDistractorPool(item) : [];
+    mcActiveForCurrent = quizMultipleChoice && distractorPool.length > 0;
+
+    if (mcActiveForCurrent) {
+      input.classList.add('hidden');
+      answerLabel.classList.add('hidden');
+      var optionCount = renderMcOptions(item, distractorPool);
+      mcWrap.classList.remove('hidden');
+      actionBtn.classList.add('hidden');
+      if (optionCount >= 3) {
+        hintBtnEl.textContent = 'Eine falsche Antwort ausschließen (kostet ½ Punkt)';
+        hintRow.classList.remove('hidden');
+        hintBtnEl.classList.remove('hidden');
+      } else {
+        hintRow.classList.add('hidden');
+        hintBtnEl.classList.add('hidden');
+      }
+    } else {
+      input.classList.remove('hidden');
+      answerLabel.classList.remove('hidden');
+      hintBtnEl.textContent = 'Hinweis anzeigen (kostet ½ Punkt)';
+      hintRow.classList.remove('hidden');
+      hintBtnEl.classList.remove('hidden');
+      mcWrap.classList.add('hidden');
+      mcWrap.innerHTML = '';
+      actionBtn.classList.remove('hidden');
+      input.focus();
+    }
   }
 
   function normalizeAnswer(text) {
@@ -1638,11 +1965,19 @@ Wasser; water"></textarea>
     }
   }
 
+  // *Wort* im Beispielsatz wird hervorgehoben
+  function exHtml(text) {
+    return escapeHtml(text).replace(/\*([^*\s][^*]*?)\*/g, '<mark class="ex-mark">$1</mark>');
+  }
+
   function showFeedback(cls, text, levelLineText) {
     var feedback = document.getElementById('feedback');
     feedback.className = 'feedback ' + cls;
     document.getElementById('feedbackText').textContent = text;
     document.getElementById('levelLine').textContent = levelLineText;
+    var exV = currentItem ? findVocab(currentItem.vocabId) : null;
+    var exT = exV && exV.ex ? exV.ex.trim() : '';
+    document.getElementById('exLine').innerHTML = exT ? 'Beispiel: ' + exHtml(exT) : '';
   }
 
   // Hinweis: erster Buchstabe jedes Wortes + Länge, Rest als Striche
@@ -1660,6 +1995,19 @@ Wasser; water"></textarea>
 
   function showHint() {
     if (answered || hintUsed || !currentItem) return;
+    if (mcActiveForCurrent) {
+      var remaining = Array.prototype.slice.call(document.querySelectorAll('#mcOptions .mc-option:not(.mc-eliminated)'));
+      if (remaining.length <= 2) return;
+      var correctNorm = normalizeAnswer(currentItem.dir === 'aToB' ? currentItem.b : currentItem.a);
+      var wrongOptions = remaining.filter(function (o) { return normalizeAnswer(o.dataset.answer) !== correctNorm; });
+      if (wrongOptions.length === 0) return;
+      var pick = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+      pick.classList.add('mc-eliminated');
+      pick.disabled = true;
+      hintUsed = true;
+      document.getElementById('hintBtn').classList.add('hidden');
+      return;
+    }
     hintUsed = true;
     var word = currentItem.dir === 'aToB' ? currentItem.b : currentItem.a;
     document.getElementById('hintLine').textContent = buildHint(word);
@@ -1924,6 +2272,32 @@ Wasser; water"></textarea>
     saveAll();
   }
 
+  /* ---- Konfetti ---- */
+  var CONFETTI_COLORS = ['#A8442E', '#2F6E5C', '#9C7A25', '#241A10', '#C9BB94', '#C15A3E'];
+
+  function launchConfetti() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var count = 46;
+    for (var i = 0; i < count; i++) {
+      (function () {
+        var el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = (Math.random() * 100) + 'vw';
+        el.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+        el.style.borderRadius = (Math.random() < 0.5) ? '50%' : '2px';
+        var duration = 2.1 + Math.random() * 1.6;
+        var delay = Math.random() * 0.35;
+        el.style.animationDuration = duration + 's';
+        el.style.animationDelay = delay + 's';
+        el.style.transform = 'rotate(' + Math.round(Math.random() * 360) + 'deg)';
+        document.body.appendChild(el);
+        setTimeout(function () {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, (duration + delay) * 1000 + 500);
+      })();
+    }
+  }
+
   function showResults() {
     stopTimer();
     showScreen('results');
@@ -1947,6 +2321,7 @@ Wasser; water"></textarea>
     }
     document.getElementById('retryMissedBtn').style.display = quizMissed.length > 0 ? '' : 'none';
     if (getCurrentList() === quizListRef) renderVocabList();
+    if (total > 0 && pct === 100) launchConfetti();
   }
 
   /* ---- language picker modal ---- */
@@ -2107,6 +2482,9 @@ Wasser; water"></textarea>
         getCurrentList().vocab[idx][field] = e.target.value;
         updateStartButtonState();
         debouncedSave();
+      } else if (e.target.classList.contains('ex-input')) {
+        getCurrentList().vocab[parseInt(e.target.dataset.idx, 10)].ex = e.target.value;
+        debouncedSave();
       } else if (e.target.classList.contains('alt-input')) {
         var idx2 = parseInt(e.target.dataset.idx, 10);
         var field2 = e.target.dataset.field;
@@ -2123,6 +2501,9 @@ Wasser; water"></textarea>
         debouncedSave();
       }
     });
+    document.getElementById('vocabList').addEventListener('mousedown', function (e) {
+      if (e.target.closest('.ex-mark-btn')) e.preventDefault();
+    });
     document.getElementById('vocabList').addEventListener('click', function (e) {
       if (e.target.closest('.btn-delete')) {
         var btnDel = e.target.closest('.btn-delete');
@@ -2132,6 +2513,20 @@ Wasser; water"></textarea>
         saveAll();
       } else if (e.target.closest('.phon-input')) {
         openPhonModal(parseInt(e.target.closest('.phon-input').dataset.idx, 10));
+      } else if (e.target.closest('.ex-mark-btn')) {
+        var mBtn = e.target.closest('.ex-mark-btn');
+        var mRow = mBtn.parentNode;
+        if (mRow.classList.contains('marking')) {
+          endMarking(mRow);
+        } else {
+          var activeRows = document.querySelectorAll('.ex-row.marking');
+          for (var ar = 0; ar < activeRows.length; ar++) endMarking(activeRows[ar]);
+          mRow.classList.add('marking');
+          mRow.querySelector('.ex-input').readOnly = true;
+          mBtn.textContent = MARK_HINT_TEXT;
+        }
+      } else if (e.target.classList.contains('ex-input') && e.target.parentNode.classList.contains('marking')) {
+        toggleWordAt(e.target);
       } else if (e.target.closest('.btn-alt-add')) {
         var btnAdd = e.target.closest('.btn-alt-add');
         var idxAdd = parseInt(btnAdd.dataset.idx, 10);
@@ -2175,6 +2570,15 @@ Wasser; water"></textarea>
       }
     });
 
+    document.getElementById('vocabSearch').addEventListener('input', function (e) {
+      vocabSearchText = e.target.value;
+      renderVocabList();
+    });
+    document.getElementById('vocabSort').addEventListener('change', function (e) {
+      getCurrentList().sortBy = e.target.value;
+      renderVocabList();
+      saveAll();
+    });
     document.getElementById('addRowBtn').addEventListener('click', addRow);
 
     var clearArmed = false;
@@ -2214,6 +2618,10 @@ Wasser; water"></textarea>
       updateWeakInfo();
       saveAll();
     });
+    document.getElementById('multipleChoiceCheck').addEventListener('change', function (e) {
+      getCurrentList().multipleChoice = e.target.checked;
+      saveAll();
+    });
     document.getElementById('showPhonCheck').addEventListener('change', function (e) {
       getCurrentList().showPhon = e.target.checked;
       renderVocabList();
@@ -2242,9 +2650,14 @@ Wasser; water"></textarea>
     document.getElementById('fullCorrectBtn').addEventListener('click', markFullyCorrect);
     document.getElementById('removeAltBtn').addEventListener('click', removeAlternativeAnswer);
     document.getElementById('startQuizBtn').addEventListener('click', startQuiz);
+    document.getElementById('mcOptions').addEventListener('click', function (e) {
+      var btn = e.target.closest('.mc-option');
+      if (!btn || answered || btn.disabled) return;
+      checkAnswerMc(currentItem, btn.dataset.answer);
+    });
 
     document.getElementById('actionBtn').addEventListener('click', function () {
-      if (!answered) checkAnswer();
+      if (!answered) { if (!mcActiveForCurrent) checkAnswer(); }
       else advance();
     });
     document.getElementById('answerInput').addEventListener('keydown', function (e) {
@@ -2260,13 +2673,13 @@ Wasser; water"></textarea>
     });
 
     document.getElementById('retryAllBtn').addEventListener('click', function () {
-      beginQuizWith(quizSourceVocab, { minutes: quizMinutes, weakOnly: quizWeakOnly });
+      beginQuizWith(quizSourceVocab, { minutes: quizMinutes, weakOnly: quizWeakOnly, multipleChoice: quizMultipleChoice });
     });
     document.getElementById('retryMissedBtn').addEventListener('click', function () {
       var keys = {};
       Object.keys(quizMissedKeys).forEach(function (k) { keys[k] = true; });
       // Fehler-Wiederholung: ohne Zeitlimit, jede falsche Karte einmal
-      beginQuizWith(quizSourceVocab, { requiredKeys: keys, minutes: 0 });
+      beginQuizWith(quizSourceVocab, { requiredKeys: keys, minutes: 0, multipleChoice: quizMultipleChoice });
     });
     document.getElementById('backToSetupBtn').addEventListener('click', function () {
       showScreen('setup');
