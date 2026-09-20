@@ -338,7 +338,7 @@
           <select id="mergeSelect" aria-label="Liste zum Hinzufügen"></select>
           <button class="btn-outline" id="mergeBtn" type="button">In diese Liste einfügen</button>
         </div>
-        <p class="hint" id="mergeHint">Die gewählte Liste wird in die aktuelle Liste eingefügt. Doppelte Wörter werden zusammengeführt, die gewählte Liste bleibt bestehen.</p>
+        <p class="hint" id="mergeHint">Die gewählte Liste wird in die aktuelle Liste eingefügt. Doppelte Wörter werden zusammengeführt, die gewählte Liste bleibt bestehen. Haben die Listen andere Sprachen, werden die Wörter trotzdem übernommen (Sprache 1 zu Sprache 1, Sprache 2 zu Sprache 2).</p>
         <div class="row">
           <select id="splitSelect" aria-label="Auswahl für neue Liste">
             <option value="weak">Nur Lernstufe 1–2</option>
@@ -350,7 +350,7 @@
           <button class="btn-outline" id="splitBtn" type="button">In neue Liste kopieren</button>
         </div>
         <p class="hint" id="splitHint">Legt eine neue Liste mit den passenden Wörtern an. Die Wörter bleiben auch in dieser Liste.</p>
-        <p class="hint" id="toolsMsg" aria-live="polite"></p>
+        <p class="setup-message" id="toolsMsg" aria-live="polite" style="font-weight:700;font-size:16px"></p>
       </details>
     </section>
 
@@ -1585,7 +1585,10 @@ Wasser; water"></textarea>
       }
     }
     var res = out.join('');
-    return normalizeAnswer(res) === normalizeAnswer(word) ? null : res;
+    if (normalizeAnswer(res) === normalizeAnswer(word)) return null;
+    // Zu starke Veränderung vermeiden: höchstens 3 Bearbeitungsschritte
+    if (levenshtein(res.toLowerCase(), String(word).toLowerCase()) > 3) return null;
+    return res;
   }
 
   function startMirror() {
@@ -1794,14 +1797,18 @@ Wasser; water"></textarea>
 
   function mergeLists() {
     var src = null, dst = getCurrentList();
-    lists.forEach(function (l) { if (l.id === gid('mergeSelect').value) src = l; });
-    if (!src) { gid('toolsMsg').textContent = 'Bitte wähle eine Liste.'; return; }
-    if (src.langA !== dst.langA || src.langB !== dst.langB) {
-      if (!(src.langA === dst.langB && src.langB === dst.langA)) { gid('toolsMsg').textContent = 'Die Sprachen der Listen passen nicht zusammen (' + src.langA + '/' + src.langB + ' und ' + dst.langA + '/' + dst.langB + ').'; return; }
-    }
-    var swapped = src.langA !== dst.langA;
+    var selVal = gid('mergeSelect').value;
+    lists.forEach(function (l) { if (l.id === selVal) src = l; });
+    var msg = gid('toolsMsg');
+    if (!src) { msg.textContent = 'Es gibt keine andere Liste zum Einfügen. Lege zuerst eine zweite Liste an.'; return; }
+    if (src.id === dst.id) { msg.textContent = 'Wähle eine andere Liste als die aktuelle.'; return; }
+    if (!src.vocab.length) { msg.textContent = 'Die Liste „' + (src.name || 'ohne Namen') + '“ ist leer.'; return; }
+    // Vertauschte Sprachen (Englisch/Deutsch statt Deutsch/Englisch) werden erkannt und gedreht.
+    // Sonst wird 1:1 übernommen (Sprache 1 zu Sprache 1), auch bei anderen Sprachen.
+    var swapped = src.langA !== dst.langA && src.langA === dst.langB && src.langB === dst.langA;
+    var sameLangs = src.langA === dst.langA && src.langB === dst.langB;
     var snapshot = JSON.stringify(dst.vocab);
-    var added = 0, merged = 0;
+    var added = 0, merged = 0, empty = 0;
     src.vocab.forEach(function (v) {
       var c = cloneVocab(v);
       if (swapped) {
@@ -1813,16 +1820,27 @@ Wasser; water"></textarea>
         var tae = c.aAltEx; c.aAltEx = c.bAltEx; c.bAltEx = tae;
         var tb = c.boxAB; c.boxAB = c.boxBA; c.boxBA = tb;
         if (c.hist) { var thi = c.hist.ab; c.hist.ab = c.hist.ba; c.hist.ba = thi; }
-        if (c.conf) { c.conf = { ab: {}, ba: {} }; }
+        c.conf = { ab: {}, ba: {} };
+      } else if (!sameLangs) {
+        // andere Sprachen: Wörter behalten, Lernstand nicht (er gehört zu einem anderen Sprachpaar)
+        c.boxAB = 1; c.boxBA = 1;
+        c.hist = { ab: { ok: 0, bad: 0, last: 0 }, ba: { ok: 0, bad: 0, last: 0 } };
+        c.conf = { ab: {}, ba: {} };
       }
-      if (!c.a.trim() || !c.b.trim()) return;
+      if (!c.a.trim() || !c.b.trim()) { empty++; return; }
       var dup = findDuplicate(dst.vocab, c.a, c.b);
       if (dup) { if (mergeVocabInto(dup, c) > 0) merged++; }
       else { dst.vocab.push(c); added++; if (c.phon) dst.showPhon = true; }
     });
-    renderVocabList(); saveAll();
-    gid('toolsMsg').textContent = added + ' hinzugefügt, ' + merged + ' zusammengeführt.' + (swapped ? ' (Sprachen waren vertauscht und wurden angepasst.)' : '');
-    offerUndo('Liste eingefügt (' + added + ' neu)', function () { dst.vocab = JSON.parse(snapshot); });
+    vocabSearchText = ''; gid('vocabSearch').value = '';
+    renderVocabList(); saveAll(); renderMergeSelect();
+    var out = added + ' hinzugefügt, ' + merged + ' zusammengeführt (aus „' + (src.name || 'ohne Namen') + '“).';
+    var same = src.vocab.length - added - merged - empty;
+    if (same > 0) out += ' ' + same + ' schon identisch vorhanden.';
+    if (swapped) out += ' Sprachen waren vertauscht und wurden angepasst.';
+    else if (!sameLangs) out += ' Die Sprachen sind verschieden (' + src.langA + '/' + src.langB + ' → ' + dst.langA + '/' + dst.langB + '), Lernstufen der neuen Wörter starten bei 1.';
+    msg.textContent = out;
+    if (added > 0 || merged > 0) offerUndo('Liste eingefügt (' + added + ' neu)', function () { dst.vocab = JSON.parse(snapshot); });
   }
 
   function newListFromVocab(vocabArr, name, langA, langB, native) {
@@ -3754,7 +3772,7 @@ Wasser; water"></textarea>
     gid('dupMergeBtn').addEventListener('click', function () { resolveDup('merge'); });
     gid('dupSkipBtn').addEventListener('click', function () { resolveDup('skip'); });
     gid('dupAddBtn').addEventListener('click', function () { resolveDup('add'); });
-    gid('mergeBtn').addEventListener('click', mergeLists);
+    gid('mergeBtn').addEventListener('click', function () { mergeLists(); gid('listTools').open = true; });
     gid('splitBtn').addEventListener('click', splitList);
     function newListFrom(idsFn, base) {
       var nl = missedAsNewList(idsFn(), base);
