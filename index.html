@@ -179,6 +179,8 @@
   mark.ex-mark { background: transparent; color: inherit; font-style: normal; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
   .ex-line { font-size: 17px; font-weight: 600; font-style: italic; margin-top: 6px; word-break: break-word; }
   .ex-line:empty { display: none; }
+  .mnem-line { font-size: 17px; font-weight: 700; color: var(--rust); margin-top: 8px; word-break: break-word; }
+  .mnem-line:empty { display: none; }
   .status-line { text-align: center; color: var(--muted); font-size: 15px; margin-top: 14px; }
   .quiz-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 26px; font-size: 16px; color: var(--muted); }
   .quiz-header #progressLabel, .quiz-header #smartProgressLabel { flex: 1; text-align: center; }
@@ -306,6 +308,17 @@
   .share-mini .btn-outline { flex: 1; padding: 10px 8px; font-size: 16px; }
   .smart-note { font-size: 15px; color: var(--muted); margin: 0 0 12px; }
   .smart-note:empty { display: none; }
+  /* Neu: Auswahl, Sammel-Aktionen, Filter */
+  .sel-row { display: flex; align-items: center; gap: 8px; padding: 6px 12px 0; cursor: pointer; }
+  .sel-box { width: 22px; height: 22px; flex: none; accent-color: var(--rust); cursor: pointer; }
+  .sel-text { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .bulkbar { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 40; display: flex; flex-wrap: wrap; gap: 8px; background: var(--ink); padding: 10px; border-radius: 12px; margin-top: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .bulkbar.hidden { display: none; }
+  .bulkbar .sel-count { flex: 1 1 100%; color: var(--bg); font-weight: 700; font-size: 16px; }
+  .bulkbar button, .bulkbar select { flex: 1 1 90px; width: auto; padding: 9px 6px; font-size: 15px; border-radius: 6px; border: 1.5px solid var(--bg); background: transparent; color: var(--bg); font-family: inherit; font-weight: 700; cursor: pointer; min-height: 40px; }
+  .bulkbar select { flex: 2 1 130px; appearance: auto; }
+  .bulkbar option { color: #000; background: #fff; }
+  .lvl-seg { margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -382,7 +395,7 @@
 
     <section class="vocab-section">
       <label class="section-label">Vokabelliste</label>
-      <p class="hint">Tipp: Unter jedem Wort kannst du mit <strong>+ Alternative hinzufügen</strong> weitere akzeptierte Antworten hinterlegen. Alternativen, die beim Lernen hinzugefügt wurden, sind markiert. Mit dem <strong>½</strong>-Knopf neben einer Alternative markierst du sie als halben Fehler: Antwortest du damit, gibt es nur einen halben Fehler und den Hinweis „besser wäre …“. Jede Alternative kann außerdem ihren eigenen Beispielsatz haben. Die zwei Zahlen zeigen die Lernstufen (1–5) pro Richtung: → Sprache 1 zu Sprache 2, ← Sprache 2 zu Sprache 1. Je niedriger, desto öfter wird die Karte abgefragt.</p>
+      <p class="hint">Tipp: Unter jedem Wort kannst du mit <strong>+ Alternative hinzufügen</strong> weitere akzeptierte Antworten hinterlegen. Alternativen, die beim Lernen hinzugefügt wurden, sind markiert. Mit dem <strong>½</strong>-Knopf neben einer Alternative markierst du sie als halben Fehler: Antwortest du damit, gibt es nur einen halben Fehler und den Hinweis „besser wäre …“. Jede Alternative kann außerdem ihren eigenen Beispielsatz haben. Die <strong>Eselsbrücke</strong> ist ein eigener Merksatz pro Wort: Er erscheint nach einem Fehler und beim Kennenlernen. Die zwei Zahlen zeigen die Lernstufen (1–5) pro Richtung: → Sprache 1 zu Sprache 2, ← Sprache 2 zu Sprache 1. Je niedriger, desto öfter wird die Karte abgefragt.</p>
       <label class="toggle-row small"><input type="checkbox" id="showPhonCheck"><span>Lautschrift-Spalte anzeigen (optional)</span></label>
       <div class="vocab-toolbar">
         <input type="text" id="vocabSearch" placeholder="Suchen (beide Sprachen)…" autocomplete="off" aria-label="Vokabeln suchen">
@@ -397,6 +410,21 @@
           </select>
           <span class="select-chevron" aria-hidden="true">⌄</span>
         </div>
+        <div class="select-wrapper sort-wrapper">
+          <select id="vocabFilter" aria-label="Filter nach Typ">
+            <option value="">Alle Wörter</option>
+            <option value="hasex">Mit Beispielsatz</option>
+            <option value="noex">Ohne Beispielsatz</option>
+            <option value="hasphon">Mit Lautschrift</option>
+            <option value="nophon">Ohne Lautschrift</option>
+            <option value="hasalt">Mit Alternativen</option>
+            <option value="noalt">Ohne Alternativen</option>
+            <option value="hasmnem">Mit Eselsbrücke</option>
+            <option value="nomnem">Ohne Eselsbrücke</option>
+            <option value="star">Nur Sternchen ★</option>
+          </select>
+          <span class="select-chevron" aria-hidden="true">⌄</span>
+        </div>
       </div>
       <p class="hint" id="vocabCount" aria-live="polite"></p>
       <div class="vocab-header">
@@ -406,6 +434,18 @@
         <span></span>
       </div>
       <div id="vocabList" class="vocab-list"></div>
+
+      <div class="bulkbar hidden" id="bulkBar">
+        <span class="sel-count" id="selCount"></span>
+        <button type="button" id="selAllBtn">Alle sichtbaren</button>
+        <button type="button" id="selNoneBtn">Auswahl leeren</button>
+        <button type="button" id="selStarBtn">★ setzen</button>
+        <button type="button" id="selUnstarBtn">★ entfernen</button>
+        <button type="button" id="selResetBtn">Lernstufen zurücksetzen</button>
+        <button type="button" id="selDelBtn">Löschen</button>
+        <select id="selMoveSel" aria-label="Zielliste"></select>
+        <button type="button" id="selMoveBtn">Verschieben</button>
+      </div>
 
       <div class="vocab-actions">
         <button class="btn-outline" id="addRowBtn" type="button">+ Zeile hinzufügen</button>
@@ -418,6 +458,7 @@
         <p class="hint" id="hintBulkPhon"></p>
         <p class="hint" id="hintBulkAlt"></p>
         <p class="hint" id="hintBulkEx"></p>
+        <p class="hint" id="hintBulkMnem"></p>
         <textarea id="bulkText" rows="4" placeholder="Haus; house &quot;The house is big.&quot; / home* &quot;Welcome to my home.&quot;
 Auto / Wagen; car
 Wasser; water"></textarea>
@@ -481,9 +522,23 @@ Wasser; water"></textarea>
 
     <section class="smart-section">
       <label class="section-label">Smart-Lernpfad</label>
-      <p class="hint">Das System wertet Lernstufen, Treffer und Fehler, Wortlänge und die Zeit seit der letzten Übung aus und baut daraus einen festen Lernplan. Es wird nur die <strong>Fremdsprache</strong> gelernt (deine Muttersprache oben markieren). Jedes Wort durchläuft viele Stufen: <strong>Kennenlernen → Abtippen → Auswahl → Richtig oder falsch → Blitz-Diktat → Rückrichtung → Silben → Buchstaben legen → Lückenwort → Satz-Lücke → Tippen mit Hilfe → Tippen → Rückrichtung tippen → Diktat aus dem Kopf → Abschlusstest → Spät-Test</strong>. Fehlerwörter werden am Ende der Runde noch einmal geübt. Beispielsätze und Lautschrift werden angezeigt, wenn vorhanden.</p>
+      <p class="hint">Das System wertet Lernstufen, Treffer und Fehler, Wortlänge und die Zeit seit der letzten Übung aus und baut daraus einen festen Lernplan. Es wird nur die <strong>Fremdsprache</strong> gelernt (deine Muttersprache oben markieren). Jedes Wort durchläuft viele Stufen: <strong>Kennenlernen → Abtippen → Auswahl → Richtig oder falsch → Blitz-Diktat → Rückrichtung → Silben → Buchstaben legen → Lückenwort → Satz-Lücke → Tippen mit Hilfe → Tippen → Rückrichtung tippen → Diktat aus dem Kopf → Abschlusstest → Spät-Test</strong>. Fehlerwörter werden am Ende der Runde noch einmal geübt. Beispielsätze, Lautschrift und Eselsbrücken werden angezeigt, wenn vorhanden.</p>
+      <label class="section-label" style="margin-top:14px">Schwierigkeit</label>
+      <div class="segmented lvl-seg" role="group" aria-label="Schwierigkeit">
+        <button class="segment-btn" type="button" data-lvl="fast">Schnell</button>
+        <button class="segment-btn" type="button" data-lvl="normal">Normal</button>
+        <button class="segment-btn" type="button" data-lvl="thorough">Gründlich</button>
+      </div>
+      <p class="hint" id="lvlHint"></p>
       <p class="hint smart-info" id="smartInfo" aria-live="polite"></p>
       <button class="btn-primary btn-smart" id="startSmartBtn" type="button">Smart-Lernpfad starten</button>
+    </section>
+
+    <section class="conf-section">
+      <label class="section-label">Verwechsler</label>
+      <p class="hint">Wortpaare, die du öfter durcheinanderbringst. Sie werden beim Smart-Lernpfad und beim Zuordnen automatisch gemerkt.</p>
+      <div id="confList"></div>
+      <button class="btn-outline" id="startConfBtn" type="button" style="width:100%;margin-top:8px">Diese Paare üben</button>
     </section>
 
     <section class="know-section">
@@ -500,6 +555,17 @@ Wasser; water"></textarea>
 
     <button class="btn-primary" id="startQuizBtn" type="button">Karteikasten starten</button>
     <p class="status-line" id="statusLine" aria-live="polite"></p>
+
+    <section class="backup-section">
+      <label class="section-label">Gesamt-Backup</label>
+      <p class="hint">Dein Lernstand liegt nur im Browser-Speicher. Ein Backup sichert <strong>alle Listen</strong> samt Lernstufen, Verlauf, Verwechslungen, Eselsbrücken und Einstellungen in <strong>einer Datei</strong>. Beim Einlesen wird sie wieder in die einzelnen Listen aufgeteilt.</p>
+      <div class="share-actions">
+        <button class="btn-outline" id="backupMakeBtn" type="button">Backup erstellen</button>
+        <button class="btn-outline" id="backupLoadBtn" type="button">Backup einlesen</button>
+      </div>
+      <input type="file" id="backupFile" accept=".json,.txt,application/json,text/plain" class="hidden">
+      <p class="hint" id="backupMsg" aria-live="polite"></p>
+    </section>
   </div>
 
   <div id="quiz-screen" class="screen hidden">
@@ -520,7 +586,7 @@ Wasser; water"></textarea>
       <button class="btn-text hint-btn" id="hintBtn" type="button">Hinweis anzeigen (kostet ½ Punkt)</button>
       <span class="hint-line" id="hintLine" aria-live="polite"></span>
     </div>
-    <div class="feedback hidden" id="feedback"><div id="feedbackText"></div><div class="phon-line" id="phonLine"></div><div class="ex-line" id="exLine"></div><div class="level-line" id="levelLine"></div></div>
+    <div class="feedback hidden" id="feedback"><div id="feedbackText"></div><div class="phon-line" id="phonLine"></div><div class="ex-line" id="exLine"></div><div class="mnem-line" id="mnemLine"></div><div class="level-line" id="levelLine"></div></div>
     <button class="btn-outline mark-correct-btn hidden" id="markCorrectBtn" type="button">Als Alternative speichern</button>
     <button class="btn-outline mark-correct-btn hidden" id="fullCorrectBtn" type="button">Als komplett richtig markieren</button>
     <button class="btn-outline mark-correct-btn subtle hidden" id="removeAltBtn" type="button">Alternative entfernen</button>
@@ -576,7 +642,7 @@ Wasser; water"></textarea>
     <input type="text" id="smartInput" class="hidden" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Antwort eingeben">
     <div class="hint-line" id="smartHintLine" aria-live="polite"></div>
     <div class="feedback hidden" id="smartFeedback"><div id="smartFbText"></div><div class="level-line" id="smartLevel"></div></div>
-    <div id="smartExtra"><div class="phon-line" id="smartPhon"></div><div class="ex-line" id="smartEx"></div></div>
+    <div id="smartExtra"><div class="phon-line" id="smartPhon"></div><div class="ex-line" id="smartEx"></div><div class="mnem-line" id="smartMnem"></div></div>
     <button class="btn-text" id="smartSkipBtn" type="button">Weiß ich nicht</button>
     <button class="btn-primary" id="smartActionBtn" type="button">Prüfen</button>
   </div>
@@ -779,8 +845,10 @@ Wasser; water"></textarea>
     if (elAlt) elAlt.innerHTML = 'Alternativen gehen direkt mit einem Schrägstrich <strong>/</strong>: Das erste Wort ist die Hauptantwort, die weiteren sind Alternativen (auf beiden Seiten möglich). Ein <strong>*</strong> direkt hinter einer Alternative markiert sie als halben Fehler: Wer sie eintippt, bekommt nur einen halben Fehler („besser wäre …“). Beispiele: <em>' + escEm(a.w1) + '; ' + escEm(b.w1) + ' / ' + escEm(b.w1alt) + '*</em> (bei „' + escEm(b.w1alt) + '“ gibt es nur einen halben Fehler) oder <em>' + escEm(a.w2) + ' / ' + escEm(a.w2alt) + '; ' + escEm(b.w2) + '</em>';
     var elEx = document.getElementById('hintBulkEx');
     if (elEx) elEx.innerHTML = 'Einen Beispielsatz setzt du in Anführungszeichen ("…" oder „…“), direkt hinter dem Wort, zu dem er gehört – das funktioniert auch pro Alternative: <em>' + escEm(a.w1) + '; ' + escEm(b.w1) + ' "' + escEm(b.ex1) + '" / ' + escEm(b.w1alt) + '* "' + escEm(b.ex1alt) + '"</em> Mit Sternchen markierst du zusätzlich ein Wort im Satz selbst: <em>"' + escEm(b.ex1marked) + '"</em> Der Satz darf auch Kommas oder Semikolons enthalten.';
+    var elMn = document.getElementById('hintBulkMnem');
+    if (elMn) elMn.innerHTML = 'Eine <strong>Eselsbrücke</strong> (Merksatz) setzt du in geschweifte Klammern, an beliebiger Stelle der Zeile: <em>' + escEm(a.w1) + '; ' + escEm(b.w1) + ' {' + escEm(b.w1) + ' klingt wie „Haus“}</em>. Sie gehört zur Fremdsprache und erscheint nach einem Fehler und beim Kennenlernen.';
     var elShare = document.getElementById('hintShareFormat');
-    if (elShare) elShare.innerHTML = 'Die Datei hat pro Zeile ein Wortpaar (<em>' + escEm(a.w1) + '; ' + escEm(b.w1) + ' / ' + escEm(b.w1alt) + '*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Lautschrift steht in eckigen Klammern hinter dem jeweiligen Wort, Beispielsätze in Anführungszeichen. Lernstufen werden nicht mitgespeichert.';
+    if (elShare) elShare.innerHTML = 'Die Datei hat pro Zeile ein Wortpaar (<em>' + escEm(a.w1) + '; ' + escEm(b.w1) + ' / ' + escEm(b.w1alt) + '*</em>) und lässt sich direkt bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen. Alternativen stehen hinter „/“, ein „*“ markiert halbe Fehler. Lautschrift steht in eckigen Klammern hinter dem jeweiligen Wort, Beispielsätze in Anführungszeichen, Eselsbrücken in {…}. Lernstufen werden nicht mitgespeichert (dafür gibt es das Gesamt-Backup).';
   }
 
   var langModalTarget = null;
@@ -845,8 +913,29 @@ Wasser; water"></textarea>
     ['ab', 'ba'].forEach(function (k) { if (!v.conf[k] || typeof v.conf[k] !== 'object') v.conf[k] = {}; });
     if (typeof v.phon !== 'string') v.phon = '';
     if (typeof v.ex !== 'string') v.ex = '';
+    if (typeof v.mnem !== 'string') v.mnem = '';
     if (typeof v.created !== 'number') v.created = Date.now();
     return v;
+  }
+
+  function normalizeList(l) {
+    if (!Array.isArray(l.vocab)) l.vocab = [];
+    l.vocab.forEach(function (v, i) { if (typeof v.created !== 'number') v.created = i + 1; });
+    l.vocab.forEach(normalizeVocab);
+    if (!l.id) l.id = generateId();
+    if (typeof l.name !== 'string') l.name = 'Liste';
+    if (typeof l.langA !== 'string') l.langA = 'Deutsch';
+    if (typeof l.langB !== 'string') l.langB = 'Englisch';
+    if (['aToB', 'bToA', 'mixed'].indexOf(l.direction) === -1) l.direction = 'mixed';
+    if (typeof l.sortBy !== 'string') l.sortBy = 'created_asc';
+    if (typeof l.showPhon !== 'boolean') l.showPhon = l.vocab.some(function (v) { return v.phon; });
+    if (typeof l.multipleChoice !== 'boolean') l.multipleChoice = false;
+    if (typeof l.starOnly !== 'boolean') l.starOnly = false;
+    if (typeof l.weakOnly !== 'boolean') l.weakOnly = false;
+    if (l.native !== 'a' && l.native !== 'b') l.native = 'a';
+    if (['fast', 'normal', 'thorough'].indexOf(l.smartLevel) === -1) l.smartLevel = 'normal';
+    if (l.minutes !== null && (typeof l.minutes !== 'number' || isNaN(l.minutes) || l.minutes < 0)) l.minutes = DEFAULT_MINUTES;
+    return l;
   }
 
   function getCurrentList() {
@@ -855,7 +944,7 @@ Wasser; water"></textarea>
   }
 
   function defaultList(name) {
-    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', native: 'a', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false, multipleChoice: false, starOnly: false, sortBy: 'created_asc' };
+    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', native: 'a', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false, multipleChoice: false, starOnly: false, sortBy: 'created_asc', smartLevel: 'normal' };
   }
 
   function loadAll() {
@@ -866,17 +955,7 @@ Wasser; water"></textarea>
         var parsed = JSON.parse(raw);
         if (parsed && Array.isArray(parsed.lists) && parsed.lists.length > 0) {
           lists = parsed.lists;
-          lists.forEach(function (l) {
-            if (!Array.isArray(l.vocab)) l.vocab = [];
-            l.vocab.forEach(function (v, i) { if (typeof v.created !== 'number') v.created = i + 1; });
-            l.vocab.forEach(normalizeVocab);
-            if (typeof l.sortBy !== 'string') l.sortBy = 'created_asc';
-            if (typeof l.showPhon !== 'boolean') l.showPhon = l.vocab.some(function (v) { return v.phon; });
-            if (typeof l.multipleChoice !== 'boolean') l.multipleChoice = false;
-            if (typeof l.starOnly !== 'boolean') l.starOnly = false;
-            if (l.native !== 'a' && l.native !== 'b') l.native = 'a';
-            if (l.minutes !== null && (typeof l.minutes !== 'number' || isNaN(l.minutes) || l.minutes < 0)) l.minutes = DEFAULT_MINUTES;
-          });
+          lists.forEach(normalizeList);
           var validId = false;
           for (var i = 0; i < lists.length; i++) if (lists[i].id === parsed.currentListId) validId = true;
           currentListId = validId ? parsed.currentListId : lists[0].id;
@@ -931,6 +1010,19 @@ Wasser; water"></textarea>
     gid('nativeB').classList.toggle('active', l.native === 'b');
   }
 
+  var LVL_HINTS = {
+    fast: 'Schnell: kurze Leiter mit den wichtigsten Stufen (Aufdecken/Kennenlernen, Abtippen, Auswahl, Tippen mit Hilfe, Tippen, Abschlusstest). Mehr Wörter in der gleichen Zeit.',
+    normal: 'Normal: die volle Leiter ohne die aufwändigsten Zwischenstufen (Richtig oder falsch, Silben, Rückrichtung tippen).',
+    thorough: 'Gründlich: die komplette Leiter mit allen Stufen. Weniger Wörter pro Runde, dafür am festesten eingeprägt.'
+  };
+
+  function setLvlButtons() {
+    var l = getCurrentList();
+    var btns = document.querySelectorAll('[data-lvl]');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', btns[i].dataset.lvl === l.smartLevel);
+    gid('lvlHint').textContent = LVL_HINTS[l.smartLevel] || '';
+  }
+
   function updateLangHeadersAndPlaceholders() {
     var list = getCurrentList();
     var a = list.langA || 'Sprache 1';
@@ -975,6 +1067,7 @@ Wasser; water"></textarea>
       ? 'Noch keine vollständigen Vokabelpaare.'
       : validCount + (validCount === 1 ? ' Vokabelpaar bereit.' : ' Vokabelpaare bereit.') + (starN ? ' ★ ' + starN + ' markiert.' : '');
     updateWeakInfo();
+    renderConfList();
   }
 
   function countWeakCards(list) {
@@ -1026,6 +1119,8 @@ Wasser; water"></textarea>
   }
 
   var vocabSearchText = '';
+  var vocabFilter = '';
+  var selected = {};
 
   function textCmp(x, y) {
     if (!x && !y) return 0;
@@ -1039,10 +1134,27 @@ Wasser; water"></textarea>
     return fields.some(function (f) { return simplifyAnswer(String(f).toLowerCase()).indexOf(q) !== -1; });
   }
 
+  function passesFilter(v) {
+    var hasAlt = (v.aAlts && v.aAlts.length) || (v.bAlts && v.bAlts.length);
+    var hasPhon = !!(v.phon && v.phon.trim()) || Object.keys(v.aAltPhon || {}).length > 0 || Object.keys(v.bAltPhon || {}).length > 0;
+    switch (vocabFilter) {
+      case 'hasex': return !!(v.ex && v.ex.trim());
+      case 'noex': return !(v.ex && v.ex.trim());
+      case 'hasphon': return !!(v.phon && v.phon.trim());
+      case 'nophon': return !(v.phon && v.phon.trim());
+      case 'hasalt': return !!hasAlt;
+      case 'noalt': return !hasAlt;
+      case 'hasmnem': return !!(v.mnem && v.mnem.trim());
+      case 'nomnem': return !(v.mnem && v.mnem.trim());
+      case 'star': return !!v.star;
+      default: return true;
+    }
+  }
+
   function getVocabOrder(list) {
     var q = simplifyAnswer(vocabSearchText.trim().toLowerCase());
     var idxs = [];
-    list.vocab.forEach(function (v, i) { if (!q || vocabMatches(v, q)) idxs.push(i); });
+    list.vocab.forEach(function (v, i) { if ((!q || vocabMatches(v, q)) && passesFilter(v)) idxs.push(i); });
     var by = list.sortBy || 'created_asc';
     var vs = list.vocab;
     function lvl(v) { return (v.boxAB + v.boxBA) / 2; }
@@ -1059,17 +1171,38 @@ Wasser; water"></textarea>
     return idxs;
   }
 
+  /* ---- Sammel-Aktionen ---- */
+  function selIds() { return Object.keys(selected).filter(function (k) { return selected[k]; }); }
+  function selVocab() { var ids = selIds(); return getCurrentList().vocab.filter(function (v) { return ids.indexOf(v.id) !== -1; }); }
+  function pruneSelection() {
+    var have = {};
+    getCurrentList().vocab.forEach(function (v) { have[v.id] = true; });
+    Object.keys(selected).forEach(function (k) { if (!have[k]) delete selected[k]; });
+  }
+  function updateBulkBar() {
+    pruneSelection();
+    var n = selIds().length;
+    gid('bulkBar').classList.toggle('hidden', n === 0);
+    gid('selCount').textContent = n + (n === 1 ? ' Wort ausgewählt' : ' Wörter ausgewählt');
+    var html = '';
+    lists.forEach(function (l) { if (l.id !== currentListId) html += '<option value="' + l.id + '">→ ' + escapeHtml(l.name || '(ohne Namen)') + '</option>'; });
+    gid('selMoveSel').innerHTML = html || '<option value="">Keine andere Liste</option>';
+    gid('selMoveBtn').disabled = !html;
+  }
+
   function renderVocabList() {
     var list = getCurrentList();
     var container = gid('vocabList');
     var html = '';
     var order = getVocabOrder(list);
-    gid('vocabCount').textContent = vocabSearchText.trim() ? order.length + ' von ' + list.vocab.length + ' Vokabeln gefunden.' : '';
+    gid('vocabCount').textContent = (vocabSearchText.trim() || vocabFilter) ? order.length + ' von ' + list.vocab.length + ' Vokabeln angezeigt.' : '';
     gid('vocabSort').value = list.sortBy || 'created_asc';
+    gid('vocabFilter').value = vocabFilter;
     for (var oi = 0; oi < order.length; oi++) {
       var i = order[oi];
       var pair = list.vocab[i];
       html += '<div class="vocab-card">';
+      html += '<label class="sel-row"><input type="checkbox" class="sel-box" data-id="' + pair.id + '"' + (selected[pair.id] ? ' checked' : '') + '><span class="sel-text">auswählen</span></label>';
       html += '<div class="vocab-row">' +
         '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="a" value="' + escapeHtml(pair.a) + '" placeholder="' + escapeHtml(list.langA) + '">' +
         '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="b" value="' + escapeHtml(pair.b) + '" placeholder="' + escapeHtml(list.langB) + '">' +
@@ -1085,6 +1218,8 @@ Wasser; water"></textarea>
       html += '<div class="ex-row"><span class="ex-label">Beispiel</span>' +
         '<input type="text" class="ex-input" data-idx="' + i + '" value="' + escapeHtml(pair.ex || '') + '" placeholder="Beispielsatz (optional)" autocomplete="off">' +
         '<button class="ex-mark-btn" data-idx="' + i + '" type="button" title="Wörter im Beispielsatz markieren">Markieren</button></div>';
+      html += '<div class="ex-row"><span class="ex-label">Eselsbrücke</span>' +
+        '<input type="text" class="mnem-input" data-idx="' + i + '" value="' + escapeHtml(pair.mnem || '') + '" placeholder="Merksatz (optional)" autocomplete="off" style="flex:1;font-size:16px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg)"></div>';
       html += '<div class="alt-panel">' + altColumnHtml(pair, i, 'aAlts', 'alt-lang-a', list.langA) + altColumnHtml(pair, i, 'bAlts', 'alt-lang-b', list.langB) + '</div></div>';
     }
     if (order.length === 0 && list.vocab.length > 0) html = '<div class="vocab-empty">Keine Treffer.</div>';
@@ -1092,6 +1227,7 @@ Wasser; water"></textarea>
     gid('showPhonCheck').checked = !!list.showPhon;
     updateLangHeadersAndPlaceholders();
     updateStartButtonState();
+    updateBulkBar();
   }
 
   function updateMinutesSeconds() {
@@ -1108,6 +1244,8 @@ Wasser; water"></textarea>
     var list = getCurrentList();
     gid('listNameInput').value = list.name;
     vocabSearchText = '';
+    vocabFilter = '';
+    selected = {};
     gid('vocabSearch').value = '';
     gid('weakOnlyCheck').checked = !!list.weakOnly;
     gid('multipleChoiceCheck').checked = !!list.multipleChoice;
@@ -1117,6 +1255,7 @@ Wasser; water"></textarea>
     updateLangPickerLabels();
     renderVocabList();
     setActiveSegment(list.direction);
+    setLvlButtons();
   }
 
   var MARK_HINT_TEXT = 'Klicke auf das Wort / die Wörter, die du markieren möchtest';
@@ -1159,6 +1298,7 @@ Wasser; water"></textarea>
   function addRow() {
     var list = getCurrentList();
     vocabSearchText = '';
+    vocabFilter = '';
     gid('vocabSearch').value = '';
     list.vocab.push(normalizeVocab({ a: '', b: '' }));
     renderVocabList();
@@ -1233,6 +1373,8 @@ Wasser; water"></textarea>
     if (!/^[\[\/]/.test(t)) t = '[' + t + ']';
     return 'Lautschrift: ' + t;
   }
+
+  function mnemHtml(v) { var m = v && v.mnem ? v.mnem.trim() : ''; return m ? '💡 ' + escapeHtml(m) : ''; }
 
   function phonInsert(text) {
     var input = gid('phonSheetInput');
@@ -1363,11 +1505,12 @@ Wasser; water"></textarea>
       var phonExport = String(v.phon || '').replace(/[;\t\r\n]+/g, ' ').trim();
       if (phonExport && !/^\[.*\]$/.test(phonExport)) phonExport = '[' + phonExport + ']';
       var exExport = String(v.ex || '').replace(/["„“”\t\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+      var mnExport = String(v.mnem || '').replace(/[{}\t\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
       var sideBTxt = exportSide(v.b, v.bAlts, v.bHalf, v.bAltPhon, v.bAltEx);
       var firstEnd = sideBTxt.indexOf(' / ');
       var mainB = firstEnd === -1 ? sideBTxt : sideBTxt.slice(0, firstEnd);
       var restB = firstEnd === -1 ? '' : sideBTxt.slice(firstEnd);
-      mainB += (phonExport ? ' ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : '');
+      mainB += (phonExport ? ' ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : '') + (mnExport ? ' {' + mnExport + '}' : '');
       lines.push(exportSide(v.a, v.aAlts, v.aHalf, v.aAltPhon, v.aAltEx) + '; ' + mainB + restB);
     });
     return lines.join('\n');
@@ -1379,8 +1522,8 @@ Wasser; water"></textarea>
   }
   function showShareMessage(msg) { gid('shareMessage').textContent = msg; }
 
-  function downloadTextFile(text, fileName) {
-    var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  function downloadTextFile(text, fileName, mime) {
+    var blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = fileName;
@@ -1523,15 +1666,13 @@ Wasser; water"></textarea>
       }
     }
     var lastOk = 0; while (lastOk < ts.length && lastOk < cs.length && ts.charAt(lastOk) === cs.charAt(lastOk)) lastOk++;
-    var endOk = 0; while (endOk < ts.length && endOk < cs.length && ts.charAt(ts.length - 1 - endOk) === cs.charAt(cs.length - 1 - endOk)) endOk++;
     if (lastOk === 0 && cs.length > 2) return 'start';
-    // Endung: alles ab der Wortmitte ist anders (mehr als nur ein einzelner Buchstabe)
     if (cs.length - lastOk >= 2 && lastOk >= Math.ceil(cs.length / 2) && cs.length > 3) return 'ending';
     if (ts.length === cs.length + 1 && lastOk === cs.length) return 'extra';
     return 'letter';
   }
 
-  var errPatterns = {}; // aktuelle Runde: { key: count }
+  var errPatterns = {};
   function resetPatterns() { errPatterns = {}; }
   function notePattern(typed, correct) {
     if (!String(typed || '').trim()) return;
@@ -1544,7 +1685,6 @@ Wasser; water"></textarea>
     var total = keys.reduce(function (n, k) { return n + errPatterns[k]; }, 0);
     gid(boxElId).style.display = total >= 2 ? '' : 'none';
     if (total < 2) return;
-    // 'other' nur nennen, wenn er dominiert, sonst ist es kein Muster
     gid(listElId).innerHTML = keys.slice(0, 3).map(function (k) {
       var info = PATTERN_INFO[k];
       return '<div class="pattern-row"><span class="p-count">' + errPatterns[k] + '×</span> ' + escapeHtml(info.label) + '<span class="p-tip">' + escapeHtml(info.tip) + '</span></div>';
@@ -1554,7 +1694,6 @@ Wasser; water"></textarea>
   /* ---- Spiegelübung ---- */
   var mirror = null;
 
-  // 1–2 Buchstaben ändern: ersetzen, vertauschen, weglassen oder verdoppeln
   function mutateWord(word, seed) {
     var chars = Array.from(String(word));
     var idxs = [];
@@ -1573,20 +1712,19 @@ Wasser; water"></textarea>
       var type = (h >> (step * 3 + 1)) % 4;
       var ch = out[pos], low = ch.toLowerCase(), rep;
       if (type === 0 && pos + 1 < out.length && /[\p{L}]/u.test(out[pos + 1]) && out[pos + 1] !== ch) {
-        var nx = out[pos + 1]; out[pos + 1] = ch; out[pos] = nx;                       // vertauschen
+        var nx = out[pos + 1]; out[pos + 1] = ch; out[pos] = nx;
       } else if (type === 1 && idxs.length >= 5) {
-        out[pos] = '';                                                                 // weglassen
+        out[pos] = '';
       } else if (type === 2) {
-        out[pos] = ch + ch;                                                            // verdoppeln
+        out[pos] = ch + ch;
       } else {
-        rep = lookalike[low] || String.fromCharCode(((low.charCodeAt(0) - 97 + 3) % 26) + 97); // ersetzen
+        rep = lookalike[low] || String.fromCharCode(((low.charCodeAt(0) - 97 + 3) % 26) + 97);
         if (!/[a-z]/.test(rep.charAt(0))) rep = 'e';
         out[pos] = ch === ch.toUpperCase() && ch !== low ? rep.toUpperCase() : rep;
       }
     }
     var res = out.join('');
     if (normalizeAnswer(res) === normalizeAnswer(word)) return null;
-    // Zu starke Veränderung vermeiden: höchstens 3 Bearbeitungsschritte
     if (levenshtein(res.toLowerCase(), String(word).toLowerCase()) > 3) return null;
     return res;
   }
@@ -1602,7 +1740,6 @@ Wasser; water"></textarea>
     var cards = seededShuffle(vocab.map(function (v) { return v.id; }), 'mirror' + round).slice(0, 20).map(function (id, i) {
       var v = findVocab(id), tgt = dir === 'aToB' ? v.b : v.a;
       var wrong = mutateWord(tgt, id + round + i);
-      // Etwa 65 % der Karten sind verändert, der Rest bleibt richtig (sonst rät man einfach "falsch")
       var useWrong = wrong !== null && hashStr(id + round + 'w') % 100 < 65;
       return { id: id, dir: dir, target: tgt, shown: useWrong ? wrong : tgt, isWrong: useWrong };
     });
@@ -1628,7 +1765,7 @@ Wasser; water"></textarea>
     gid('mirrorScore').textContent = '✓ ' + mirror.ok;
   }
 
-  function mirrorFeedback(cls, text, btn) {
+  function mirrorFeedback(cls, text) {
     gid('mirrorCard').classList.add(cls === 'correct' ? 'correct' : 'incorrect');
     gid('mirrorFeedback').className = 'feedback ' + cls;
     gid('mirrorFbText').textContent = text;
@@ -1649,7 +1786,6 @@ Wasser; water"></textarea>
     } else {
       if (!c.isWrong) { mirror.miss.push(c); mirrorFeedback('incorrect', 'Die Schreibweise stimmte: ' + c.target); }
       else {
-        // Falsch erkannt: jetzt die richtige Schreibweise tippen
         mirror.phase = 'type';
         gid('mirrorChoice').classList.add('hidden');
         gid('mirrorInstr').textContent = 'Gut erkannt! Tippe jetzt die richtige Schreibweise.';
@@ -1707,7 +1843,6 @@ Wasser; water"></textarea>
   }
 
   function mergeAlt(target, src, altF, mainF) {
-    // Hauptwort und Alternativen der Quelle als Alternativen der Zielseite, sofern neu
     var known = [target[mainF]].concat(target[altF] || []).map(dupKey);
     var srcWords = [src[mainF]].concat(src[altF] || []);
     var added = 0;
@@ -1724,15 +1859,15 @@ Wasser; water"></textarea>
     return added;
   }
 
-  // Ergänzt nur, was fehlt. Lernstufen, Verlauf und vorhandene Texte bleiben unverändert.
   function mergeVocabInto(target, src) {
     var n = mergeAlt(target, src, 'aAlts', 'a') + mergeAlt(target, src, 'bAlts', 'b');
     if (!target.phon && src.phon) { target.phon = src.phon; n++; }
     if (!target.ex && src.ex) { target.ex = src.ex; n++; }
+    if (!target.mnem && src.mnem) { target.mnem = src.mnem; n++; }
     return n;
   }
 
-  var pendingDup = null; // { list, fresh: [vocab], dups: [{ existing, incoming }], added }
+  var pendingDup = null;
 
   function hideDupBox() { gid('dupBox').classList.add('hidden'); pendingDup = null; }
 
@@ -1760,7 +1895,6 @@ Wasser; water"></textarea>
     showBulkMessage(parts.join(', ') + '.');
   }
 
-  // ---- Rückgängig ----
   var undoState = null, undoTimer = null;
 
   function offerUndo(text, restoreFn) {
@@ -1779,7 +1913,6 @@ Wasser; water"></textarea>
     renderVocabList(); saveAll();
   }
 
-  // ---- Listen zusammenführen / aufteilen ----
   function renderMergeSelect() {
     var sel = gid('mergeSelect');
     if (!sel) return;
@@ -1803,8 +1936,6 @@ Wasser; water"></textarea>
     if (!src) { msg.textContent = 'Es gibt keine andere Liste zum Einfügen. Lege zuerst eine zweite Liste an.'; return; }
     if (src.id === dst.id) { msg.textContent = 'Wähle eine andere Liste als die aktuelle.'; return; }
     if (!src.vocab.length) { msg.textContent = 'Die Liste „' + (src.name || 'ohne Namen') + '“ ist leer.'; return; }
-    // Vertauschte Sprachen (Englisch/Deutsch statt Deutsch/Englisch) werden erkannt und gedreht.
-    // Sonst wird 1:1 übernommen (Sprache 1 zu Sprache 1), auch bei anderen Sprachen.
     var swapped = src.langA !== dst.langA && src.langA === dst.langB && src.langB === dst.langA;
     var sameLangs = src.langA === dst.langA && src.langB === dst.langB;
     var snapshot = JSON.stringify(dst.vocab);
@@ -1822,7 +1953,6 @@ Wasser; water"></textarea>
         if (c.hist) { var thi = c.hist.ab; c.hist.ab = c.hist.ba; c.hist.ba = thi; }
         c.conf = { ab: {}, ba: {} };
       } else if (!sameLangs) {
-        // andere Sprachen: Wörter behalten, Lernstand nicht (er gehört zu einem anderen Sprachpaar)
         c.boxAB = 1; c.boxBA = 1;
         c.hist = { ab: { ok: 0, bad: 0, last: 0 }, ba: { ok: 0, bad: 0, last: 0 } };
         c.conf = { ab: {}, ba: {} };
@@ -1872,7 +2002,6 @@ Wasser; water"></textarea>
     showSetupMessage(picked.length + ' Wörter in neue Liste „' + nl.name + '“ kopiert.');
   }
 
-  // Fehlerliste (nach Quiz/Smart/Selbstcheck) als neue Liste speichern
   function missedAsNewList(vocabIds, baseName) {
     var src = quizListRef || getCurrentList();
     var seen = {}, out = [];
@@ -1888,11 +2017,15 @@ Wasser; water"></textarea>
   function parseBulk() {
     var list = getCurrentList();
     var lines = gid('bulkText').value.split('\n');
-    var added = 0, altCount = 0, halfCount = 0, phonCount = 0, exCount = 0;
+    var added = 0, altCount = 0, halfCount = 0, phonCount = 0, exCount = 0, mnemCount = 0;
     var freshPairs = [];
     hideDupBox();
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
+      if (!line) continue;
+      // Eselsbrücke {…}: an beliebiger Stelle der Zeile
+      var mnemText = '';
+      line = line.replace(/\{([^}]*)\}/g, function (m, inner) { if (!mnemText) mnemText = inner.trim(); return ' '; }).replace(/ {2,}/g, ' ').trim();
       if (!line) continue;
       var examples = [];
       line = line.replace(/"([^"]*)"|„([^„“”"]*)[“”"]|“([^“”]*)”/g, function (m, q1, q2, q3) {
@@ -1917,7 +2050,6 @@ Wasser; water"></textarea>
       var sideA = splitAlternatives(parts[0], brackets, examples);
       var sideB = splitAlternatives(parts[1], brackets, examples);
       if (sideA.main && sideB.main) {
-        // Weitere Felder (Tab/Semikolon): Lautschrift und Beispielsatz daraus lesen, Platzhalter restlos auflösen
         var thirdPhon = '', thirdEx = '';
         if (!commaSep) {
           for (var pi = 2; pi < parts.length; pi++) {
@@ -1928,18 +2060,18 @@ Wasser; water"></textarea>
             if (plain && !thirdPhon && /^\/.*\/$|^[^\s]+$/.test(plain) && pi === 2) thirdPhon = plain.replace(/^\/|\/$/g, '');
           }
         }
-        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, aAltPhon: sideA.altPhon, bAltPhon: sideB.altPhon, aAltEx: sideA.altEx, bAltEx: sideB.altEx, ex: sideB.mainEx || sideA.mainEx || thirdEx, phon: sideB.mainPhon || sideA.mainPhon || thirdPhon });
+        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, aAltPhon: sideA.altPhon, bAltPhon: sideB.altPhon, aAltEx: sideA.altEx, bAltEx: sideB.altEx, ex: sideB.mainEx || sideA.mainEx || thirdEx, phon: sideB.mainPhon || sideA.mainPhon || thirdPhon, mnem: mnemText });
         freshPairs.push(newPair);
         var altPhonN = Object.keys(newPair.aAltPhon).length + Object.keys(newPair.bAltPhon).length;
         var altExN = Object.keys(newPair.aAltEx).length + Object.keys(newPair.bAltEx).length;
         if (newPair.phon || altPhonN > 0) { list.showPhon = true; phonCount++; }
         if (newPair.ex || altExN > 0) exCount++;
+        if (newPair.mnem) mnemCount++;
         added++;
         altCount += sideA.alts.length + sideB.alts.length;
         halfCount += sideA.half.length + sideB.half.length;
       }
     }
-    // Duplikate: gegen die Liste und innerhalb der Eingabe prüfen
     var toAdd = [], dups = [], batchKeys = {};
     freshPairs.forEach(function (np) {
       var ex = findDuplicate(list.vocab, np.a, np.b);
@@ -1960,6 +2092,7 @@ Wasser; water"></textarea>
       if (altCount > 0) extras.push(altCount + (altCount === 1 ? ' Alternative' : ' Alternativen') + (halfCount > 0 ? ' (davon ' + halfCount + ' als halber Fehler)' : ''));
       if (phonCount > 0) extras.push(phonCount + ' mit Lautschrift');
       if (exCount > 0) extras.push(exCount + ' mit Beispielsatz');
+      if (mnemCount > 0) extras.push(mnemCount + ' mit Eselsbrücke');
       bulkMsg = added + ' Vokabelpaar(e) hinzugefügt' + (extras.length ? ' – ' + extras.join(', ') : '') + '.';
     } else bulkMsg = dups.length ? 'Alle Wörter stehen schon in der Liste – siehe unten.' : 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2';
     showBulkMessage(bulkMsg);
@@ -2208,7 +2341,7 @@ Wasser; water"></textarea>
     var input = gid('answerInput');
     input.value = ''; input.readOnly = false;
     gid('feedback').className = 'feedback hidden';
-    gid('feedbackText').textContent = ''; gid('phonLine').textContent = ''; gid('exLine').textContent = ''; gid('levelLine').textContent = '';
+    gid('feedbackText').textContent = ''; gid('phonLine').textContent = ''; gid('exLine').textContent = ''; gid('mnemLine').textContent = ''; gid('levelLine').textContent = '';
     hideActionButtons();
     gid('actionBtn').textContent = 'Prüfen';
     gid('scoreLabel').textContent = '✓ ' + formatScore(quizScore);
@@ -2264,6 +2397,8 @@ Wasser; water"></textarea>
     var exV = currentItem ? findVocab(currentItem.vocabId) : null;
     var exT = exV && exV.ex ? exV.ex.trim() : '';
     gid('exLine').innerHTML = exT ? 'Beispiel: ' + exHtml(exT) : '';
+    // Eselsbrücke nach einem Fehler (auch bei halbem Fehler / Hinweis)
+    gid('mnemLine').innerHTML = (cls === 'incorrect' || cls === 'half') ? mnemHtml(exV) : '';
   }
 
   function buildHint(word) {
@@ -2571,7 +2706,6 @@ Wasser; water"></textarea>
     return list.vocab.filter(function (v) { return v.a.trim() && v.b.trim() && (!list.starOnly || v.star); });
   }
 
-  // Lernrichtung: immer von der Muttersprache zur Fremdsprache
   function smartDir(list) { return list.native === 'b' ? 'bToA' : 'aToB'; }
 
   function cardPriority(v, dir) {
@@ -2585,7 +2719,6 @@ Wasser; water"></textarea>
     return s;
   }
 
-  // Verwechslungen: pro Karte merken, welches andere Wort statt des richtigen gewählt/getippt wurde
   function confPartner(v, dir) {
     var m = v.conf && v.conf[histKey(dir)];
     if (!m) return null;
@@ -2600,7 +2733,6 @@ Wasser; water"></textarea>
     var m = v.conf[histKey(dir)] || (v.conf[histKey(dir)] = {});
     m[otherId] = (m[otherId] || 0) + 1;
   }
-  // Findet das Vokabelpaar, dessen Zielwort dem Text entspricht (bei falscher Auswahl oder falschem Tippen)
   function vocabByTarget(dir, text) {
     var n = normalizeAnswer(text);
     if (!n) return null;
@@ -2612,7 +2744,22 @@ Wasser; water"></textarea>
     });
     return res;
   }
-  function baseLadder(v, dir) {
+
+  // Schwierigkeit: Schnell = kurze Leiter, Normal = ohne die aufwändigsten Zwischenstufen, Gründlich = alles
+  function applyLevel(l, lvl) {
+    var f;
+    if (lvl === 'fast') {
+      var keep = ['flash', 'intro', 'copy', 'mc', 'hint', 'type', 'final', 'conf'];
+      f = l.filter(function (s) { return keep.indexOf(s) !== -1; });
+      return f.length ? f : l;
+    }
+    if (lvl === 'thorough') return l;
+    var drop = ['tf', 'syl', 'revtype'];
+    f = l.filter(function (s) { return drop.indexOf(s) === -1; });
+    return f.length ? f : l;
+  }
+
+  function baseLadder(v, dir, lvl) {
     var box = v[boxField(dir)] || 1;
     var h = getHist(v, dir);
     var l;
@@ -2621,6 +2768,7 @@ Wasser; water"></textarea>
     else if (box === 3) l = ['flash','peek','ctx','hint','type','revtype','mem','final','late'];
     else if (box === 4) l = ['type','mem','final','late'];
     else l = ['type','late'];
+    l = applyLevel(l, lvl || 'normal');
     if (box >= 3 && h.bad > h.ok && l[0] === 'type') l.unshift('hint');
     if (confPartner(v, dir) && l.indexOf('final') !== -1) l.splice(l.indexOf('final'), 0, 'conf');
     return l;
@@ -2630,6 +2778,7 @@ Wasser; water"></textarea>
 
   function buildSmartPlan(list, minutes) {
     var dir = smartDir(list);
+    var lvl = list.smartLevel || 'normal';
     var cards = validSmartVocab(list).map(function (v) { return { v: v, dir: dir, score: cardPriority(v, dir) }; });
     cards.sort(function (x, y) { return (y.score - x.score) || (x.v.created - y.v.created); });
     var budget = Math.max(60, (minutes > 0 ? minutes : DEFAULT_MINUTES) * 60);
@@ -2637,7 +2786,7 @@ Wasser; water"></textarea>
     for (var i = 0; i < cards.length; i++) {
       if (used >= budget) break;
       var cd = cards[i];
-      var ladder = baseLadder(cd.v, cd.dir);
+      var ladder = baseLadder(cd.v, cd.dir, lvl);
       var secs = ladderSeconds(ladder);
       if (chosen.length > 0 && used + secs > budget * 1.1) continue;
       var box = cd.v[boxField(cd.dir)] || 1;
@@ -2727,7 +2876,6 @@ Wasser; water"></textarea>
     return res;
   }
 
-  // Silben: Wort in 2-4 Stücke zerlegen (grobe Vokalgruppen-Regel), Stücke müssen unterscheidbar sein
   function syllableSplit(word) {
     var w = String(word).trim();
     if (!w || /\s/.test(w)) return null;
@@ -2802,6 +2950,11 @@ Wasser; water"></textarea>
     return { kind: 'wrong' };
   }
 
+  function newSmartState(list, cards, warm) {
+    return { list: list, cards: cards, warm: warm, match: null, active: [], nextIdx: 0, t: 0, current: null, lastVocabId: null,
+      answered: false, stats: {}, tile: null, missed: {}, streak: 0, best: 0, retried: {}, peekT: null, timerT: null };
+  }
+
   function startSmart() {
     var list = getCurrentList();
     if (validSmartVocab(list).length === 0) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
@@ -2812,8 +2965,7 @@ Wasser; water"></textarea>
     quizListRef = list; quizLangA = list.langA; quizLangB = list.langB; quizDirection = list.direction;
     var plan = buildSmartPlan(list, minutes);
     var warm = buildMatchRounds(list, plan.cards);
-    smart = { list: list, cards: plan.cards, warm: warm, match: null, active: [], nextIdx: 0, t: 0, current: null, lastVocabId: null,
-      answered: false, stats: {}, tile: null, missed: {}, streak: 0, best: 0, retried: {}, peekT: null, timerT: null };
+    smart = newSmartState(list, plan.cards, warm);
     resetPatterns();
     showScreen('smart');
     if (smart.warm.length) startMatch(); else smartNext();
@@ -2832,6 +2984,60 @@ Wasser; water"></textarea>
       if (g.length >= 4) rounds.push(g.map(function (v) { return v.id; }));
     }
     return rounds.slice(0, 2);
+  }
+
+  /* ---- Verwechsler-Übersicht ---- */
+  function confPairs(list) {
+    var dir = smartDir(list), out = [], seen = {};
+    list.vocab.forEach(function (v) {
+      var m = v.conf && v.conf[histKey(dir)];
+      if (!m) return;
+      Object.keys(m).forEach(function (oid) {
+        if (m[oid] < 2) return;
+        var o = null;
+        list.vocab.forEach(function (x) { if (x.id === oid) o = x; });
+        if (!o || !(v.a.trim() && v.b.trim() && o.a.trim() && o.b.trim())) return;
+        var k = [v.id, oid].sort().join('|');
+        if (seen[k]) { seen[k].n += m[oid]; return; }
+        seen[k] = { a: v, b: o, n: m[oid] };
+        out.push(seen[k]);
+      });
+    });
+    return out.sort(function (x, y) { return y.n - x.n; });
+  }
+
+  function renderConfList() {
+    var el = gid('confList');
+    if (!el) return;
+    var list = getCurrentList(), ps = confPairs(list), dir = smartDir(list);
+    var fmt = function (v) { return escapeHtml(dir === 'aToB' ? v.a + ' → ' + v.b : v.b + ' → ' + v.a); };
+    el.innerHTML = ps.slice(0, 12).map(function (p) {
+      return '<div class="pattern-row"><span class="p-count">' + p.n + '×</span> ' + fmt(p.a) + '<br>&nbsp;&nbsp;&nbsp;&nbsp;⇄ ' + fmt(p.b) + '</div>';
+    }).join('') + (ps.length > 12 ? '<div class="hint">… und ' + (ps.length - 12) + ' weitere Paare.</div>' : '') ||
+      '';
+    if (!ps.length) el.innerHTML = '<div class="missed-empty">Noch keine Verwechslungen gespeichert. Sie entstehen, wenn du im Smart-Lernpfad oder beim Zuordnen zwei Wörter mehrfach vertauschst.</div>';
+    gid('startConfBtn').disabled = !ps.length;
+  }
+
+  function startConfPractice() {
+    var list = getCurrentList(), ps = confPairs(list);
+    if (!ps.length) return;
+    showSetupMessage('');
+    quizListRef = list; quizLangA = list.langA; quizLangB = list.langB; quizDirection = list.direction;
+    var ids = [];
+    ps.forEach(function (p) { [p.a.id, p.b.id].forEach(function (i) { if (ids.indexOf(i) === -1) ids.push(i); }); });
+    var rounds = [];
+    for (var i = 0; i < ids.length; i += 5) {
+      var g = ids.slice(i, i + 5);
+      if (g.length >= 3 || !rounds.length) rounds.push(g);
+      else rounds[rounds.length - 1] = rounds[rounds.length - 1].concat(g);
+    }
+    rounds = rounds.filter(function (g) { return g.length >= 2; }).slice(0, 4);
+    if (!rounds.length) { showSetupMessage('Zu wenige Verwechsler für eine Runde.'); return; }
+    smart = newSmartState(list, [], rounds);
+    resetPatterns();
+    showScreen('smart');
+    startMatch();
   }
 
   function startMatch() {
@@ -2864,7 +3070,7 @@ Wasser; water"></textarea>
     gid('smartSkipBtn').classList.add('hidden');
     gid('smartActionBtn').classList.add('hidden');
     var langL = m.dir === 'aToB' ? quizLangA : quizLangB, langR = m.dir === 'aToB' ? quizLangB : quizLangA;
-    gid('smartInstruction').textContent = 'Aufwärmen · Tippe links ein Wort, dann rechts die Übersetzung (' + langL + ' → ' + langR + ').';
+    gid('smartInstruction').textContent = (smart.cards.length ? 'Aufwärmen' : 'Verwechsler üben') + ' · Tippe links ein Wort, dann rechts die Übersetzung (' + langL + ' → ' + langR + ').';
     var byId = {};
     m.pairs.forEach(function (p) { byId[p.id] = p; });
     function col(order, side) {
@@ -2891,8 +3097,6 @@ Wasser; water"></textarea>
       if (Object.keys(m.done).length === m.pairs.length) matchFinish();
     } else {
       m.errs++;
-      var wrongOther = m.sel.id;
-      // Verwechslung merken: linkes Wort mit falscher rechter Übersetzung
       var leftId = m.sel.side === 'l' ? m.sel.id : id, rightId = m.sel.side === 'l' ? id : m.sel.id;
       recordConf(leftId, m.dir, rightId);
       m.sel = null;
@@ -2962,19 +3166,20 @@ Wasser; water"></textarea>
     });
     Object.keys(smart.stats).forEach(function (k) { ok += smart.stats[k].ok; });
     gid('smartBarFill').style.width = (total ? Math.round(sum / total * 100) : 0) + '%';
-    gid('smartProgressLabel').textContent = 'Geschafft: ' + doneN + ' / ' + total;
+    gid('smartProgressLabel').textContent = total ? 'Geschafft: ' + doneN + ' / ' + total : 'Verwechsler';
     gid('smartScoreLabel').textContent = '✓ ' + ok;
     var s = smart.streak;
     gid('smartStreak').textContent = s >= 3 ? '🔥 ' + s + ' in Folge' + (s >= 10 ? ' – stark!' : '') : '';
   }
 
-  function smartSetExtra(v) {
+  // showMnem: Eselsbrücke einblenden (Kennenlernen und nach einem Fehler)
+  function smartSetExtra(v, showMnem) {
     gid('smartPhon').textContent = v ? phonDisplay(v.phon) : '';
     var ex = v && v.ex ? v.ex.trim() : '';
     gid('smartEx').innerHTML = ex ? 'Beispiel: ' + exHtml(ex) : '';
+    gid('smartMnem').innerHTML = (showMnem && v) ? mnemHtml(v) : '';
   }
 
-  // Merkhilfe je nach Stufe (kurze Lerntipps, nur gelegentlich)
   var STAGE_NOTE = {
     intro: 'Sprich das Wort laut aus und stell dir ein Bild dazu vor.',
     copy: 'Beim Schreiben merkt sich die Hand die Schreibweise mit.',
@@ -3017,7 +3222,7 @@ Wasser; water"></textarea>
       intro.classList.remove('hidden');
       intro.innerHTML = escapeHtml(cAnswer(c)) + (alts.length ? '<div class="smart-intro-alts">auch: ' + escapeHtml(alts.join(', ')) + '</div>' : '');
       gid('smartInstruction').textContent = dirText + ' · Präge dir das Wort ein.';
-      smartSetExtra(v);
+      smartSetExtra(v, true);
       act.textContent = 'Verstanden';
     } else if (st === 'copy') {
       intro.classList.remove('hidden'); intro.textContent = cAnswer(c);
@@ -3055,7 +3260,6 @@ Wasser; water"></textarea>
       gid('smartInstruction').textContent = dirText + (tt.mode === 'words' ? ' · Lege die Wörter in die richtige Reihenfolge.' : tt.mode === 'syl' ? ' · Setze das Wort aus seinen Silben zusammen.' : ' · Lege die Buchstaben in die richtige Reihenfolge.');
       renderSmartTiles();
     } else if (st === 'peek' || st === 'mem') {
-      // Blitz-Diktat: Wort kurz zeigen, dann verschwindet es. mem: sehr kurz und ohne Anfangsbuchstabe.
       var ms = st === 'peek' ? 1500 + letterCount(cAnswer(c)) * 160 : 700 + letterCount(cAnswer(c)) * 70;
       intro.classList.remove('hidden'); intro.textContent = cAnswer(c);
       inp.classList.remove('hidden'); inp.readOnly = true;
@@ -3094,7 +3298,6 @@ Wasser; water"></textarea>
         gid('smartInstruction').textContent = dirText + ' · Tippe das Ausgangswort, jetzt von der anderen Seite.';
       } else if (st === 'final' || st === 'late') {
         gid('smartInstruction').textContent = dirText + ' · Kontrolle nach Pause, ohne Hilfe. Die Zeit läuft.';
-        // Zeitdruck: sichtbarer Balken; bei Ablauf zählt es als nicht gewusst (großzügig bemessen)
         var lim = Math.max(8, 5 + letterCount(cAnswer(c)) * 0.9);
         var tm = gid('smartTimer');
         tm.classList.remove('hidden', 'run');
@@ -3137,7 +3340,6 @@ Wasser; water"></textarea>
     c.box1 = nb;
     setVocabBox(c.vocabId, c.dir, nb);
     smart.active = smart.active.filter(function (x) { return x !== c; });
-    // Fehler-Wiederholung: schwierige Karten kommen einmal am Rundenende mit kurzer Leiter zurück
     if ((c.forced || c.fails >= 2) && !smart.retried[c.key]) {
       smart.retried[c.key] = true;
       smart.cards.push({ key: c.key, vocabId: c.vocabId, dir: c.dir, box0: nb, box1: nb, ladder: ['flash', 'peek', 'hint', 'type', 'final'],
@@ -3174,7 +3376,6 @@ Wasser; water"></textarea>
         smartFinishCard(c);
         levelLine = 'Noch nicht sicher – Lernstufe ' + c.box0 + ' → ' + c.box1 + '. Das Wort kommt am Rundenende nochmal.';
       } else {
-        // sanfter Rückfall: eine Stufe zurück, bei Tipp-Stufen zuerst kurz das Wort wieder zeigen
         if (st === 'type' || st === 'final' || st === 'late' || st === 'mem' || st === 'revtype') c.ladder.splice(c.idx, 0, 'peek');
         else if (c.idx > 0) c.idx--;
         else c.ladder.unshift('intro');
@@ -3185,7 +3386,7 @@ Wasser; water"></textarea>
     gid('smartFeedback').className = 'feedback ' + cls;
     gid('smartFbText').textContent = text;
     gid('smartLevel').textContent = levelLine;
-    smartSetExtra(cV(c));
+    smartSetExtra(cV(c), effective === 'fail');
     gid('smartInput').readOnly = true;
     gid('smartSkipBtn').classList.add('hidden');
     gid('smartIntroAnswer').classList.toggle('hidden', !(st === 'copy' || st === 'intro'));
@@ -3216,7 +3417,8 @@ Wasser; water"></textarea>
     else if (res.kind === 'accent') { notePattern(inp.value.trim(), res.raw); smartResolve('soft', 'Fast: Achte auf Akzente und Sonderzeichen – richtig wäre: ' + res.raw, 'half'); }
     else if (res.kind === 'half') smartResolve('soft', 'Das gilt nur halb – besser wäre: ' + target, 'half');
     else {
-      if (!rev) { var tv = vocabByTarget(c.dir, inp.value.trim()); if (tv) recordConf(c.vocabId, c.dir, tv.id); }
+      var tv = null;
+      if (!rev) { tv = vocabByTarget(c.dir, inp.value.trim()); if (tv) recordConf(c.vocabId, c.dir, tv.id); }
       if (!tv) notePattern(inp.value.trim(), target);
       smartResolve('fail', 'Richtig wäre: ' + target, 'incorrect');
     }
@@ -3303,7 +3505,7 @@ Wasser; water"></textarea>
     if (smart.best >= 3) typeHtml += '<div class="smart-stat-row"><span>Längste Serie</span><span>🔥 ' + smart.best + '</span></div>';
     var doneCards = smart.cards.filter(function (c) { return c.done && !c.retry; });
     gid('smartResFraction').textContent = ok + ' / ' + tot;
-    gid('smartResPercent').textContent = (tot ? Math.round(ok / tot * 100) : 0) + ' % Treffer bei ' + doneCards.length + (doneCards.length === 1 ? ' Karte' : ' Karten');
+    gid('smartResPercent').textContent = (tot ? Math.round(ok / tot * 100) : 0) + ' % Treffer' + (doneCards.length ? ' bei ' + doneCards.length + (doneCards.length === 1 ? ' Karte' : ' Karten') : '');
     gid('smartResTypes').innerHTML = typeHtml || '<div class="missed-empty">Diesmal nur Kennenlernen.</div>';
     var rows = '';
     doneCards.forEach(function (c) {
@@ -3324,7 +3526,6 @@ Wasser; water"></textarea>
     if (!vocab.length) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
     showSetupMessage('');
     quizListRef = list; quizLangA = list.langA; quizLangB = list.langB;
-    // Abgefragt wird die Fremdsprache (Muttersprache = Vorgabe), in fester Reihenfolge nach Anlage
     var dir = smartDir(list);
     var cards = vocab.slice().sort(function (x, y) { return x.created - y.created; }).map(function (v) { return { id: v.id, dir: dir }; });
     know = { list: list, cards: cards, i: 0, yes: 0, no: [], dir: dir };
@@ -3358,7 +3559,7 @@ Wasser; water"></textarea>
     gid('knowCard').classList.add(yes ? 'correct' : 'incorrect');
     gid('knowPhon').textContent = phonDisplay(v.phon);
     var ex = v.ex ? v.ex.trim() : '';
-    gid('knowEx').innerHTML = ex ? 'Beispiel: ' + exHtml(ex) : '';
+    gid('knowEx').innerHTML = (ex ? 'Beispiel: ' + exHtml(ex) : '') + (!yes && v.mnem ? '<div class="mnem-line">' + mnemHtml(v) + '</div>' : '');
     gid('knowChoice').classList.add('hidden');
     var nb = gid('knowNextBtn');
     nb.textContent = know.i + 1 >= know.cards.length ? 'Fertig' : 'Weiter';
@@ -3388,6 +3589,54 @@ Wasser; water"></textarea>
     if (total > 0 && know.yes === total) launchConfetti();
   }
 
+  /* ---- Gesamt-Backup ---- */
+  function makeBackup() {
+    saveAll();
+    var payload = { app: 'karteikasten', version: 3, created: new Date().toISOString(), currentListId: currentListId, lists: lists };
+    var data = JSON.stringify(payload);
+    var name = 'Karteikasten-Backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    var vocabN = lists.reduce(function (n, l) { return n + l.vocab.length; }, 0);
+    var msg = gid('backupMsg');
+    function fallback() {
+      downloadTextFile(data, name, 'application/json');
+      msg.textContent = 'Backup „' + name + '“ gespeichert: ' + lists.length + (lists.length === 1 ? ' Liste, ' : ' Listen, ') + vocabN + ' Wörter.';
+    }
+    var file = null;
+    try { file = new File([data], name, { type: 'application/json' }); } catch (e) { file = null; }
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: name }).then(function () { msg.textContent = 'Backup geteilt (' + lists.length + ' Listen, ' + vocabN + ' Wörter).'; }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        fallback();
+      });
+    } else fallback();
+  }
+
+  function loadBackup(file) {
+    var msg = gid('backupMsg');
+    var r = new FileReader();
+    r.onerror = function () { msg.textContent = 'Datei konnte nicht gelesen werden.'; };
+    r.onload = function () {
+      var p;
+      try { p = JSON.parse(r.result); } catch (e) { p = null; }
+      if (!p || p.app !== 'karteikasten' || !Array.isArray(p.lists) || !p.lists.length) {
+        msg.textContent = 'Das ist kein gültiges Karteikasten-Backup.';
+        return;
+      }
+      var oldLists = lists, oldCur = currentListId;
+      var incoming = p.lists.filter(function (l) { return l && typeof l === 'object'; }).map(normalizeList);
+      var ids = incoming.map(function (l) { return l.id; });
+      var replaced = oldLists.filter(function (l) { return ids.indexOf(l.id) !== -1; }).length;
+      // Listen mit gleicher ID werden durch die Backup-Version ersetzt, alle anderen bleiben erhalten
+      lists = oldLists.filter(function (l) { return ids.indexOf(l.id) === -1; }).concat(incoming);
+      currentListId = ids.indexOf(p.currentListId) !== -1 ? p.currentListId : incoming[0].id;
+      hideDupBox();
+      renderListSelect(); renderCurrentListIntoForm(); renderMergeSelect(); saveAll();
+      msg.textContent = incoming.length + (incoming.length === 1 ? ' Liste' : ' Listen') + ' wiederhergestellt' + (replaced ? ' (' + replaced + ' bestehende ersetzt)' : '') + '.';
+      offerUndo('Backup eingelesen', function () { lists = oldLists; currentListId = oldCur; renderListSelect(); renderCurrentListIntoForm(); renderMergeSelect(); });
+    };
+    r.readAsText(file);
+  }
+
   function attachKnowEvents() {
     gid('startKnowBtn').addEventListener('click', startKnow);
     gid('knowYesBtn').addEventListener('click', function () { knowAnswer(true); });
@@ -3406,6 +3655,7 @@ Wasser; water"></textarea>
 
   function attachSmartEvents() {
     gid('startSmartBtn').addEventListener('click', startSmart);
+    gid('startConfBtn').addEventListener('click', startConfPractice);
     gid('smartActionBtn').addEventListener('click', smartAction);
     gid('smartSkipBtn').addEventListener('click', smartSkip);
     gid('smartInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); smartAction(); } });
@@ -3495,6 +3745,7 @@ Wasser; water"></textarea>
       var opt = document.querySelector('#listSelect option[value="' + list.id + '"]');
       if (opt) opt.textContent = list.name || '(ohne Namen)';
       renderMergeSelect();
+      updateBulkBar();
       debouncedSave();
     });
 
@@ -3521,18 +3772,17 @@ Wasser; water"></textarea>
       if (btn) chooseLang(btn.dataset.lang);
     });
 
-    // Muttersprache markieren
     ['a', 'b'].forEach(function (s) {
       gid('native' + s.toUpperCase()).addEventListener('click', function () {
         getCurrentList().native = s;
-        updateNativeButtons(); updateSmartInfo(); saveAll();
+        updateNativeButtons(); updateSmartInfo(); renderConfList(); saveAll();
       });
     });
 
     gid('swapLangBtn').addEventListener('click', function () {
       var list = getCurrentList();
       var tmp = list.langA; list.langA = list.langB; list.langB = tmp;
-      list.native = list.native === 'a' ? 'b' : 'a'; // Muttersprache wandert mit der Sprache
+      list.native = list.native === 'a' ? 'b' : 'a';
       list.vocab.forEach(function (v) {
         var t = v.a; v.a = v.b; v.b = t;
         var ta = v.aAlts; v.aAlts = v.bAlts; v.bAlts = ta;
@@ -3556,6 +3806,9 @@ Wasser; water"></textarea>
       if (t.classList.contains('vocab-input')) {
         getCurrentList().vocab[parseInt(t.dataset.idx, 10)][t.dataset.field] = t.value;
         updateStartButtonState(); debouncedSave();
+      } else if (t.classList.contains('mnem-input')) {
+        getCurrentList().vocab[parseInt(t.dataset.idx, 10)].mnem = t.value;
+        debouncedSave();
       } else if (t.classList.contains('alt-ex-input')) {
         var vAE = getCurrentList().vocab[parseInt(t.dataset.idx, 10)];
         var altTextAE = vAE[t.dataset.field][parseInt(t.dataset.alt, 10)];
@@ -3583,6 +3836,12 @@ Wasser; water"></textarea>
           }
         });
         debouncedSave();
+      }
+    });
+    gid('vocabList').addEventListener('change', function (e) {
+      if (e.target.classList.contains('sel-box')) {
+        selected[e.target.dataset.id] = e.target.checked;
+        updateBulkBar();
       }
     });
     gid('vocabList').addEventListener('mousedown', function (e) { if (e.target.closest('.ex-mark-btn')) e.preventDefault(); });
@@ -3662,7 +3921,53 @@ Wasser; water"></textarea>
 
     gid('vocabSearch').addEventListener('input', function (e) { vocabSearchText = e.target.value; renderVocabList(); });
     gid('vocabSort').addEventListener('change', function (e) { getCurrentList().sortBy = e.target.value; renderVocabList(); saveAll(); });
+    gid('vocabFilter').addEventListener('change', function (e) { vocabFilter = e.target.value; renderVocabList(); });
     gid('addRowBtn').addEventListener('click', addRow);
+
+    // Sammel-Aktionen
+    gid('selAllBtn').addEventListener('click', function () {
+      var l = getCurrentList();
+      getVocabOrder(l).forEach(function (i) { selected[l.vocab[i].id] = true; });
+      renderVocabList();
+    });
+    gid('selNoneBtn').addEventListener('click', function () { selected = {}; renderVocabList(); });
+    gid('selStarBtn').addEventListener('click', function () { selVocab().forEach(function (v) { v.star = true; }); renderVocabList(); saveAll(); });
+    gid('selUnstarBtn').addEventListener('click', function () { selVocab().forEach(function (v) { v.star = false; }); renderVocabList(); saveAll(); });
+    gid('selResetBtn').addEventListener('click', function () {
+      var vs = selVocab(), snaps = vs.map(function (v) { return { v: v, s: snapshotLevels(v) }; });
+      if (!vs.length) return;
+      vs.forEach(resetLevels);
+      renderVocabList(); saveAll();
+      offerUndo(vs.length + ' Lernstufen zurückgesetzt', function () { snaps.forEach(function (x) { restoreLevels(x.v, x.s); }); });
+    });
+    gid('selDelBtn').addEventListener('click', function () {
+      var l = getCurrentList(), ids = selIds();
+      if (!ids.length) return;
+      var old = l.vocab.slice();
+      l.vocab = l.vocab.filter(function (v) { return ids.indexOf(v.id) === -1; });
+      selected = {};
+      renderVocabList(); saveAll();
+      offerUndo(ids.length + ' Wörter gelöscht', function () { l.vocab = old; });
+    });
+    gid('selMoveBtn').addEventListener('click', function () {
+      var src = getCurrentList(), dst = null, id = gid('selMoveSel').value;
+      lists.forEach(function (l) { if (l.id === id) dst = l; });
+      var vs = selVocab();
+      if (!dst || !vs.length) return;
+      var ids = vs.map(function (v) { return v.id; });
+      var oldSrc = src.vocab.slice(), oldDst = dst.vocab.slice();
+      var moved = 0, merged = 0;
+      vs.forEach(function (v) {
+        var dup = findDuplicate(dst.vocab, v.a, v.b);
+        if (dup) { mergeVocabInto(dup, v); merged++; }
+        else { dst.vocab.push(v); moved++; if (v.phon) dst.showPhon = true; }
+      });
+      src.vocab = src.vocab.filter(function (v) { return ids.indexOf(v.id) === -1; });
+      selected = {};
+      renderVocabList(); renderMergeSelect(); saveAll();
+      showSetupMessage(moved + ' Wörter nach „' + (dst.name || 'ohne Namen') + '“ verschoben' + (merged ? ', ' + merged + ' mit vorhandenen zusammengeführt' : '') + '.');
+      offerUndo(vs.length + ' Wörter verschoben', function () { src.vocab = oldSrc; dst.vocab = oldDst; renderMergeSelect(); });
+    });
 
     var clearArmed = false, clearArmTimeout = null;
     gid('clearAllBtn').addEventListener('click', function (e) {
@@ -3678,6 +3983,7 @@ Wasser; water"></textarea>
       e.target.textContent = 'Vokabeln leeren';
       var clrList = getCurrentList(), clrOld = clrList.vocab;
       clrList.vocab = [];
+      selected = {};
       renderVocabList(); saveAll();
       offerUndo(clrOld.length + ' Vokabeln gelöscht', function () { clrList.vocab = clrOld; });
     });
@@ -3689,6 +3995,15 @@ Wasser; water"></textarea>
         getCurrentList().direction = e.currentTarget.dataset.value;
         setActiveSegment(getCurrentList().direction);
         updateWeakInfo(); saveAll();
+      });
+    }
+
+    // Schwierigkeit im Smart-Lernpfad
+    var lvlBtns = document.querySelectorAll('[data-lvl]');
+    for (var li = 0; li < lvlBtns.length; li++) {
+      lvlBtns[li].addEventListener('click', function (e) {
+        getCurrentList().smartLevel = e.currentTarget.dataset.lvl;
+        setLvlButtons(); updateSmartInfo(); saveAll();
       });
     }
 
@@ -3784,6 +4099,14 @@ Wasser; water"></textarea>
     gid('smartMissedNewListBtn').addEventListener('click', function () { newListFrom(function () { return Object.keys(smart.missed); }, 'Fehler'); });
     gid('knowNewListBtn').addEventListener('click', function () { newListFrom(function () { return know.no; }, 'Noch nicht sicher'); });
     gid('backToSetupBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
+
+    // Backup
+    gid('backupMakeBtn').addEventListener('click', makeBackup);
+    gid('backupLoadBtn').addEventListener('click', function () { gid('backupFile').click(); });
+    gid('backupFile').addEventListener('change', function (e) {
+      if (e.target.files && e.target.files[0]) loadBackup(e.target.files[0]);
+      e.target.value = '';
+    });
   }
 
   function init() {
