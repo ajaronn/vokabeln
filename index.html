@@ -90,11 +90,11 @@
   .lang-modal-empty { color: var(--muted); font-size: 16px; padding: 14px 4px; }
   .lang-modal-close { margin-top: 12px; flex-shrink: 0; }
   .setup-message { min-height: 18px; font-size: 15px; color: var(--rust); margin: 10px 0 0 0; }
-  .vocab-header { display: grid; grid-template-columns: 1fr 1fr 48px 28px; gap: 10px; background: var(--rust); color: var(--rust-contrast); padding: 11px 12px;
+  .vocab-header { display: grid; grid-template-columns: 1fr 1fr 48px 30px; gap: 10px; background: var(--rust); color: var(--rust-contrast); padding: 11px 12px;
     border-radius: var(--radius) var(--radius) 0 0; text-transform: uppercase; font-weight: 700; font-size: 15px; letter-spacing: 0.04em; }
   .vocab-card { border-bottom: 1px solid var(--border); background: var(--surface); }
   .vocab-card:last-child { border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
-  .vocab-row { display: grid; grid-template-columns: 1fr 1fr 48px 28px; gap: 10px; align-items: center; padding: 9px 12px; }
+  .vocab-row { display: grid; grid-template-columns: 1fr 1fr 48px 30px; gap: 10px; align-items: center; padding: 9px 12px; }
   .vocab-row input { border: none; border-radius: 0; background: transparent; padding: 6px 0; font-size: 18px; }
   .vocab-row input:focus-visible { outline: none; border-bottom: 2px solid var(--rust); }
   .btn-delete, .btn-alt-remove { width: 26px; height: 26px; flex: none; border-radius: 50%; border: none; background: transparent; color: var(--muted);
@@ -270,6 +270,40 @@
   .match-item.sel { border-color: var(--rust); background: var(--warn-bg); }
   .match-item.ok { border-color: var(--success); background: var(--success-bg); color: var(--success); opacity: 0.55; cursor: default; }
   .match-item.bad { border-color: var(--error); background: var(--error-bg); animation: cardPulse 0.3s ease; }
+  .undo-bar { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 60; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-sizing: border-box; max-width: 456px; margin: 0 auto; background: var(--ink); color: var(--bg); padding: 10px 10px 10px 16px; border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3); font-size: 17px; font-weight: 600; line-height: 1.25; }
+  .undo-bar.hidden { display: none; }
+  .undo-bar span { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+  .undo-bar button { flex: 0 0 auto; background: transparent; border: 1.5px solid var(--bg); border-radius: 8px; color: var(--bg); font-family: inherit; font-size: 16px; font-weight: 700;
+    text-decoration: none; cursor: pointer; padding: 8px 14px; min-height: 40px; white-space: nowrap; }
+  .undo-bar button:active { background: var(--bg); color: var(--ink); }
+  .dup-box { background: var(--surface); border: 2px solid var(--warn); border-radius: var(--radius); padding: 12px 14px; margin: 12px 0; }
+  .dup-box .dup-title { font-weight: 700; margin-bottom: 6px; }
+  .dup-list { max-height: 180px; overflow-y: auto; font-size: 16px; margin-bottom: 10px; }
+  .dup-list div { padding: 4px 0; border-bottom: 1px solid var(--rule-color); }
+  .dup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .dup-actions .btn-outline { flex: 1 1 120px; padding: 10px 8px; font-size: 16px; }
+  .listtools { margin-top: 12px; border: 1.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--surface); }
+  .listtools summary { cursor: pointer; font-weight: 700; color: var(--rust); font-size: 16px; }
+  .listtools .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .listtools .row select { flex: 1 1 150px; padding: 10px 12px; font-size: 16px; }
+  .listtools .row .btn-outline { flex: 1 1 120px; padding: 10px 8px; font-size: 16px; }
+  .btn-star { width: 26px; height: 26px; flex: none; border: none; background: transparent; color: var(--muted); font-size: 19px; cursor: pointer; line-height: 1; padding: 0; font-family: inherit; }
+  .btn-star.on { color: var(--warn); }
+  .btn-reset { width: 26px; height: 26px; flex: none; border: none; background: transparent; color: var(--muted); font-size: 17px; cursor: pointer; line-height: 1; padding: 0; font-family: inherit; }
+  .btn-reset:hover { color: var(--rust); }
+  .vocab-actions-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .pattern-row { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 17px; }
+  .pattern-row .p-count { color: var(--rust); font-weight: 700; }
+  .pattern-row .p-tip { display: block; font-size: 15px; color: var(--muted); margin-top: 2px; }
+  .mirror-diff { font-size: 22px; letter-spacing: 0.04em; }
+  .know-actions { display: flex; gap: 10px; }
+  .know-actions .mc-option { text-align: center; font-weight: 700; }
+  .know-yes { border-color: var(--success); color: var(--success); }
+  .know-no { border-color: var(--error); color: var(--error); }
+  .share-mini { display: flex; gap: 10px; margin: 12px 0 4px; }
+  .share-mini .btn-outline { flex: 1; padding: 10px 8px; font-size: 16px; }
   .smart-note { font-size: 15px; color: var(--muted); margin: 0 0 12px; }
   .smart-note:empty { display: none; }
 </style>
@@ -298,6 +332,26 @@
         <button class="btn-outline" id="newListBtn" type="button">+ Neue Liste</button>
         <button class="btn-outline btn-rust" id="deleteListBtn" type="button">Diese Liste löschen</button>
       </div>
+      <details class="listtools" id="listTools">
+        <summary>Listen zusammenführen / aufteilen</summary>
+        <div class="row">
+          <select id="mergeSelect" aria-label="Liste zum Hinzufügen"></select>
+          <button class="btn-outline" id="mergeBtn" type="button">In diese Liste einfügen</button>
+        </div>
+        <p class="hint" id="mergeHint">Die gewählte Liste wird in die aktuelle Liste eingefügt. Doppelte Wörter werden zusammengeführt, die gewählte Liste bleibt bestehen.</p>
+        <div class="row">
+          <select id="splitSelect" aria-label="Auswahl für neue Liste">
+            <option value="weak">Nur Lernstufe 1–2</option>
+            <option value="strong">Nur Lernstufe 4–5</option>
+            <option value="mid">Nur Lernstufe 3</option>
+            <option value="nophon">Ohne Beispielsatz</option>
+            <option value="star">Nur Sternchen ★</option>
+          </select>
+          <button class="btn-outline" id="splitBtn" type="button">In neue Liste kopieren</button>
+        </div>
+        <p class="hint" id="splitHint">Legt eine neue Liste mit den passenden Wörtern an. Die Wörter bleiben auch in dieser Liste.</p>
+        <p class="hint" id="toolsMsg" aria-live="polite"></p>
+      </details>
     </section>
 
     <section class="rename-section">
@@ -372,6 +426,15 @@ Wasser; water"></textarea>
           <button class="btn-outline" id="bulkPhonBtn" type="button">Lautschrift-Tastatur</button>
         </div>
         <p class="hint" id="bulkMessage" aria-live="polite"></p>
+        <div class="dup-box hidden" id="dupBox">
+          <div class="dup-title" id="dupTitle"></div>
+          <div class="dup-list" id="dupList"></div>
+          <div class="dup-actions">
+            <button class="btn-outline" id="dupMergeBtn" type="button">Zusammenführen</button>
+            <button class="btn-outline" id="dupSkipBtn" type="button">Überspringen</button>
+            <button class="btn-outline" id="dupAddBtn" type="button">Trotzdem hinzufügen</button>
+          </div>
+        </div>
       </details>
 
       <div class="share-block">
@@ -406,6 +469,9 @@ Wasser; water"></textarea>
     <section class="weak-section">
       <label class="toggle-row"><input type="checkbox" id="weakOnlyCheck"><span>Nur schwache Wörter üben (Lernstufe 1–2)</span></label>
       <p class="hint" id="weakInfo"></p>
+      <label class="toggle-row"><input type="checkbox" id="starOnlyCheck"><span>Nur Sternchen-Wörter ★ üben</span></label>
+      <p class="hint" id="starInfo">Markiere Wörter in der Liste mit dem ★ neben dem Wort. Der Filter gilt für Karteikasten, Smart-Lernpfad, Selbstcheck und Spiegelübung.</p>
+      <button class="btn-outline btn-rust" id="resetAllBtn" type="button" style="width:100%;margin-top:6px">Alle Lernstufen zurücksetzen</button>
     </section>
 
     <section class="mc-section">
@@ -418,6 +484,18 @@ Wasser; water"></textarea>
       <p class="hint">Das System wertet Lernstufen, Treffer und Fehler, Wortlänge und die Zeit seit der letzten Übung aus und baut daraus einen festen Lernplan. Es wird nur die <strong>Fremdsprache</strong> gelernt (deine Muttersprache oben markieren). Jedes Wort durchläuft viele Stufen: <strong>Kennenlernen → Abtippen → Auswahl → Richtig oder falsch → Blitz-Diktat → Rückrichtung → Silben → Buchstaben legen → Lückenwort → Satz-Lücke → Tippen mit Hilfe → Tippen → Rückrichtung tippen → Diktat aus dem Kopf → Abschlusstest → Spät-Test</strong>. Fehlerwörter werden am Ende der Runde noch einmal geübt. Beispielsätze und Lautschrift werden angezeigt, wenn vorhanden.</p>
       <p class="hint smart-info" id="smartInfo" aria-live="polite"></p>
       <button class="btn-primary btn-smart" id="startSmartBtn" type="button">Smart-Lernpfad starten</button>
+    </section>
+
+    <section class="know-section">
+      <label class="section-label">Was kann ich schon?</label>
+      <p class="hint">Selbstcheck: Du siehst ein Wort und sagst nur, ob du es kannst. Dann wird die Übersetzung gezeigt. Es ändert keine Lernstufen und zählt nicht als Fehler.</p>
+      <button class="btn-outline" id="startKnowBtn" type="button" style="width:100%">Selbstcheck starten</button>
+    </section>
+
+    <section class="mirror-section">
+      <label class="section-label">Spiegelübung</label>
+      <p class="hint">Du siehst eine Übersetzung, die manchmal falsch ist: Das System ändert dann einen oder mehrere Buchstaben. Entscheide, ob sie stimmt, und tippe bei „falsch" die richtige Schreibweise. Das schärft den Blick für genaue Schreibweise. Ändert keine Lernstufen.</p>
+      <button class="btn-outline" id="startMirrorBtn" type="button" style="width:100%">Spiegelübung starten</button>
     </section>
 
     <button class="btn-primary" id="startQuizBtn" type="button">Karteikasten starten</button>
@@ -458,6 +536,10 @@ Wasser; water"></textarea>
       <label class="section-label">Zum Wiederholen</label>
       <div id="missedList" class="missed-list"></div>
     </div>
+    <div class="missed-section" id="patternsBox"><label class="section-label">Fehler-Muster</label><div id="patternsList"></div></div>
+    <div class="share-mini" id="missedShare"><button class="btn-outline" id="missedShareBtn" type="button">Fehler teilen / speichern</button><button class="btn-outline" id="missedCopyBtn" type="button">Fehler kopieren</button></div>
+    <button class="btn-outline" id="missedNewListBtn" type="button" style="width:100%">Fehler als neue Liste speichern</button>
+    <p class="hint" id="missedMsg" aria-live="polite"></p>
     <div class="result-actions">
       <button class="btn-primary" id="retryMissedBtn" type="button">Nur Fehler wiederholen</button>
       <button class="btn-outline" id="retryAllBtn" type="button">Alle nochmal</button>
@@ -499,6 +581,80 @@ Wasser; water"></textarea>
     <button class="btn-primary" id="smartActionBtn" type="button">Prüfen</button>
   </div>
 
+  <div id="mirror-screen" class="screen hidden">
+    <div class="quiz-header">
+      <button class="btn-text" id="mirrorQuitBtn" type="button">← Abbrechen</button>
+      <span id="mirrorProgress">1 / 1</span>
+      <span id="mirrorScore">✓ 0</span>
+    </div>
+    <div class="flashcard" id="mirrorCard">
+      <div class="card-tag" id="mirrorTag">Stimmt das?</div>
+      <div class="card-word" id="mirrorPrompt">Wort</div>
+      <div class="smart-intro-answer mirror-diff" id="mirrorShown"></div>
+    </div>
+    <div class="smart-instruction" id="mirrorInstr"></div>
+    <div class="know-actions" id="mirrorChoice">
+      <button class="mc-option know-yes" id="mirrorOkBtn" type="button">Stimmt</button>
+      <button class="mc-option know-no" id="mirrorBadBtn" type="button">Falsch</button>
+    </div>
+    <input type="text" id="mirrorInput" class="hidden" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Richtig geschrieben">
+    <div class="feedback hidden" id="mirrorFeedback"><div id="mirrorFbText"></div></div>
+    <button class="btn-primary hidden" id="mirrorActionBtn" type="button">Prüfen</button>
+  </div>
+
+  <div id="mirror-results-screen" class="screen hidden">
+    <div class="result-hero">
+      <div class="result-fraction" id="mirrorResFraction">0 / 0</div>
+      <div class="result-percent" id="mirrorResPercent"></div>
+    </div>
+    <div class="missed-section">
+      <label class="section-label">Übersehen oder falsch</label>
+      <div id="mirrorResList"></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn-primary" id="mirrorAgainBtn" type="button">Nochmal</button>
+      <button class="btn-text" id="mirrorBackBtn" type="button">Zurück zur Liste</button>
+    </div>
+  </div>
+
+  <div id="know-screen" class="screen hidden">
+    <div class="quiz-header">
+      <button class="btn-text" id="knowQuitBtn" type="button">← Abbrechen</button>
+      <span id="knowProgress">1 / 1</span>
+      <span id="knowScore">✓ 0</span>
+    </div>
+    <div class="flashcard" id="knowCard">
+      <div class="card-tag" id="knowTag">Kann ich das?</div>
+      <div class="card-word" id="knowPrompt">Wort</div>
+      <div class="smart-intro-answer hidden" id="knowAnswer"></div>
+    </div>
+    <div class="phon-line" id="knowPhon"></div>
+    <div class="ex-line" id="knowEx"></div>
+    <div class="know-actions" id="knowChoice">
+      <button class="mc-option know-yes" id="knowYesBtn" type="button">Kann ich</button>
+      <button class="mc-option know-no" id="knowNoBtn" type="button">Kann ich nicht</button>
+    </div>
+    <button class="btn-primary hidden" id="knowNextBtn" type="button">Weiter</button>
+  </div>
+
+  <div id="know-results-screen" class="screen hidden">
+    <div class="result-hero">
+      <div class="result-fraction" id="knowResFraction">0 / 0</div>
+      <div class="result-percent" id="knowResPercent"></div>
+    </div>
+    <div class="missed-section">
+      <label class="section-label">Noch nicht sicher</label>
+      <div id="knowResList"></div>
+    </div>
+    <div class="share-mini"><button class="btn-outline" id="knowShareBtn" type="button">Liste teilen / speichern</button><button class="btn-outline" id="knowCopyBtn" type="button">Liste kopieren</button></div>
+    <button class="btn-outline" id="knowNewListBtn" type="button" style="width:100%">Als neue Liste speichern</button>
+    <p class="hint" id="knowMsg" aria-live="polite"></p>
+    <div class="result-actions">
+      <button class="btn-primary" id="knowAgainBtn" type="button">Nochmal</button>
+      <button class="btn-text" id="knowBackBtn" type="button">Zurück zur Liste</button>
+    </div>
+  </div>
+
   <div id="smart-results-screen" class="screen hidden">
     <div class="result-hero">
       <div class="result-fraction" id="smartResFraction">0 / 0</div>
@@ -512,11 +668,17 @@ Wasser; water"></textarea>
       <label class="section-label">Lernstufen</label>
       <div id="smartResCards"></div>
     </div>
+    <div class="missed-section" id="smartPatternsBox"><label class="section-label">Fehler-Muster</label><div id="smartPatternsList"></div></div>
+    <div class="share-mini" id="smartMissedShare"><button class="btn-outline" id="smartMissedShareBtn" type="button">Fehler teilen / speichern</button><button class="btn-outline" id="smartMissedCopyBtn" type="button">Fehler kopieren</button></div>
+    <button class="btn-outline" id="smartMissedNewListBtn" type="button" style="width:100%">Fehler als neue Liste speichern</button>
+    <p class="hint" id="smartMissedMsg" aria-live="polite"></p>
     <div class="result-actions">
       <button class="btn-primary btn-smart" id="smartAgainBtn" type="button">Nächste Runde</button>
       <button class="btn-text" id="smartBackBtn" type="button">Zurück zur Liste</button>
     </div>
   </div>
+
+  <div class="undo-bar hidden" id="undoBar" role="status" aria-live="polite"><span id="undoText"></span><button id="undoBtn" type="button">Rückgängig</button></div>
 
   <div class="lang-modal-overlay hidden" id="phonModalOverlay">
     <div class="lang-modal phon-modal">
@@ -678,6 +840,7 @@ Wasser; water"></textarea>
       if (!h || typeof h !== 'object') h = {};
       v.hist[k] = { ok: Math.max(0, +h.ok || 0), bad: Math.max(0, +h.bad || 0), last: +h.last || 0 };
     });
+    v.star = !!v.star;
     if (!v.conf || typeof v.conf !== 'object') v.conf = {};
     ['ab', 'ba'].forEach(function (k) { if (!v.conf[k] || typeof v.conf[k] !== 'object') v.conf[k] = {}; });
     if (typeof v.phon !== 'string') v.phon = '';
@@ -692,7 +855,7 @@ Wasser; water"></textarea>
   }
 
   function defaultList(name) {
-    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', native: 'a', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false, multipleChoice: false, sortBy: 'created_asc' };
+    return { id: generateId(), name: name || 'Liste 1', langA: 'Deutsch', langB: 'Englisch', native: 'a', vocab: [], direction: 'mixed', minutes: DEFAULT_MINUTES, weakOnly: false, showPhon: false, multipleChoice: false, starOnly: false, sortBy: 'created_asc' };
   }
 
   function loadAll() {
@@ -710,6 +873,7 @@ Wasser; water"></textarea>
             if (typeof l.sortBy !== 'string') l.sortBy = 'created_asc';
             if (typeof l.showPhon !== 'boolean') l.showPhon = l.vocab.some(function (v) { return v.phon; });
             if (typeof l.multipleChoice !== 'boolean') l.multipleChoice = false;
+            if (typeof l.starOnly !== 'boolean') l.starOnly = false;
             if (l.native !== 'a' && l.native !== 'b') l.native = 'a';
             if (l.minutes !== null && (typeof l.minutes !== 'number' || isNaN(l.minutes) || l.minutes < 0)) l.minutes = DEFAULT_MINUTES;
           });
@@ -737,6 +901,10 @@ Wasser; water"></textarea>
     gid('results-screen').classList.toggle('hidden', name !== 'results');
     gid('smart-screen').classList.toggle('hidden', name !== 'smart');
     gid('smart-results-screen').classList.toggle('hidden', name !== 'smartResults');
+    gid('mirror-screen').classList.toggle('hidden', name !== 'mirror');
+    gid('mirror-results-screen').classList.toggle('hidden', name !== 'mirrorResults');
+    gid('know-screen').classList.toggle('hidden', name !== 'know');
+    gid('know-results-screen').classList.toggle('hidden', name !== 'knowResults');
   }
 
   function showSetupMessage(msg) { gid('setupMessage').textContent = msg; }
@@ -802,9 +970,10 @@ Wasser; water"></textarea>
     var validCount = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim(); }).length;
     gid('startQuizBtn').disabled = validCount === 0;
     gid('startSmartBtn').disabled = validCount === 0;
+    var starN = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim() && v.star; }).length;
     gid('statusLine').textContent = validCount === 0
       ? 'Noch keine vollständigen Vokabelpaare.'
-      : validCount + (validCount === 1 ? ' Vokabelpaar bereit.' : ' Vokabelpaare bereit.');
+      : validCount + (validCount === 1 ? ' Vokabelpaar bereit.' : ' Vokabelpaare bereit.') + (starN ? ' ★ ' + starN + ' markiert.' : '');
     updateWeakInfo();
   }
 
@@ -906,7 +1075,9 @@ Wasser; water"></textarea>
         '<input type="text" class="vocab-input" data-idx="' + i + '" data-field="b" value="' + escapeHtml(pair.b) + '" placeholder="' + escapeHtml(list.langB) + '">' +
         '<span class="box-badges"><span class="box-badge" title="Lernstufe Sprache 1 → Sprache 2">→ ' + pair.boxAB + '</span>' +
         '<span class="box-badge" title="Lernstufe Sprache 2 → Sprache 1">← ' + pair.boxBA + '</span></span>' +
-        '<button class="btn-delete" data-idx="' + i + '" type="button" aria-label="Zeile löschen">✕</button></div>';
+        '<span class="vocab-actions-col"><button class="btn-star' + (pair.star ? ' on' : '') + '" data-idx="' + i + '" type="button" aria-pressed="' + (pair.star ? 'true' : 'false') + '" title="Als wichtig markieren" aria-label="Stern setzen oder entfernen">' + (pair.star ? '★' : '☆') + '</button>' +
+        '<button class="btn-reset" data-idx="' + i + '" type="button" title="Lernstufe dieses Wortes zurücksetzen" aria-label="Lernstufe zurücksetzen">↺</button>' +
+        '<button class="btn-delete" data-idx="' + i + '" type="button" aria-label="Zeile löschen">✕</button></span></div>';
       if (list.showPhon) {
         html += '<div class="phon-row"><span class="phon-label">Lautschrift</span>' +
           '<input type="text" class="phon-input" data-idx="' + i + '" readonly inputmode="none" value="' + escapeHtml(pair.phon || '') + '" placeholder="antippen zum Eingeben"></div>';
@@ -940,6 +1111,7 @@ Wasser; water"></textarea>
     gid('vocabSearch').value = '';
     gid('weakOnlyCheck').checked = !!list.weakOnly;
     gid('multipleChoiceCheck').checked = !!list.multipleChoice;
+    gid('starOnlyCheck').checked = !!list.starOnly;
     gid('minutesInput').value = (list.minutes === null || list.minutes === undefined) ? '' : String(list.minutes).replace('.', ',');
     updateMinutesSeconds();
     updateLangPickerLabels();
@@ -1004,10 +1176,11 @@ Wasser; water"></textarea>
       var t = piece.replace(TOKEN_RE, function (m, n) { var val = brackets[parseInt(n, 10)]; if (val) ph.push(val); return ' '; })
         .replace(EX_TOKEN_RE, function (m, n) { var val = examples[parseInt(n, 10)]; if (val) ex.push(val); return ' '; })
         .replace(/\s+/g, ' ').trim();
+      t = t.replace(/[\uE000-\uE1FF]/g, '').replace(/\s+/g, ' ').trim();
       if (!t) return;
       var isHalf = /\*+$/.test(t);
       t = t.replace(/\s*\*+$/, '').trim();
-      items.push({ text: t, half: isHalf, phon: ph.length ? ph[0] : '', ex: ex.length ? ex[0] : '' });
+      items.push({ text: t, half: isHalf, phon: ph.join(' '), ex: ex.join(' ') });
     });
     var main = items.length ? items[0].text : '';
     var mainPhon = items.length ? items[0].phon : '';
@@ -1190,7 +1363,12 @@ Wasser; water"></textarea>
       var phonExport = String(v.phon || '').replace(/[;\t\r\n]+/g, ' ').trim();
       if (phonExport && !/^\[.*\]$/.test(phonExport)) phonExport = '[' + phonExport + ']';
       var exExport = String(v.ex || '').replace(/["„“”\t\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
-      lines.push(exportSide(v.a, v.aAlts, v.aHalf, v.aAltPhon, v.aAltEx) + '; ' + exportSide(v.b, v.bAlts, v.bHalf, v.bAltPhon, v.bAltEx) + (phonExport ? '; ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : ''));
+      var sideBTxt = exportSide(v.b, v.bAlts, v.bHalf, v.bAltPhon, v.bAltEx);
+      var firstEnd = sideBTxt.indexOf(' / ');
+      var mainB = firstEnd === -1 ? sideBTxt : sideBTxt.slice(0, firstEnd);
+      var restB = firstEnd === -1 ? '' : sideBTxt.slice(firstEnd);
+      mainB += (phonExport ? ' ' + phonExport : '') + (exExport ? ' "' + exExport + '"' : '');
+      lines.push(exportSide(v.a, v.aAlts, v.aHalf, v.aAltPhon, v.aAltEx) + '; ' + mainB + restB);
     });
     return lines.join('\n');
   }
@@ -1246,12 +1424,455 @@ Wasser; water"></textarea>
     else fallback();
   }
 
+  // Fehlerliste als Import-Text: pro Zeile Wort; Übersetzung (+ Lautschrift/Beispiel), direkt wieder einfügbar
+  function buildMissedText(vocabIds) {
+    var list = quizListRef || getCurrentList();
+    var seen = {}, lines = [];
+    vocabIds.forEach(function (id) {
+      if (seen[id]) return;
+      seen[id] = true;
+      for (var i = 0; i < list.vocab.length; i++) {
+        if (list.vocab[i].id !== id) continue;
+        var one = { vocab: [list.vocab[i]] };
+        var t = buildExportText(one);
+        if (t) lines.push(t);
+      }
+    });
+    return lines.join('\n');
+  }
+
+  function shareTextFile(text, baseName, msgEl) {
+    var msg = function (m) { gid(msgEl).textContent = m; };
+    if (!text) { msg('Nichts zu speichern.'); return; }
+    var fileName = safeFileName(baseName);
+    var file = null;
+    try { file = new File([text], fileName, { type: 'text/plain' }); } catch (e) { file = null; }
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: baseName }).then(function () { msg('Geteilt.'); }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        downloadTextFile(text, fileName); msg('Datei „' + fileName + '“ gespeichert.');
+      });
+    } else { downloadTextFile(text, fileName); msg('Datei „' + fileName + '“ gespeichert.'); }
+  }
+
+  function copyTextTo(text, msgEl) {
+    var msg = function (m) { gid(msgEl).textContent = m; };
+    if (!text) { msg('Nichts zu kopieren.'); return; }
+    var ok = 'Kopiert. Du kannst es bei „Mehrere Vokabeln auf einmal einfügen“ einsetzen.';
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var done = false;
+      try { done = document.execCommand('copy'); } catch (e) { done = false; }
+      document.body.removeChild(ta);
+      msg(done ? ok : 'Kopieren nicht möglich – nutze „teilen / speichern“.');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { msg(ok); }).catch(fallback);
+    else fallback();
+  }
+
   function showBulkMessage(msg) { showSetupMessage(msg); gid('bulkMessage').textContent = msg; }
+
+  /* ---- Lernstufen zurücksetzen ---- */
+  function snapshotLevels(v) { return { boxAB: v.boxAB, boxBA: v.boxBA, hist: JSON.parse(JSON.stringify(v.hist)), conf: JSON.parse(JSON.stringify(v.conf)) }; }
+  function restoreLevels(v, snap) { v.boxAB = snap.boxAB; v.boxBA = snap.boxBA; v.hist = snap.hist; v.conf = snap.conf; }
+  function resetLevels(v) {
+    v.boxAB = 1; v.boxBA = 1;
+    v.hist = { ab: { ok: 0, bad: 0, last: 0 }, ba: { ok: 0, bad: 0, last: 0 } };
+    v.conf = { ab: {}, ba: {} };
+  }
+
+  /* ---- Fehler-Muster ---- */
+  var PATTERN_INFO = {
+    accent:  { label: 'Akzente / Sonderzeichen vergessen', tip: 'Achte beim Lernen auf Akzente (é, ü, ñ …): Sie gehören zum Wort.' },
+    ending:  { label: 'Wortende falsch', tip: 'Die Endung sitzt nicht: Präge dir das Wort von hinten nach vorne ein.' },
+    start:   { label: 'Wortanfang falsch', tip: 'Der Anfang ist unsicher: Sprich den ersten Laut deutlich mit.' },
+    swap:    { label: 'Buchstaben vertauscht', tip: 'Zwei Buchstaben stehen in falscher Reihenfolge: Tippe langsamer.' },
+    missing: { label: 'Buchstabe vergessen', tip: 'Es fehlt ein Buchstabe: Sprich das Wort in Silben mit.' },
+    extra:   { label: 'Buchstabe zu viel', tip: 'Ein Buchstabe ist zu viel, oft ein Doppelbuchstabe.' },
+    double:  { label: 'Doppelbuchstaben', tip: 'Doppelt oder einfach? Präge dir solche Wörter gezielt ein.' },
+    case:    { label: 'Groß-/Kleinschreibung', tip: 'Achte auf Groß- und Kleinschreibung (z. B. bei Nomen).' },
+    letter:  { label: 'Falscher Buchstabe', tip: 'Ein Buchstabe ist ersetzt: Vergleiche Buchstabe für Buchstabe.' },
+    other:   { label: 'Ganz anderes Wort', tip: 'Das Wort war noch nicht gefestigt: Wiederholen hilft am meisten.' }
+  };
+
+  function classifyError(typed, correct) {
+    var t = String(typed || '').trim(), c = String(correct || '').trim();
+    if (!t || !c) return 'other';
+    if (t !== c && t.toLowerCase() === c.toLowerCase()) return 'case';
+    var tl = t.toLowerCase(), cl = c.toLowerCase();
+    if (stripAccents(tl) === stripAccents(cl)) return 'accent';
+    var ts = simplifyAnswer(tl), cs = simplifyAnswer(cl);
+    var dist = levenshtein(ts, cs);
+    if (dist > Math.max(2, Math.floor(cs.length / 3))) return 'other';
+    if (ts.length === cs.length) {
+      var diffs = [];
+      for (var i = 0; i < ts.length; i++) if (ts.charAt(i) !== cs.charAt(i)) diffs.push(i);
+      if (diffs.length === 2 && diffs[1] === diffs[0] + 1 && ts.charAt(diffs[0]) === cs.charAt(diffs[1]) && ts.charAt(diffs[1]) === cs.charAt(diffs[0])) return 'swap';
+    }
+    if (ts.length === cs.length - 1 || ts.length === cs.length + 1) {
+      var longer = ts.length > cs.length ? ts : cs, shorter = ts.length > cs.length ? cs : ts;
+      for (var k = 0; k < longer.length; k++) {
+        if (longer.slice(0, k) + longer.slice(k + 1) === shorter) {
+          var ch = longer.charAt(k);
+          var isDouble = (k > 0 && longer.charAt(k - 1) === ch) || longer.charAt(k + 1) === ch;
+          if (isDouble) return 'double';
+          return ts.length < cs.length ? 'missing' : 'extra';
+        }
+      }
+    }
+    var lastOk = 0; while (lastOk < ts.length && lastOk < cs.length && ts.charAt(lastOk) === cs.charAt(lastOk)) lastOk++;
+    var endOk = 0; while (endOk < ts.length && endOk < cs.length && ts.charAt(ts.length - 1 - endOk) === cs.charAt(cs.length - 1 - endOk)) endOk++;
+    if (lastOk === 0 && cs.length > 2) return 'start';
+    // Endung: alles ab der Wortmitte ist anders (mehr als nur ein einzelner Buchstabe)
+    if (cs.length - lastOk >= 2 && lastOk >= Math.ceil(cs.length / 2) && cs.length > 3) return 'ending';
+    if (ts.length === cs.length + 1 && lastOk === cs.length) return 'extra';
+    return 'letter';
+  }
+
+  var errPatterns = {}; // aktuelle Runde: { key: count }
+  function resetPatterns() { errPatterns = {}; }
+  function notePattern(typed, correct) {
+    if (!String(typed || '').trim()) return;
+    var k = classifyError(typed, correct);
+    errPatterns[k] = (errPatterns[k] || 0) + 1;
+  }
+
+  function renderPatterns(listElId, boxElId) {
+    var keys = Object.keys(errPatterns).sort(function (x, y) { return errPatterns[y] - errPatterns[x]; });
+    var total = keys.reduce(function (n, k) { return n + errPatterns[k]; }, 0);
+    gid(boxElId).style.display = total >= 2 ? '' : 'none';
+    if (total < 2) return;
+    // 'other' nur nennen, wenn er dominiert, sonst ist es kein Muster
+    gid(listElId).innerHTML = keys.slice(0, 3).map(function (k) {
+      var info = PATTERN_INFO[k];
+      return '<div class="pattern-row"><span class="p-count">' + errPatterns[k] + '×</span> ' + escapeHtml(info.label) + '<span class="p-tip">' + escapeHtml(info.tip) + '</span></div>';
+    }).join('');
+  }
+
+  /* ---- Spiegelübung ---- */
+  var mirror = null;
+
+  // 1–2 Buchstaben ändern: ersetzen, vertauschen, weglassen oder verdoppeln
+  function mutateWord(word, seed) {
+    var chars = Array.from(String(word));
+    var idxs = [];
+    chars.forEach(function (ch, i) { if (/[\p{L}]/u.test(ch)) idxs.push(i); });
+    if (idxs.length < 3) return null;
+    var h = hashStr(seed);
+    var n = idxs.length >= 7 && h % 3 === 0 ? 2 : 1;
+    var lookalike = { a: 'e', e: 'a', i: 'y', o: 'u', u: 'o', y: 'i', c: 's', s: 'c', k: 'c', t: 'd', d: 't', b: 'p', p: 'b', m: 'n', n: 'm', l: 'r', r: 'l', v: 'w', w: 'v', g: 'j', j: 'g', f: 'v', h: 'n', z: 's', x: 'ks' };
+    var out = chars.slice();
+    var used = {};
+    for (var step = 0; step < n; step++) {
+      var pos = idxs[(h + step * 7) % idxs.length];
+      var tries = 0;
+      while (used[pos] && tries++ < idxs.length) pos = idxs[(idxs.indexOf(pos) + 1) % idxs.length];
+      used[pos] = true;
+      var type = (h >> (step * 3 + 1)) % 4;
+      var ch = out[pos], low = ch.toLowerCase(), rep;
+      if (type === 0 && pos + 1 < out.length && /[\p{L}]/u.test(out[pos + 1]) && out[pos + 1] !== ch) {
+        var nx = out[pos + 1]; out[pos + 1] = ch; out[pos] = nx;                       // vertauschen
+      } else if (type === 1 && idxs.length >= 5) {
+        out[pos] = '';                                                                 // weglassen
+      } else if (type === 2) {
+        out[pos] = ch + ch;                                                            // verdoppeln
+      } else {
+        rep = lookalike[low] || String.fromCharCode(((low.charCodeAt(0) - 97 + 3) % 26) + 97); // ersetzen
+        if (!/[a-z]/.test(rep.charAt(0))) rep = 'e';
+        out[pos] = ch === ch.toUpperCase() && ch !== low ? rep.toUpperCase() : rep;
+      }
+    }
+    var res = out.join('');
+    return normalizeAnswer(res) === normalizeAnswer(word) ? null : res;
+  }
+
+  function startMirror() {
+    var list = getCurrentList();
+    var vocab = validSmartVocab(list);
+    if (!vocab.length) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
+    showSetupMessage('');
+    quizListRef = list; quizLangA = list.langA; quizLangB = list.langB;
+    var dir = smartDir(list);
+    var round = Date.now().toString(36);
+    var cards = seededShuffle(vocab.map(function (v) { return v.id; }), 'mirror' + round).slice(0, 20).map(function (id, i) {
+      var v = findVocab(id), tgt = dir === 'aToB' ? v.b : v.a;
+      var wrong = mutateWord(tgt, id + round + i);
+      // Etwa 65 % der Karten sind verändert, der Rest bleibt richtig (sonst rät man einfach "falsch")
+      var useWrong = wrong !== null && hashStr(id + round + 'w') % 100 < 65;
+      return { id: id, dir: dir, target: tgt, shown: useWrong ? wrong : tgt, isWrong: useWrong };
+    });
+    mirror = { list: list, cards: cards, i: 0, ok: 0, miss: [], phase: 'choose' };
+    resetPatterns();
+    showScreen('mirror');
+    renderMirror();
+  }
+
+  function renderMirror() {
+    var c = mirror.cards[mirror.i], v = findVocab(c.id);
+    mirror.phase = 'choose';
+    gid('mirrorCard').className = 'flashcard';
+    gid('mirrorTag').textContent = (c.dir === 'aToB' ? quizLangA : quizLangB) + ' → ' + (c.dir === 'aToB' ? quizLangB : quizLangA);
+    gid('mirrorPrompt').textContent = c.dir === 'aToB' ? v.a : v.b;
+    gid('mirrorShown').textContent = c.shown;
+    gid('mirrorInstr').textContent = 'Stimmt diese Übersetzung genau, Buchstabe für Buchstabe?';
+    gid('mirrorChoice').classList.remove('hidden');
+    gid('mirrorInput').classList.add('hidden'); gid('mirrorInput').value = ''; gid('mirrorInput').readOnly = false;
+    gid('mirrorFeedback').className = 'feedback hidden';
+    gid('mirrorActionBtn').classList.add('hidden');
+    gid('mirrorProgress').textContent = (mirror.i + 1) + ' / ' + mirror.cards.length;
+    gid('mirrorScore').textContent = '✓ ' + mirror.ok;
+  }
+
+  function mirrorFeedback(cls, text, btn) {
+    gid('mirrorCard').classList.add(cls === 'correct' ? 'correct' : 'incorrect');
+    gid('mirrorFeedback').className = 'feedback ' + cls;
+    gid('mirrorFbText').textContent = text;
+    gid('mirrorChoice').classList.add('hidden');
+    gid('mirrorInput').classList.add('hidden');
+    var b = gid('mirrorActionBtn');
+    b.textContent = mirror.i + 1 >= mirror.cards.length ? 'Fertig' : 'Weiter';
+    b.classList.remove('hidden');
+    mirror.phase = 'next';
+    gid('mirrorScore').textContent = '✓ ' + mirror.ok;
+  }
+
+  function mirrorChoose(saysOk) {
+    var c = mirror.cards[mirror.i];
+    if (saysOk) {
+      if (!c.isWrong) { mirror.ok++; mirrorFeedback('correct', 'Richtig: Die Schreibweise stimmt.'); }
+      else { mirror.miss.push(c); mirrorFeedback('incorrect', 'Übersehen! Richtig ist: ' + c.target + ' (gezeigt: ' + c.shown + ')'); notePattern(c.shown, c.target); }
+    } else {
+      if (!c.isWrong) { mirror.miss.push(c); mirrorFeedback('incorrect', 'Die Schreibweise stimmte: ' + c.target); }
+      else {
+        // Falsch erkannt: jetzt die richtige Schreibweise tippen
+        mirror.phase = 'type';
+        gid('mirrorChoice').classList.add('hidden');
+        gid('mirrorInstr').textContent = 'Gut erkannt! Tippe jetzt die richtige Schreibweise.';
+        var inp = gid('mirrorInput'); inp.classList.remove('hidden'); inp.value = ''; inp.focus();
+        var b = gid('mirrorActionBtn'); b.textContent = 'Prüfen'; b.classList.remove('hidden');
+      }
+    }
+  }
+
+  function mirrorCheckTyped() {
+    var c = mirror.cards[mirror.i], inp = gid('mirrorInput');
+    var typed = inp.value.trim();
+    if (!typed) { inp.focus(); return; }
+    inp.readOnly = true;
+    var v = findVocab(c.id);
+    var alts = cleanAltList(c.dir === 'aToB' ? v.bAlts : v.aAlts);
+    var res = gradeTyped(typed, c.target, alts, []);
+    if (res.kind === 'exact') { mirror.ok++; mirrorFeedback('correct', 'Richtig geschrieben.'); }
+    else { mirror.miss.push(c); notePattern(typed, c.target); mirrorFeedback('incorrect', 'Richtig wäre: ' + c.target); }
+  }
+
+  function mirrorAction() {
+    if (!mirror) return;
+    if (mirror.phase === 'type') { mirrorCheckTyped(); return; }
+    if (mirror.phase !== 'next') return;
+    mirror.i++;
+    if (mirror.i >= mirror.cards.length) { mirrorFinish(); return; }
+    renderMirror();
+  }
+
+  function mirrorFinish() {
+    showScreen('mirrorResults');
+    var total = mirror.cards.length;
+    gid('mirrorResFraction').textContent = mirror.ok + ' / ' + total;
+    gid('mirrorResPercent').textContent = Math.round(mirror.ok / Math.max(1, total) * 100) + ' % genau hingesehen';
+    var seen = {}, html = '';
+    mirror.miss.forEach(function (c) {
+      if (seen[c.id]) return; seen[c.id] = true;
+      html += '<div class="missed-row">' + escapeHtml(c.target) + (c.isWrong ? ' <span class="half-tag">(gezeigt: ' + escapeHtml(c.shown) + ')</span>' : '') + '</div>';
+    });
+    gid('mirrorResList').innerHTML = html || '<div class="missed-empty">Nichts übersehen.</div>';
+    if (total > 0 && mirror.ok === total) launchConfetti();
+  }
+
+  /* ---- Duplikate / Zusammenführen / Aufteilen / Rückgängig ---- */
+  function dupKey(t) { return simplifyAnswer(normalizeAnswer(t)).replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
+
+  function findDuplicate(vocab, a, b) {
+    var ka = dupKey(a), kb = dupKey(b);
+    if (!ka || !kb) return null;
+    for (var i = 0; i < vocab.length; i++) {
+      if (dupKey(vocab[i].a) === ka && dupKey(vocab[i].b) === kb) return vocab[i];
+    }
+    return null;
+  }
+
+  function mergeAlt(target, src, altF, mainF) {
+    // Hauptwort und Alternativen der Quelle als Alternativen der Zielseite, sofern neu
+    var known = [target[mainF]].concat(target[altF] || []).map(dupKey);
+    var srcWords = [src[mainF]].concat(src[altF] || []);
+    var added = 0;
+    srcWords.forEach(function (w) {
+      var k = dupKey(w);
+      if (!k || known.indexOf(k) !== -1) return;
+      known.push(k);
+      target[altF].push(w);
+      added++;
+      if (inListNorm(src[halfField(altF)], w) && !inListNorm(target[halfField(altF)], w)) target[halfField(altF)].push(w);
+      var sp = (src[altPhonField(altF)] || {})[w]; if (sp) { if (!target[altPhonField(altF)]) target[altPhonField(altF)] = {}; target[altPhonField(altF)][w] = sp; }
+      var se = (src[altExField(altF)] || {})[w]; if (se) { if (!target[altExField(altF)]) target[altExField(altF)] = {}; target[altExField(altF)][w] = se; }
+    });
+    return added;
+  }
+
+  // Ergänzt nur, was fehlt. Lernstufen, Verlauf und vorhandene Texte bleiben unverändert.
+  function mergeVocabInto(target, src) {
+    var n = mergeAlt(target, src, 'aAlts', 'a') + mergeAlt(target, src, 'bAlts', 'b');
+    if (!target.phon && src.phon) { target.phon = src.phon; n++; }
+    if (!target.ex && src.ex) { target.ex = src.ex; n++; }
+    return n;
+  }
+
+  var pendingDup = null; // { list, fresh: [vocab], dups: [{ existing, incoming }], added }
+
+  function hideDupBox() { gid('dupBox').classList.add('hidden'); pendingDup = null; }
+
+  function showDupBox(list, fresh, dups) {
+    pendingDup = { list: list, fresh: fresh, dups: dups };
+    gid('dupTitle').textContent = dups.length + (dups.length === 1 ? ' Wort steht' : ' Wörter stehen') + ' schon in der Liste:';
+    gid('dupList').innerHTML = dups.map(function (d) { return '<div>' + escapeHtml(d.existing.a) + ' — ' + escapeHtml(d.existing.b) + '</div>'; }).join('');
+    gid('dupBox').classList.remove('hidden');
+  }
+
+  function resolveDup(mode) {
+    if (!pendingDup) return;
+    var pd = pendingDup, list = pd.list, merged = 0, skipped = 0, dupAdded = 0;
+    pd.dups.forEach(function (d) {
+      if (mode === 'merge') { if (mergeVocabInto(d.existing, d.incoming) > 0) merged++; else skipped++; }
+      else if (mode === 'skip') skipped++;
+      else { list.vocab.push(d.incoming); dupAdded++; }
+    });
+    hideDupBox();
+    renderVocabList(); saveAll();
+    var parts = [];
+    if (merged) parts.push(merged + ' zusammengeführt');
+    if (skipped) parts.push(skipped + ' übersprungen');
+    if (dupAdded) parts.push(dupAdded + ' trotzdem hinzugefügt');
+    showBulkMessage(parts.join(', ') + '.');
+  }
+
+  // ---- Rückgängig ----
+  var undoState = null, undoTimer = null;
+
+  function offerUndo(text, restoreFn) {
+    clearTimeout(undoTimer);
+    undoState = restoreFn;
+    gid('undoText').textContent = text;
+    gid('undoBar').classList.remove('hidden');
+    undoTimer = setTimeout(hideUndo, 7000);
+  }
+  function hideUndo() { clearTimeout(undoTimer); undoState = null; gid('undoBar').classList.add('hidden'); }
+  function doUndo() {
+    if (!undoState) return;
+    var fn = undoState;
+    hideUndo();
+    fn();
+    renderVocabList(); saveAll();
+  }
+
+  // ---- Listen zusammenführen / aufteilen ----
+  function renderMergeSelect() {
+    var sel = gid('mergeSelect');
+    if (!sel) return;
+    var html = '';
+    lists.forEach(function (l) { if (l.id !== currentListId) html += '<option value="' + l.id + '">' + escapeHtml(l.name || '(ohne Namen)') + ' (' + l.vocab.length + ')</option>'; });
+    sel.innerHTML = html || '<option value="">Keine andere Liste vorhanden</option>';
+    gid('mergeBtn').disabled = !html;
+  }
+
+  function cloneVocab(v) {
+    var c = JSON.parse(JSON.stringify(v));
+    c.id = generateVocabId();
+    return normalizeVocab(c);
+  }
+
+  function mergeLists() {
+    var src = null, dst = getCurrentList();
+    lists.forEach(function (l) { if (l.id === gid('mergeSelect').value) src = l; });
+    if (!src) { gid('toolsMsg').textContent = 'Bitte wähle eine Liste.'; return; }
+    if (src.langA !== dst.langA || src.langB !== dst.langB) {
+      if (!(src.langA === dst.langB && src.langB === dst.langA)) { gid('toolsMsg').textContent = 'Die Sprachen der Listen passen nicht zusammen (' + src.langA + '/' + src.langB + ' und ' + dst.langA + '/' + dst.langB + ').'; return; }
+    }
+    var swapped = src.langA !== dst.langA;
+    var snapshot = JSON.stringify(dst.vocab);
+    var added = 0, merged = 0;
+    src.vocab.forEach(function (v) {
+      var c = cloneVocab(v);
+      if (swapped) {
+        var t = c.a; c.a = c.b; c.b = t;
+        var ta = c.aAlts; c.aAlts = c.bAlts; c.bAlts = ta;
+        var tg = c.aGame; c.aGame = c.bGame; c.bGame = tg;
+        var th = c.aHalf; c.aHalf = c.bHalf; c.bHalf = th;
+        var tap = c.aAltPhon; c.aAltPhon = c.bAltPhon; c.bAltPhon = tap;
+        var tae = c.aAltEx; c.aAltEx = c.bAltEx; c.bAltEx = tae;
+        var tb = c.boxAB; c.boxAB = c.boxBA; c.boxBA = tb;
+        if (c.hist) { var thi = c.hist.ab; c.hist.ab = c.hist.ba; c.hist.ba = thi; }
+        if (c.conf) { c.conf = { ab: {}, ba: {} }; }
+      }
+      if (!c.a.trim() || !c.b.trim()) return;
+      var dup = findDuplicate(dst.vocab, c.a, c.b);
+      if (dup) { if (mergeVocabInto(dup, c) > 0) merged++; }
+      else { dst.vocab.push(c); added++; if (c.phon) dst.showPhon = true; }
+    });
+    renderVocabList(); saveAll();
+    gid('toolsMsg').textContent = added + ' hinzugefügt, ' + merged + ' zusammengeführt.' + (swapped ? ' (Sprachen waren vertauscht und wurden angepasst.)' : '');
+    offerUndo('Liste eingefügt (' + added + ' neu)', function () { dst.vocab = JSON.parse(snapshot); });
+  }
+
+  function newListFromVocab(vocabArr, name, langA, langB, native) {
+    var nl = defaultList(name);
+    nl.langA = langA; nl.langB = langB; nl.native = native || 'a';
+    nl.vocab = vocabArr;
+    nl.showPhon = vocabArr.some(function (v) { return v.phon; });
+    lists.push(nl);
+    currentListId = nl.id;
+    hideDupBox(); hideUndo();
+    renderListSelect(); renderCurrentListIntoForm(); renderMergeSelect(); saveAll();
+    return nl;
+  }
+
+  function splitList() {
+    var list = getCurrentList(), mode = gid('splitSelect').value;
+    var picked = list.vocab.filter(function (v) {
+      if (!(v.a.trim() && v.b.trim())) return false;
+      var lvl = (v.boxAB + v.boxBA) / 2;
+      if (mode === 'weak') return lvl <= 2;
+      if (mode === 'mid') return lvl > 2 && lvl < 3.5;
+      if (mode === 'strong') return lvl >= 3.5;
+      if (mode === 'star') return !!v.star;
+      return !v.ex;
+    });
+    if (!picked.length) { gid('toolsMsg').textContent = 'Keine passenden Wörter gefunden.'; return; }
+    var labels = { weak: 'Schwache Wörter', mid: 'Mittlere Wörter', strong: 'Sichere Wörter', nophon: 'Ohne Beispielsatz', star: 'Sternchen-Wörter' };
+    var nl = newListFromVocab(picked.map(cloneVocab), labels[mode] + ' – ' + list.name, list.langA, list.langB, list.native);
+    showSetupMessage(picked.length + ' Wörter in neue Liste „' + nl.name + '“ kopiert.');
+  }
+
+  // Fehlerliste (nach Quiz/Smart/Selbstcheck) als neue Liste speichern
+  function missedAsNewList(vocabIds, baseName) {
+    var src = quizListRef || getCurrentList();
+    var seen = {}, out = [];
+    vocabIds.forEach(function (id) {
+      if (seen[id]) return;
+      seen[id] = true;
+      for (var i = 0; i < src.vocab.length; i++) if (src.vocab[i].id === id) { var c = cloneVocab(src.vocab[i]); c.boxAB = 1; c.boxBA = 1; out.push(c); }
+    });
+    if (!out.length) return null;
+    return newListFromVocab(out, baseName + ' – ' + src.name, src.langA, src.langB, src.native);
+  }
 
   function parseBulk() {
     var list = getCurrentList();
     var lines = gid('bulkText').value.split('\n');
     var added = 0, altCount = 0, halfCount = 0, phonCount = 0, exCount = 0;
+    var freshPairs = [];
+    hideDupBox();
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
@@ -1262,6 +1883,9 @@ Wasser; water"></textarea>
       }).replace(/ {2,}/g, ' ').trim();
       if (!line) continue;
       var brackets = [];
+      line = line.replace(/(^|\s)\/([^\/\s][^\/]*?)\/(?=\s|$|;|,)/g, function (m, pre, inner) {
+        return /[^\x00-\x7F]/.test(inner) ? pre + '[' + inner + ']' : m;
+      });
       line = line.replace(/\[([^\]]*)\]/g, function (m, inner) {
         brackets.push(inner.trim());
         return ' \uE000' + (brackets.length - 1) + '\uE001 ';
@@ -1275,10 +1899,19 @@ Wasser; water"></textarea>
       var sideA = splitAlternatives(parts[0], brackets, examples);
       var sideB = splitAlternatives(parts[1], brackets, examples);
       if (sideA.main && sideB.main) {
-        var thirdPhon = '';
-        if (!commaSep) thirdPhon = String(parts[2] || '').replace(TOKEN_RE, function (m, n) { return brackets[parseInt(n, 10)] || ''; }).replace(/\s+/g, ' ').trim();
-        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, aAltPhon: sideA.altPhon, bAltPhon: sideB.altPhon, aAltEx: sideA.altEx, bAltEx: sideB.altEx, ex: sideA.mainEx || sideB.mainEx, phon: sideA.mainPhon || sideB.mainPhon || thirdPhon });
-        list.vocab.push(newPair);
+        // Weitere Felder (Tab/Semikolon): Lautschrift und Beispielsatz daraus lesen, Platzhalter restlos auflösen
+        var thirdPhon = '', thirdEx = '';
+        if (!commaSep) {
+          for (var pi = 2; pi < parts.length; pi++) {
+            var rawPart = String(parts[pi] || '');
+            rawPart.replace(TOKEN_RE, function (m, n) { if (!thirdPhon) thirdPhon = brackets[parseInt(n, 10)] || ''; return ''; });
+            rawPart.replace(EX_TOKEN_RE, function (m, n) { if (!thirdEx) thirdEx = examples[parseInt(n, 10)] || ''; return ''; });
+            var plain = rawPart.replace(TOKEN_RE, '').replace(EX_TOKEN_RE, '').replace(/[\uE000-\uE1FF]/g, '').replace(/\s+/g, ' ').trim();
+            if (plain && !thirdPhon && /^\/.*\/$|^[^\s]+$/.test(plain) && pi === 2) thirdPhon = plain.replace(/^\/|\/$/g, '');
+          }
+        }
+        var newPair = normalizeVocab({ a: sideA.main, b: sideB.main, aAlts: sideA.alts, bAlts: sideB.alts, aHalf: sideA.half, bHalf: sideB.half, aAltPhon: sideA.altPhon, bAltPhon: sideB.altPhon, aAltEx: sideA.altEx, bAltEx: sideB.altEx, ex: sideB.mainEx || sideA.mainEx || thirdEx, phon: sideB.mainPhon || sideA.mainPhon || thirdPhon });
+        freshPairs.push(newPair);
         var altPhonN = Object.keys(newPair.aAltPhon).length + Object.keys(newPair.bAltPhon).length;
         var altExN = Object.keys(newPair.aAltEx).length + Object.keys(newPair.bAltEx).length;
         if (newPair.phon || altPhonN > 0) { list.showPhon = true; phonCount++; }
@@ -1288,9 +1921,21 @@ Wasser; water"></textarea>
         halfCount += sideA.half.length + sideB.half.length;
       }
     }
+    // Duplikate: gegen die Liste und innerhalb der Eingabe prüfen
+    var toAdd = [], dups = [], batchKeys = {};
+    freshPairs.forEach(function (np) {
+      var ex = findDuplicate(list.vocab, np.a, np.b);
+      var bk = dupKey(np.a) + '|' + dupKey(np.b);
+      if (!ex && batchKeys[bk]) ex = batchKeys[bk];
+      if (ex) dups.push({ existing: ex, incoming: np });
+      else { toAdd.push(np); batchKeys[bk] = np; }
+    });
+    toAdd.forEach(function (np) { list.vocab.push(np); });
+    added = toAdd.length;
     gid('bulkText').value = '';
     renderVocabList();
     saveAll();
+    if (dups.length) showDupBox(list, toAdd, dups);
     var bulkMsg;
     if (added > 0) {
       var extras = [];
@@ -1298,7 +1943,7 @@ Wasser; water"></textarea>
       if (phonCount > 0) extras.push(phonCount + ' mit Lautschrift');
       if (exCount > 0) extras.push(exCount + ' mit Beispielsatz');
       bulkMsg = added + ' Vokabelpaar(e) hinzugefügt' + (extras.length ? ' – ' + extras.join(', ') : '') + '.';
-    } else bulkMsg = 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2';
+    } else bulkMsg = dups.length ? 'Alle Wörter stehen schon in der Liste – siehe unten.' : 'Keine gültigen Zeilen gefunden. Format: Wort1; Wort2';
     showBulkMessage(bulkMsg);
   }
 
@@ -1412,7 +2057,7 @@ Wasser; water"></textarea>
     quizPool = buildPool(vocabList, opts.requiredKeys || null, quizWeakOnly);
     if (quizPool.length === 0 && quizWeakOnly) { quizWeakOnly = false; quizPool = buildPool(vocabList, opts.requiredKeys || null, false); }
     if (quizPool.length === 0) { showScreen('setup'); renderVocabList(); return; }
-    quizDone = {}; quizAsked = 0; quizScore = 0; quizMissed = []; quizMissedKeys = {};
+    quizDone = {}; quizAsked = 0; quizScore = 0; quizMissed = []; quizMissedKeys = {}; resetPatterns();
     lastVocabId = null; lastResult = null;
     quizMinutes = opts.minutes || 0;
     quizEndTime = quizMinutes > 0 ? Date.now() + quizMinutes * 60000 : null;
@@ -1423,8 +2068,8 @@ Wasser; water"></textarea>
 
   function startQuiz() {
     var list = getCurrentList();
-    var validVocab = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim(); });
-    if (validVocab.length === 0) { showSetupMessage('Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
+    var validVocab = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim() && (!list.starOnly || v.star); });
+    if (validVocab.length === 0) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
     var minutes = list.minutes;
     if (typeof minutes !== 'number' || isNaN(minutes) || minutes <= 0) {
       showSetupMessage('Bitte gib die Lernzeit in Minuten ein (z. B. 10 oder 0,5).');
@@ -1701,7 +2346,8 @@ Wasser; water"></textarea>
       }
     } else if (isHalfAlt) { credit = 0.5; cls = 'half'; text = 'Halber Fehler, besser wäre: ' + correctRaw; markMissed(item, 'half'); }
     else if (isAccent) { credit = 0.5; cls = 'half'; text = 'Halber Fehler (' + accentReason + ') — richtig wäre: ' + matchedRaw; markMissed(item, 'half'); }
-    else { credit = 0; cls = 'incorrect'; text = 'Richtig wäre: ' + correctRaw; markMissed(item, 'full'); updateVocabBox(item.vocabId, item.dir, -1); }
+    else { credit = 0; cls = 'incorrect'; text = 'Richtig wäre: ' + correctRaw; markMissed(item, 'full'); updateVocabBox(item.vocabId, item.dir, -1); notePattern(typedRaw, correctRaw); }
+    if (isAccent) notePattern(typedRaw, matchedRaw);
 
     quizScore += credit;
     var boxAfter = getVocabBox(item.vocabId, item.dir);
@@ -1847,8 +2493,13 @@ Wasser; water"></textarea>
     }
   }
 
+  function quizMissedIds() { return quizMissed.map(function (m) { return m.vocabId; }); }
+
   function showResults() {
     stopTimer();
+    gid('missedMsg').textContent = '';
+    renderPatterns('patternsList', 'patternsBox');
+    gid('missedShare').style.display = quizMissed.length > 0 ? '' : 'none';
     showScreen('results');
     var total = quizAsked, correct = quizScore;
     var pct = total > 0 ? Math.round((correct / total) * 100) : 0;
@@ -1898,7 +2549,9 @@ Wasser; water"></textarea>
     h.last = Date.now();
   }
   function letterCount(s) { var m = String(s).match(/[\p{L}\p{N}]/gu); return m ? m.length : 0; }
-  function validSmartVocab(list) { return list.vocab.filter(function (v) { return v.a.trim() && v.b.trim(); }); }
+  function validSmartVocab(list) {
+    return list.vocab.filter(function (v) { return v.a.trim() && v.b.trim() && (!list.starOnly || v.star); });
+  }
 
   // Lernrichtung: immer von der Muttersprache zur Fremdsprache
   function smartDir(list) { return list.native === 'b' ? 'bToA' : 'aToB'; }
@@ -2133,7 +2786,7 @@ Wasser; water"></textarea>
 
   function startSmart() {
     var list = getCurrentList();
-    if (validSmartVocab(list).length === 0) { showSetupMessage('Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
+    if (validSmartVocab(list).length === 0) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
     var minutes = (typeof list.minutes === 'number' && list.minutes > 0) ? list.minutes : DEFAULT_MINUTES;
     showSetupMessage('');
     list.vocab.forEach(function (v) { v.aAlts = cleanAltList(v.aAlts); v.bAlts = cleanAltList(v.bAlts); });
@@ -2142,7 +2795,8 @@ Wasser; water"></textarea>
     var plan = buildSmartPlan(list, minutes);
     var warm = buildMatchRounds(list, plan.cards);
     smart = { list: list, cards: plan.cards, warm: warm, match: null, active: [], nextIdx: 0, t: 0, current: null, lastVocabId: null,
-      answered: false, stats: {}, tile: null, streak: 0, best: 0, retried: {}, peekT: null, timerT: null };
+      answered: false, stats: {}, tile: null, missed: {}, streak: 0, best: 0, retried: {}, peekT: null, timerT: null };
+    resetPatterns();
     showScreen('smart');
     if (smart.warm.length) startMatch(); else smartNext();
   }
@@ -2495,6 +3149,7 @@ Wasser; water"></textarea>
       c.due = smart.t + 3;
     } else {
       c.fails++;
+      smart.missed[c.vocabId] = true;
       if (st !== 'flash') recordHist(c.vocabId, c.dir, false);
       if (c.fails >= SMART_MAX_FAILS) {
         c.forced = true;
@@ -2540,10 +3195,11 @@ Wasser; water"></textarea>
     }
     if (res.kind === 'exact') smartResolve('pass', 'Richtig.', 'correct');
     else if (res.kind === 'typo') smartResolve('pass', 'Fast richtig! Kleiner Tippfehler – richtig wäre: ' + res.raw, 'almost');
-    else if (res.kind === 'accent') smartResolve('soft', 'Fast: Achte auf Akzente und Sonderzeichen – richtig wäre: ' + res.raw, 'half');
+    else if (res.kind === 'accent') { notePattern(inp.value.trim(), res.raw); smartResolve('soft', 'Fast: Achte auf Akzente und Sonderzeichen – richtig wäre: ' + res.raw, 'half'); }
     else if (res.kind === 'half') smartResolve('soft', 'Das gilt nur halb – besser wäre: ' + target, 'half');
     else {
       if (!rev) { var tv = vocabByTarget(c.dir, inp.value.trim()); if (tv) recordConf(c.vocabId, c.dir, tv.id); }
+      if (!tv) notePattern(inp.value.trim(), target);
       smartResolve('fail', 'Richtig wäre: ' + target, 'incorrect');
     }
   }
@@ -2615,6 +3271,9 @@ Wasser; water"></textarea>
 
   function smartFinish() {
     smartClearTimers();
+    gid('smartMissedMsg').textContent = '';
+    renderPatterns('smartPatternsList', 'smartPatternsBox');
+    gid('smartMissedShare').style.display = Object.keys(smart.missed).length > 0 ? '' : 'none';
     showScreen('smartResults');
     var tot = 0, ok = 0, typeHtml = '';
     STAGE_ORDER.forEach(function (k) {
@@ -2636,6 +3295,95 @@ Wasser; water"></textarea>
     });
     gid('smartResCards').innerHTML = rows || '<div class="missed-empty">Keine Karten.</div>';
     if (tot > 0 && ok === tot) launchConfetti();
+  }
+
+  /* ---- Was kann ich schon? (Selbstcheck) ---- */
+  var know = null;
+
+  function startKnow() {
+    var list = getCurrentList();
+    var vocab = validSmartVocab(list);
+    if (!vocab.length) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
+    showSetupMessage('');
+    quizListRef = list; quizLangA = list.langA; quizLangB = list.langB;
+    // Abgefragt wird die Fremdsprache (Muttersprache = Vorgabe), in fester Reihenfolge nach Anlage
+    var dir = smartDir(list);
+    var cards = vocab.slice().sort(function (x, y) { return x.created - y.created; }).map(function (v) { return { id: v.id, dir: dir }; });
+    know = { list: list, cards: cards, i: 0, yes: 0, no: [], dir: dir };
+    showScreen('know');
+    renderKnow();
+  }
+
+  function renderKnow() {
+    var c = know.cards[know.i];
+    var v = findVocab(c.id);
+    gid('knowCard').className = 'flashcard';
+    gid('knowTag').textContent = (c.dir === 'aToB' ? quizLangA : quizLangB) + ' → ' + (c.dir === 'aToB' ? quizLangB : quizLangA);
+    gid('knowPrompt').textContent = c.dir === 'aToB' ? v.a : v.b;
+    gid('knowAnswer').classList.add('hidden');
+    gid('knowPhon').textContent = '';
+    gid('knowEx').innerHTML = '';
+    gid('knowChoice').classList.remove('hidden');
+    gid('knowNextBtn').classList.add('hidden');
+    gid('knowProgress').textContent = (know.i + 1) + ' / ' + know.cards.length;
+    gid('knowScore').textContent = '✓ ' + know.yes;
+  }
+
+  function knowAnswer(yes) {
+    var c = know.cards[know.i];
+    var v = findVocab(c.id);
+    if (yes) know.yes++; else know.no.push(c.id);
+    var ans = gid('knowAnswer');
+    var alts = cleanAltList(c.dir === 'aToB' ? v.bAlts : v.aAlts);
+    ans.innerHTML = escapeHtml(c.dir === 'aToB' ? v.b : v.a) + (alts.length ? '<div class="smart-intro-alts">auch: ' + escapeHtml(alts.join(', ')) + '</div>' : '');
+    ans.classList.remove('hidden');
+    gid('knowCard').classList.add(yes ? 'correct' : 'incorrect');
+    gid('knowPhon').textContent = phonDisplay(v.phon);
+    var ex = v.ex ? v.ex.trim() : '';
+    gid('knowEx').innerHTML = ex ? 'Beispiel: ' + exHtml(ex) : '';
+    gid('knowChoice').classList.add('hidden');
+    var nb = gid('knowNextBtn');
+    nb.textContent = know.i + 1 >= know.cards.length ? 'Fertig' : 'Weiter';
+    nb.classList.remove('hidden');
+    gid('knowScore').textContent = '✓ ' + know.yes;
+  }
+
+  function knowNext() {
+    know.i++;
+    if (know.i >= know.cards.length) { knowFinish(); return; }
+    renderKnow();
+  }
+
+  function knowFinish() {
+    showScreen('knowResults');
+    var total = know.cards.length;
+    gid('knowResFraction').textContent = know.yes + ' / ' + total;
+    gid('knowResPercent').textContent = (total ? Math.round(know.yes / total * 100) : 0) + ' % kann ich schon';
+    gid('knowMsg').textContent = '';
+    var html = '';
+    know.no.forEach(function (id) {
+      var v = findVocab(id);
+      if (v) html += '<div class="missed-row">' + escapeHtml(v.a) + ' — ' + escapeHtml(v.b) + '</div>';
+    });
+    gid('knowResList').innerHTML = html || '<div class="missed-empty">Alles gewusst.</div>';
+    document.querySelector('#know-results-screen .share-mini').style.display = know.no.length ? '' : 'none';
+    if (total > 0 && know.yes === total) launchConfetti();
+  }
+
+  function attachKnowEvents() {
+    gid('startKnowBtn').addEventListener('click', startKnow);
+    gid('knowYesBtn').addEventListener('click', function () { knowAnswer(true); });
+    gid('knowNoBtn').addEventListener('click', function () { knowAnswer(false); });
+    gid('knowNextBtn').addEventListener('click', knowNext);
+    gid('knowQuitBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
+    gid('knowAgainBtn').addEventListener('click', startKnow);
+    gid('knowBackBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
+    gid('knowShareBtn').addEventListener('click', function () { shareTextFile(buildMissedText(know.no), getCurrentList().name + ' – noch nicht sicher', 'knowMsg'); });
+    gid('knowCopyBtn').addEventListener('click', function () { copyTextTo(buildMissedText(know.no), 'knowMsg'); });
+    gid('missedShareBtn').addEventListener('click', function () { shareTextFile(buildMissedText(quizMissedIds()), getCurrentList().name + ' – Fehler', 'missedMsg'); });
+    gid('missedCopyBtn').addEventListener('click', function () { copyTextTo(buildMissedText(quizMissedIds()), 'missedMsg'); });
+    gid('smartMissedShareBtn').addEventListener('click', function () { shareTextFile(buildMissedText(Object.keys(smart.missed)), getCurrentList().name + ' – Fehler', 'smartMissedMsg'); });
+    gid('smartMissedCopyBtn').addEventListener('click', function () { copyTextTo(buildMissedText(Object.keys(smart.missed)), 'smartMissedMsg'); });
   }
 
   function attachSmartEvents() {
@@ -2694,13 +3442,13 @@ Wasser; water"></textarea>
   }
 
   function attachEvents() {
-    gid('listSelect').addEventListener('change', function (e) { currentListId = e.target.value; renderCurrentListIntoForm(); saveAll(); });
+    gid('listSelect').addEventListener('change', function (e) { currentListId = e.target.value; hideDupBox(); hideUndo(); renderCurrentListIntoForm(); renderMergeSelect(); saveAll(); });
 
     gid('newListBtn').addEventListener('click', function () {
       var newList = defaultList('Liste ' + (lists.length + 1));
       lists.push(newList);
       currentListId = newList.id;
-      renderListSelect(); renderCurrentListIntoForm(); saveAll();
+      renderListSelect(); renderCurrentListIntoForm(); renderMergeSelect(); saveAll();
       showSetupMessage('Neue Liste "' + newList.name + '" erstellt.');
     });
 
@@ -2715,10 +3463,12 @@ Wasser; water"></textarea>
       clearTimeout(deleteListArmTimeout);
       deleteListArmed = false;
       e.target.textContent = 'Diese Liste löschen';
+      var oldLists = lists.slice(), oldCur = currentListId, oldName = getCurrentList().name;
       lists = lists.filter(function (l) { return l.id !== currentListId; });
       if (lists.length === 0) lists.push(defaultList('Liste 1'));
       currentListId = lists[0].id;
-      renderListSelect(); renderCurrentListIntoForm(); saveAll();
+      renderListSelect(); renderCurrentListIntoForm(); renderMergeSelect(); saveAll();
+      offerUndo('Liste „' + (oldName || 'ohne Namen') + '“ gelöscht', function () { lists = oldLists; currentListId = oldCur; renderListSelect(); renderCurrentListIntoForm(); renderMergeSelect(); });
     });
 
     gid('listNameInput').addEventListener('input', function (e) {
@@ -2726,6 +3476,7 @@ Wasser; water"></textarea>
       list.name = e.target.value;
       var opt = document.querySelector('#listSelect option[value="' + list.id + '"]');
       if (opt) opt.textContent = list.name || '(ohne Namen)';
+      renderMergeSelect();
       debouncedSave();
     });
 
@@ -2819,9 +3570,25 @@ Wasser; water"></textarea>
     gid('vocabList').addEventListener('mousedown', function (e) { if (e.target.closest('.ex-mark-btn')) e.preventDefault(); });
     gid('vocabList').addEventListener('click', function (e) {
       var t = e.target;
-      if (t.closest('.btn-delete')) {
-        getCurrentList().vocab.splice(parseInt(t.closest('.btn-delete').dataset.idx, 10), 1);
+      if (t.closest('.btn-star')) {
+        var stBtn = t.closest('.btn-star');
+        var stV = getCurrentList().vocab[parseInt(stBtn.dataset.idx, 10)];
+        stV.star = !stV.star;
+        stBtn.classList.toggle('on', stV.star);
+        stBtn.textContent = stV.star ? '★' : '☆';
+        stBtn.setAttribute('aria-pressed', stV.star ? 'true' : 'false');
+        updateStartButtonState(); saveAll();
+      } else if (t.closest('.btn-reset')) {
+        var rsV = getCurrentList().vocab[parseInt(t.closest('.btn-reset').dataset.idx, 10)];
+        var rsSnap = snapshotLevels(rsV);
+        resetLevels(rsV);
         renderVocabList(); saveAll();
+        offerUndo('Lernstufe zurückgesetzt', function () { restoreLevels(rsV, rsSnap); });
+      } else if (t.closest('.btn-delete')) {
+        var delList = getCurrentList(), delIdx = parseInt(t.closest('.btn-delete').dataset.idx, 10);
+        var delItem = delList.vocab.splice(delIdx, 1)[0];
+        renderVocabList(); saveAll();
+        if (delItem) offerUndo('Zeile gelöscht', function () { delList.vocab.splice(Math.min(delIdx, delList.vocab.length), 0, delItem); });
       } else if (t.closest('.alt-phon-input')) {
         var apIn = t.closest('.alt-phon-input');
         openPhonModalAlt(parseInt(apIn.dataset.idx, 10), apIn.dataset.field, parseInt(apIn.dataset.alt, 10));
@@ -2891,8 +3658,10 @@ Wasser; water"></textarea>
       clearTimeout(clearArmTimeout);
       clearArmed = false;
       e.target.textContent = 'Vokabeln leeren';
-      getCurrentList().vocab = [];
+      var clrList = getCurrentList(), clrOld = clrList.vocab;
+      clrList.vocab = [];
       renderVocabList(); saveAll();
+      offerUndo(clrOld.length + ' Vokabeln gelöscht', function () { clrList.vocab = clrOld; });
     });
     gid('bulkAddBtn').addEventListener('click', parseBulk);
 
@@ -2953,6 +3722,49 @@ Wasser; water"></textarea>
       beginQuizWith(quizSourceVocab, { requiredKeys: keys, minutes: 0, multipleChoice: quizMultipleChoice });
     });
     attachSmartEvents();
+    attachKnowEvents();
+    gid('undoBtn').addEventListener('click', doUndo);
+    gid('startMirrorBtn').addEventListener('click', startMirror);
+    gid('mirrorOkBtn').addEventListener('click', function () { if (mirror && mirror.phase === 'choose') mirrorChoose(true); });
+    gid('mirrorBadBtn').addEventListener('click', function () { if (mirror && mirror.phase === 'choose') mirrorChoose(false); });
+    gid('mirrorActionBtn').addEventListener('click', mirrorAction);
+    gid('mirrorInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); mirrorAction(); } });
+    gid('mirrorQuitBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
+    gid('mirrorAgainBtn').addEventListener('click', startMirror);
+    gid('mirrorBackBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
+    gid('starOnlyCheck').addEventListener('change', function (e) { getCurrentList().starOnly = e.target.checked; updateWeakInfo(); saveAll(); });
+    var resetAllArmed = false, resetAllTimer = null;
+    gid('resetAllBtn').addEventListener('click', function (e) {
+      var rl = getCurrentList();
+      if (!rl.vocab.length) return;
+      if (!resetAllArmed) {
+        resetAllArmed = true;
+        e.target.textContent = 'Wirklich alle zurücksetzen? Nochmal tippen';
+        resetAllTimer = setTimeout(function () { resetAllArmed = false; e.target.textContent = 'Alle Lernstufen zurücksetzen'; }, 3000);
+        return;
+      }
+      clearTimeout(resetAllTimer);
+      resetAllArmed = false;
+      e.target.textContent = 'Alle Lernstufen zurücksetzen';
+      var snaps = rl.vocab.map(function (v) { return { v: v, s: snapshotLevels(v) }; });
+      rl.vocab.forEach(resetLevels);
+      renderVocabList(); saveAll();
+      offerUndo('Alle Lernstufen zurückgesetzt', function () { snaps.forEach(function (x) { restoreLevels(x.v, x.s); }); });
+    });
+    gid('dupMergeBtn').addEventListener('click', function () { resolveDup('merge'); });
+    gid('dupSkipBtn').addEventListener('click', function () { resolveDup('skip'); });
+    gid('dupAddBtn').addEventListener('click', function () { resolveDup('add'); });
+    gid('mergeBtn').addEventListener('click', mergeLists);
+    gid('splitBtn').addEventListener('click', splitList);
+    function newListFrom(idsFn, base) {
+      var nl = missedAsNewList(idsFn(), base);
+      if (!nl) return;
+      showScreen('setup');
+      showSetupMessage('Neue Liste „' + nl.name + '“ mit ' + nl.vocab.length + ' Wörtern angelegt (Lernstufe 1).');
+    }
+    gid('missedNewListBtn').addEventListener('click', function () { newListFrom(quizMissedIds, 'Fehler'); });
+    gid('smartMissedNewListBtn').addEventListener('click', function () { newListFrom(function () { return Object.keys(smart.missed); }, 'Fehler'); });
+    gid('knowNewListBtn').addEventListener('click', function () { newListFrom(function () { return know.no; }, 'Noch nicht sicher'); });
     gid('backToSetupBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
   }
 
@@ -2961,6 +3773,7 @@ Wasser; water"></textarea>
     buildPhonKeys();
     renderListSelect();
     renderCurrentListIntoForm();
+    renderMergeSelect();
     attachEvents();
     showScreen('setup');
   }
