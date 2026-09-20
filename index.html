@@ -319,6 +319,12 @@
   .bulkbar select { flex: 2 1 130px; appearance: auto; }
   .bulkbar option { color: #000; background: #fff; }
   .lvl-seg { margin-bottom: 10px; }
+  body.hide-help .hint:not(.keep) { display: none; }
+  body.hide-help .hint.smart-info, body.hide-help #vocabCount, body.hide-help #weakInfo, body.hide-help #lvlHint { display: block; }
+  body.hide-help .hint:empty { display: none; }
+  /* Abstand nachholen, wenn ein Hinweistext (und damit sein Abstand) ausgeblendet ist */
+  body.hide-help .hint:not(.keep) + * { margin-top: 14px; }
+  .help-toggle { margin: 0 0 4px; }
 </style>
 </head>
 <body>
@@ -333,6 +339,7 @@
         </div>
       </div>
       <div class="header-rule"></div>
+      <label class="toggle-row small help-toggle"><input type="checkbox" id="hideHelpCheck"><span>Anleitungen ausblenden</span></label>
     </header>
 
     <section class="lists-section">
@@ -4109,8 +4116,21 @@ Wasser; water"></textarea>
     });
   }
 
+  var HELP_KEY = 'karteikasten_hide_help';
+  function applyHelp(hide) {
+    document.body.classList.toggle('hide-help', !!hide);
+    gid('hideHelpCheck').checked = !!hide;
+  }
+
   function init() {
     loadAll();
+    var hh = false;
+    try { hh = localStorage.getItem(HELP_KEY) === '1'; } catch (e) { }
+    applyHelp(hh);
+    gid('hideHelpCheck').addEventListener('change', function (e) {
+      applyHelp(e.target.checked);
+      try { localStorage.setItem(HELP_KEY, e.target.checked ? '1' : '0'); } catch (err) { }
+    });
     buildPhonKeys();
     renderListSelect();
     renderCurrentListIntoForm();
