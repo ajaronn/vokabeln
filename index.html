@@ -319,6 +319,8 @@
   .bulkbar select { flex: 2 1 130px; appearance: auto; }
   .bulkbar option { color: #000; background: #fff; }
   .lvl-seg { margin-bottom: 10px; }
+  #speakRecordBtn.recording { background: var(--rust); border-color: var(--rust); color: var(--rust-contrast); animation: cardPulse 1s ease infinite; }
+  #speakRecordBtn:disabled:not(.recording) { opacity: 0.6; }
   body.hide-help .hint:not(.keep) { display: none; }
   body.hide-help .hint.smart-info, body.hide-help #vocabCount, body.hide-help #weakInfo, body.hide-help #lvlHint { display: block; }
   body.hide-help .hint:empty { display: none; }
@@ -560,6 +562,14 @@ Wasser; water"></textarea>
       <button class="btn-outline" id="startMirrorBtn" type="button" style="width:100%">Spiegelübung starten</button>
     </section>
 
+    <section class="speak-section hidden" id="speakSection">
+      <label class="section-label">Aussprache</label>
+      <p class="hint">Nutzt die Spracherkennung deines Browsers (kostenlos, ohne Anmeldung). Nur verfügbar, wenn dein Browser das unterstützt und deine Fremdsprache dabei ist (aktuell: Deutsch, Englisch, Französisch, Spanisch, Italienisch, Portugiesisch).</p>
+      <p class="hint">„Sprechen“ zeigt das Wort auf deiner Muttersprache, du sagst die Fremdsprachen-Übersetzung – zählt wie der Karteikasten für die Lernstufe. „Vorlesen“ zeigt das fremdsprachige Wort direkt, du liest es nur laut vor – übt die Aussprache, ändert keine Lernstufe.</p>
+      <button class="btn-outline" id="startSpeakSayBtn" type="button" style="width:100%">Sprechen üben starten</button>
+      <button class="btn-outline" id="startSpeakReadBtn" type="button" style="width:100%;margin-top:10px">Vorlesen üben starten</button>
+    </section>
+
     <button class="btn-primary" id="startQuizBtn" type="button">Karteikasten starten</button>
     <p class="status-line" id="statusLine" aria-live="polite"></p>
 
@@ -687,6 +697,40 @@ Wasser; water"></textarea>
     <div class="result-actions">
       <button class="btn-primary" id="mirrorAgainBtn" type="button">Nochmal</button>
       <button class="btn-text" id="mirrorBackBtn" type="button">Zurück zur Liste</button>
+    </div>
+  </div>
+
+  <div id="speak-screen" class="screen hidden">
+    <div class="quiz-header">
+      <button class="btn-text" id="speakQuitBtn" type="button">← Abbrechen</button>
+      <span id="speakProgress">1 / 1</span>
+      <span id="speakScore">✓ 0</span>
+    </div>
+    <div class="flashcard" id="speakCard">
+      <div class="card-tag" id="speakTag">Sprechen</div>
+      <div class="card-word" id="speakPrompt">Wort</div>
+    </div>
+    <div class="smart-instruction" id="speakInstruction"></div>
+    <div class="smart-note" id="speakNote"></div>
+    <button class="btn-primary" id="speakRecordBtn" type="button">🎙️ Aufnehmen</button>
+    <div class="hint-line" id="speakHeard" aria-live="polite"></div>
+    <div class="feedback hidden" id="speakFeedback"><div id="speakFbText"></div><div class="phon-line" id="speakPhon"></div><div class="ex-line" id="speakEx"></div></div>
+    <button class="btn-text" id="speakSkipBtn" type="button">Weiß ich nicht</button>
+    <button class="btn-primary hidden" id="speakNextBtn" type="button">Weiter</button>
+  </div>
+
+  <div id="speak-results-screen" class="screen hidden">
+    <div class="result-hero">
+      <div class="result-fraction" id="speakResFraction">0 / 0</div>
+      <div class="result-percent" id="speakResPercent"></div>
+    </div>
+    <div class="missed-section">
+      <label class="section-label">Zum Wiederholen</label>
+      <div id="speakResList"></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn-primary" id="speakAgainBtn" type="button">Nochmal</button>
+      <button class="btn-text" id="speakBackBtn" type="button">Zurück zur Liste</button>
     </div>
   </div>
 
@@ -991,6 +1035,8 @@ Wasser; water"></textarea>
     gid('mirror-results-screen').classList.toggle('hidden', name !== 'mirrorResults');
     gid('know-screen').classList.toggle('hidden', name !== 'know');
     gid('know-results-screen').classList.toggle('hidden', name !== 'knowResults');
+    gid('speak-screen').classList.toggle('hidden', name !== 'speak');
+    gid('speak-results-screen').classList.toggle('hidden', name !== 'speakResults');
   }
 
   function showSetupMessage(msg) { gid('setupMessage').textContent = msg; }
@@ -1015,6 +1061,7 @@ Wasser; water"></textarea>
     gid('nativeB').textContent = l.langB || 'Sprache 2';
     gid('nativeA').classList.toggle('active', l.native === 'a');
     gid('nativeB').classList.toggle('active', l.native === 'b');
+    updateSpeechAvailability();
   }
 
   var LVL_HINTS = {
@@ -1075,6 +1122,7 @@ Wasser; water"></textarea>
       : validCount + (validCount === 1 ? ' Vokabelpaar bereit.' : ' Vokabelpaare bereit.') + (starN ? ' ★ ' + starN + ' markiert.' : '');
     updateWeakInfo();
     renderConfList();
+    updateSpeechAvailability();
   }
 
   function countWeakCards(list) {
@@ -1835,6 +1883,247 @@ Wasser; water"></textarea>
     });
     gid('mirrorResList').innerHTML = html || '<div class="missed-empty">Nichts übersehen.</div>';
     if (total > 0 && mirror.ok === total) launchConfetti();
+  }
+
+  /* ---- Aussprache: Sprechen (Muttersprache → Fremdsprache sagen) & Vorlesen (Fremdsprache laut lesen) ---- */
+  var SPEECH_LOCALES = {
+    'Deutsch': 'de-DE', 'Englisch': 'en-US', 'Französisch': 'fr-FR',
+    'Spanisch': 'es-ES', 'Italienisch': 'it-IT', 'Portugiesisch': 'pt-PT'
+  };
+  var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var speechSupported = !!SpeechRecognitionCtor;
+  var speak = null;
+  var speakRecognizer = null;
+
+  function foreignLangOf(list) {
+    var dir = smartDir(list);
+    return dir === 'aToB' ? list.langB : list.langA;
+  }
+
+  // true = die Seite läuft eingebettet in einem fremden Frame (z. B. Claude-Vorschau). In solchen
+  // Sandboxes ist Mikrofonzugriff meist strukturell blockiert oder unzuverlässig — unabhängig von
+  // der persönlichen Mikro-Erlaubnis des Nutzers, die sich nur beim echten Aufnahmeversuch zeigt.
+  function isEmbeddedFrame() {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }
+
+  // Zusätzliche Absicherung über die Permissions-/Feature-Policy, falls die Umgebung sie korrekt setzt.
+  function microphonePolicyBlocked() {
+    try {
+      if (document.permissionsPolicy && typeof document.permissionsPolicy.allowsFeature === 'function') {
+        return !document.permissionsPolicy.allowsFeature('microphone');
+      }
+      if (document.featurePolicy && typeof document.featurePolicy.allowsFeature === 'function') {
+        return !document.featurePolicy.allowsFeature('microphone');
+      }
+    } catch (e) { }
+    return false;
+  }
+
+  function updateSpeechAvailability() {
+    var el = gid('speakSection');
+    if (!el) return;
+    var list = getCurrentList();
+    var ok = speechSupported && !!SPEECH_LOCALES[foreignLangOf(list)] && validSmartVocab(list).length > 0
+      && !isEmbeddedFrame() && !microphonePolicyBlocked();
+    el.classList.toggle('hidden', !ok);
+  }
+
+  function gradeSpeech(alternatives, main, alts, half) {
+    var order = { exact: 4, typo: 3, accent: 3, half: 2, wrong: 0, empty: -1 };
+    var best = { kind: 'empty', heard: '' };
+    (alternatives || []).forEach(function (t) {
+      var r = gradeTyped(t, main, alts, half);
+      r.heard = t;
+      if ((order[r.kind] || 0) > (order[best.kind] || 0)) best = r;
+    });
+    if (!best.heard && alternatives && alternatives.length) best.heard = alternatives[0];
+    return best;
+  }
+
+  function speakLangLabel(dir, rev) {
+    var list = speak.list;
+    return rev ? (dir === 'aToB' ? list.langB : list.langA) : (dir === 'aToB' ? list.langA : list.langB);
+  }
+
+  function startSpeakMode(mode) {
+    var list = getCurrentList();
+    if (!speechSupported) { showSetupMessage('Dein Browser unterstützt leider keine Spracherkennung.'); return; }
+    var foreignLang = foreignLangOf(list);
+    var locale = SPEECH_LOCALES[foreignLang];
+    if (!locale) { showSetupMessage('Für „' + foreignLang + '“ gibt es diese Übung noch nicht.'); return; }
+    var vocab = validSmartVocab(list);
+    if (!vocab.length) { showSetupMessage(list.starOnly ? 'Keine Wörter mit ★ markiert.' : 'Bitte füge mindestens ein Vokabelpaar hinzu.'); return; }
+    showSetupMessage('');
+    quizListRef = list; quizLangA = list.langA; quizLangB = list.langB;
+    var dir = smartDir(list);
+    var round = Date.now().toString(36);
+    var cards = seededShuffle(vocab.map(function (v) { return v.id; }), 'speak' + mode + round);
+    speak = { list: list, mode: mode, dir: dir, locale: locale, cards: cards, i: 0, ok: 0, missed: [], answered: true, recording: false };
+    showScreen('speak');
+    renderSpeakStep();
+  }
+
+  function speakCurrentTarget() {
+    var c = speak.cards[speak.i], v = findVocab(c);
+    if (speak.mode === 'read') {
+      var word = speak.dir === 'aToB' ? v.b : v.a;
+      var altsR = cleanAltList(speak.dir === 'aToB' ? v.bAlts : v.aAlts);
+      var halfR = (speak.dir === 'aToB' ? v.bHalf : v.aHalf) || [];
+      return { prompt: word, target: word, alts: altsR, half: halfR, v: v };
+    }
+    var prompt = speak.dir === 'aToB' ? v.a : v.b;
+    var target = speak.dir === 'aToB' ? v.b : v.a;
+    var alts = cleanAltList(speak.dir === 'aToB' ? v.bAlts : v.aAlts);
+    var half = (speak.dir === 'aToB' ? v.bHalf : v.aHalf) || [];
+    return { prompt: prompt, target: target, alts: alts, half: half, v: v };
+  }
+
+  function renderSpeakStep() {
+    var t = speakCurrentTarget();
+    speak.answered = false;
+    speak.current = t;
+    gid('speakCard').className = 'flashcard';
+    var promptLang = speak.mode === 'read' ? foreignLangOf(speak.list) : (speak.dir === 'aToB' ? speak.list.langA : speak.list.langB);
+    var speakLang = foreignLangOf(speak.list);
+    gid('speakTag').textContent = speak.mode === 'read' ? ('Vorlesen · ' + speakLang) : (promptLang + ' → ' + speakLang);
+    gid('speakPrompt').textContent = t.prompt;
+    gid('speakInstruction').textContent = speak.mode === 'read'
+      ? 'Lies das Wort laut und deutlich vor.'
+      : 'Sag die Übersetzung auf ' + speakLang + ' laut.';
+    gid('speakNote').textContent = '';
+    gid('speakHeard').textContent = '';
+    gid('speakFeedback').className = 'feedback hidden';
+    gid('speakFbText').textContent = ''; gid('speakPhon').textContent = ''; gid('speakEx').textContent = '';
+    gid('speakNextBtn').classList.add('hidden');
+    gid('speakSkipBtn').classList.remove('hidden');
+    var rb = gid('speakRecordBtn');
+    rb.disabled = false; rb.classList.remove('recording'); rb.textContent = '🎙️ Aufnehmen';
+    gid('speakProgress').textContent = (speak.i + 1) + ' / ' + speak.cards.length;
+    gid('speakScore').textContent = '✓ ' + formatScore(speak.ok);
+  }
+
+  function speakRecordStart() {
+    if (!speak || speak.answered || speak.recording) return;
+    if (!speechSupported) return;
+    try { speakRecognizer = new SpeechRecognitionCtor(); } catch (e) { speakRecordError('Spracherkennung konnte nicht gestartet werden.'); return; }
+    speakRecognizer.lang = speak.locale;
+    speakRecognizer.maxAlternatives = 5;
+    speakRecognizer.interimResults = false;
+    speakRecognizer.continuous = false;
+    speak.recording = true;
+    var rb = gid('speakRecordBtn');
+    rb.classList.add('recording'); rb.textContent = '🎙️ Höre zu… (antippen zum Abbrechen)';
+    gid('speakHeard').textContent = '';
+    speakRecognizer.onresult = function (e) {
+      var alts = [];
+      var res = e.results && e.results[0];
+      if (res) for (var i = 0; i < res.length; i++) alts.push(res[i].transcript);
+      speak.recording = false;
+      speakProcessResult(alts);
+    };
+    speakRecognizer.onerror = function (e) {
+      speak.recording = false;
+      if (speak.answered) return;
+      speakRecordError(speechErrorMessage(e.error));
+    };
+    speakRecognizer.onend = function () {
+      speak.recording = false;
+      var rb2 = gid('speakRecordBtn');
+      if (!speak.answered) { rb2.classList.remove('recording'); rb2.textContent = '🎙️ Aufnehmen'; }
+    };
+    try { speakRecognizer.start(); } catch (e) { speak.recording = false; speakRecordError('Aufnahme konnte nicht gestartet werden.'); }
+  }
+
+  function speechErrorMessage(errType) {
+    var embedded = isEmbeddedFrame();
+    switch (errType) {
+      case 'not-allowed':
+        return embedded
+          ? 'Mikrofon blockiert — diese eingebettete Vorschau erlaubt kein Mikrofon, selbst wenn dein Browser zugestimmt hat. Öffne die Datei direkt in Chrome oder Safari (nicht in der Vorschau).'
+          : 'Kein Mikrofonzugriff — bitte in den Browser-/System-Einstellungen für diese Seite erlauben.';
+      case 'service-not-allowed':
+        return 'Der Spracherkennungs-Dienst wurde blockiert (evtl. durch die Umgebung oder ein fehlendes Netzwerk). Öffne die Seite direkt in Chrome oder Safari.';
+      case 'audio-capture':
+        return 'Kein Mikrofon gefunden — ist eines angeschlossen und ausgewählt?';
+      case 'no-speech':
+        return 'Nichts gehört — versuch\'s nochmal, etwas näher am Mikrofon.';
+      case 'network':
+        return 'Keine Verbindung zum Spracherkennungs-Dienst — Internetverbindung prüfen.';
+      case 'aborted':
+        return 'Aufnahme abgebrochen.';
+      default:
+        return 'Nicht verstanden — versuch\'s nochmal.';
+    }
+  }
+
+  function speakRecordError(msg) {
+    var rb = gid('speakRecordBtn');
+    rb.classList.remove('recording'); rb.textContent = '🎙️ Aufnehmen';
+    gid('speakHeard').textContent = msg;
+  }
+
+  function speakRecordStop() {
+    if (speakRecognizer && speak && speak.recording) { try { speakRecognizer.stop(); } catch (e) { } }
+  }
+
+  function speakProcessResult(alternatives) {
+    var t = speak.current;
+    var res = gradeSpeech(alternatives, t.target, t.alts, t.half);
+    gid('speakHeard').textContent = res.heard ? 'Erkannt: „' + res.heard + '“' : '';
+    var cls, text, credit;
+    if (res.kind === 'exact' || res.kind === 'typo') { cls = 'correct'; credit = 1; text = 'Richtig' + (res.kind === 'typo' ? ' (ähnlich erkannt).' : '.'); }
+    else if (res.kind === 'accent' || res.kind === 'half') { cls = 'half'; credit = 0.5; text = 'Nah dran — richtig wäre: ' + t.target; }
+    else { cls = 'incorrect'; credit = 0; text = 'Richtig wäre: ' + t.target; }
+    speakResolve(cls, text, credit);
+  }
+
+  function speakResolve(cls, text, credit) {
+    var t = speak.current, c = speak.cards[speak.i];
+    speak.answered = true;
+    speak.ok += credit;
+    if (speak.mode === 'say') {
+      if (credit === 1) updateVocabBox(c, speak.dir, +1);
+      else if (credit === 0) updateVocabBox(c, speak.dir, -1);
+    }
+    if (credit < 1) speak.missed.push({ vocabId: c, prompt: t.prompt, target: t.target });
+    gid('speakCard').classList.add(cls);
+    gid('speakFeedback').className = 'feedback ' + cls;
+    gid('speakFbText').textContent = text;
+    var exT = t.v && t.v.ex ? t.v.ex.trim() : '';
+    gid('speakEx').innerHTML = exT ? 'Beispiel: ' + exHtml(exT) : '';
+    gid('speakPhon').textContent = t.v ? phonDisplay(t.v.phon) : '';
+    gid('speakSkipBtn').classList.add('hidden');
+    gid('speakNextBtn').classList.remove('hidden');
+    var rb = gid('speakRecordBtn');
+    rb.disabled = true; rb.classList.remove('recording');
+    gid('speakScore').textContent = '✓ ' + formatScore(speak.ok);
+  }
+
+  function speakSkip() {
+    if (!speak || speak.answered) return;
+    speakRecordStop();
+    var t = speak.current;
+    speakResolve('incorrect', 'Richtig wäre: ' + t.target, 0);
+  }
+
+  function speakNext() {
+    if (!speak) return;
+    speak.i++;
+    if (speak.i >= speak.cards.length) { speakFinish(); return; }
+    renderSpeakStep();
+  }
+
+  function speakFinish() {
+    showScreen('speakResults');
+    var total = speak.cards.length;
+    gid('speakResFraction').textContent = formatScore(speak.ok) + ' / ' + total;
+    gid('speakResPercent').textContent = Math.round(speak.ok / Math.max(1, total) * 100) + ' % richtig';
+    var html = speak.missed.map(function (m) {
+      return '<div class="missed-row">' + escapeHtml(m.prompt) + ' — ' + escapeHtml(m.target) + '</div>';
+    }).join('');
+    gid('speakResList').innerHTML = html || '<div class="missed-empty">Alles richtig.</div>';
+    if (total > 0 && speak.ok === total) launchConfetti();
   }
 
   /* ---- Duplikate / Zusammenführen / Aufteilen / Rückgängig ---- */
@@ -4072,6 +4361,17 @@ Wasser; water"></textarea>
     gid('mirrorQuitBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
     gid('mirrorAgainBtn').addEventListener('click', startMirror);
     gid('mirrorBackBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
+    gid('startSpeakSayBtn').addEventListener('click', function () { startSpeakMode('say'); });
+    gid('startSpeakReadBtn').addEventListener('click', function () { startSpeakMode('read'); });
+    gid('speakRecordBtn').addEventListener('click', function () {
+      if (!speak || speak.answered) return;
+      if (speak.recording) speakRecordStop(); else speakRecordStart();
+    });
+    gid('speakSkipBtn').addEventListener('click', speakSkip);
+    gid('speakNextBtn').addEventListener('click', speakNext);
+    gid('speakQuitBtn').addEventListener('click', function () { speakRecordStop(); showScreen('setup'); renderVocabList(); });
+    gid('speakAgainBtn').addEventListener('click', function () { startSpeakMode(speak.mode); });
+    gid('speakBackBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
     gid('starOnlyCheck').addEventListener('change', function (e) { getCurrentList().starOnly = e.target.checked; updateWeakInfo(); saveAll(); });
     var resetAllArmed = false, resetAllTimer = null;
     gid('resetAllBtn').addEventListener('click', function (e) {
