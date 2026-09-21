@@ -713,6 +713,7 @@ Wasser; water"></textarea>
     <div class="smart-instruction" id="speakInstruction"></div>
     <div class="smart-note" id="speakNote"></div>
     <button class="btn-primary" id="speakRecordBtn" type="button">🎙️ Aufnehmen</button>
+    <button class="btn-text hidden" id="speakCancelBtn" type="button">Abbrechen (ohne Auswertung)</button>
     <div class="hint-line" id="speakHeard" aria-live="polite"></div>
     <div class="feedback hidden" id="speakFeedback"><div id="speakFbText"></div><div class="phon-line" id="speakPhon"></div><div class="ex-line" id="speakEx"></div></div>
     <button class="btn-text" id="speakSkipBtn" type="button">Weiß ich nicht</button>
@@ -1999,8 +2000,15 @@ Wasser; water"></textarea>
     gid('speakSkipBtn').classList.remove('hidden');
     var rb = gid('speakRecordBtn');
     rb.disabled = false; rb.classList.remove('recording'); rb.textContent = '🎙️ Aufnehmen';
+    gid('speakCancelBtn').classList.add('hidden');
     gid('speakProgress').textContent = (speak.i + 1) + ' / ' + speak.cards.length;
     gid('speakScore').textContent = '✓ ' + formatScore(speak.ok);
+  }
+
+  function speakResetRecordUi() {
+    var rb = gid('speakRecordBtn');
+    rb.classList.remove('recording'); rb.textContent = '🎙️ Aufnehmen';
+    gid('speakCancelBtn').classList.add('hidden');
   }
 
   function speakRecordStart() {
@@ -2012,25 +2020,29 @@ Wasser; water"></textarea>
     speakRecognizer.interimResults = false;
     speakRecognizer.continuous = false;
     speak.recording = true;
+    speak.cancelling = false;
     var rb = gid('speakRecordBtn');
-    rb.classList.add('recording'); rb.textContent = '🎙️ Höre zu… (antippen zum Abbrechen)';
+    rb.classList.add('recording'); rb.textContent = '⏹ Fertig — Aufnahme beenden';
+    gid('speakCancelBtn').classList.remove('hidden');
     gid('speakHeard').textContent = '';
     speakRecognizer.onresult = function (e) {
       var alts = [];
       var res = e.results && e.results[0];
       if (res) for (var i = 0; i < res.length; i++) alts.push(res[i].transcript);
       speak.recording = false;
+      speakResetRecordUi();
       speakProcessResult(alts);
     };
     speakRecognizer.onerror = function (e) {
       speak.recording = false;
       if (speak.answered) return;
+      speakResetRecordUi();
+      if (speak.cancelling && (e.error === 'aborted' || e.error === 'no-speech')) { gid('speakHeard').textContent = ''; return; }
       speakRecordError(speechErrorMessage(e.error));
     };
     speakRecognizer.onend = function () {
       speak.recording = false;
-      var rb2 = gid('speakRecordBtn');
-      if (!speak.answered) { rb2.classList.remove('recording'); rb2.textContent = '🎙️ Aufnehmen'; }
+      if (!speak.answered) speakResetRecordUi();
     };
     try { speakRecognizer.start(); } catch (e) { speak.recording = false; speakRecordError('Aufnahme konnte nicht gestartet werden.'); }
   }
@@ -2047,7 +2059,7 @@ Wasser; water"></textarea>
       case 'audio-capture':
         return 'Kein Mikrofon gefunden — ist eines angeschlossen und ausgewählt?';
       case 'no-speech':
-        return 'Nichts gehört — versuch\'s nochmal, etwas näher am Mikrofon.';
+        return 'Nichts gehört — tippe „Fertig“ erst, nachdem du gesprochen hast, oder versuch\'s nochmal näher am Mikrofon.';
       case 'network':
         return 'Keine Verbindung zum Spracherkennungs-Dienst — Internetverbindung prüfen.';
       case 'aborted':
@@ -2058,13 +2070,21 @@ Wasser; water"></textarea>
   }
 
   function speakRecordError(msg) {
-    var rb = gid('speakRecordBtn');
-    rb.classList.remove('recording'); rb.textContent = '🎙️ Aufnehmen';
     gid('speakHeard').textContent = msg;
   }
 
-  function speakRecordStop() {
+  function speakRecordFinish() {
     if (speakRecognizer && speak && speak.recording) { try { speakRecognizer.stop(); } catch (e) { } }
+  }
+
+  function speakRecordCancel() {
+    if (speakRecognizer && speak && speak.recording) {
+      speak.cancelling = true;
+      try { speakRecognizer.abort(); } catch (e) { }
+    }
+    if (speak) speak.recording = false;
+    speakResetRecordUi();
+    gid('speakHeard').textContent = '';
   }
 
   function speakProcessResult(alternatives) {
@@ -2102,7 +2122,7 @@ Wasser; water"></textarea>
 
   function speakSkip() {
     if (!speak || speak.answered) return;
-    speakRecordStop();
+    speakRecordCancel();
     var t = speak.current;
     speakResolve('incorrect', 'Richtig wäre: ' + t.target, 0);
   }
@@ -4365,11 +4385,12 @@ Wasser; water"></textarea>
     gid('startSpeakReadBtn').addEventListener('click', function () { startSpeakMode('read'); });
     gid('speakRecordBtn').addEventListener('click', function () {
       if (!speak || speak.answered) return;
-      if (speak.recording) speakRecordStop(); else speakRecordStart();
+      if (speak.recording) speakRecordFinish(); else speakRecordStart();
     });
+    gid('speakCancelBtn').addEventListener('click', speakRecordCancel);
     gid('speakSkipBtn').addEventListener('click', speakSkip);
     gid('speakNextBtn').addEventListener('click', speakNext);
-    gid('speakQuitBtn').addEventListener('click', function () { speakRecordStop(); showScreen('setup'); renderVocabList(); });
+    gid('speakQuitBtn').addEventListener('click', function () { speakRecordCancel(); showScreen('setup'); renderVocabList(); });
     gid('speakAgainBtn').addEventListener('click', function () { startSpeakMode(speak.mode); });
     gid('speakBackBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
     gid('starOnlyCheck').addEventListener('change', function (e) { getCurrentList().starOnly = e.target.checked; updateWeakInfo(); saveAll(); });
