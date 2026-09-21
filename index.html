@@ -144,6 +144,10 @@
   .bulk-actions { display: flex; flex-wrap: wrap; gap: 10px; }
   .toggle-row.small { margin-top: 12px; font-size: 17px; }
   .phon-row { display: flex; align-items: center; gap: 10px; padding: 0 12px 10px; }
+  .listen-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 12px 10px; }
+  .btn-listen { background: transparent; border: 1.5px solid var(--border); color: var(--muted); border-radius: var(--radius);
+    padding: 6px 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-listen:hover, .btn-listen:active { color: var(--rust); border-color: var(--rust); }
   .phon-label { flex: none; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .phon-input, .phon-line, #phonSheetInput, .phon-key, #bulkText, .ipa {
     font-family: 'Noto Sans', 'Segoe UI', 'DejaVu Sans', 'Lucida Sans Unicode', 'Arial Unicode MS', 'Helvetica Neue', Arial, sans-serif; }
@@ -716,6 +720,7 @@ Wasser; water"></textarea>
     <button class="btn-text hidden" id="speakCancelBtn" type="button">Abbrechen (ohne Auswertung)</button>
     <div class="hint-line" id="speakHeard" aria-live="polite"></div>
     <div class="feedback hidden" id="speakFeedback"><div id="speakFbText"></div><div class="phon-line" id="speakPhon"></div><div class="ex-line" id="speakEx"></div></div>
+    <button class="btn-outline hidden" id="speakListenBtn" type="button" style="width:100%;margin-bottom:10px">🔊 Richtige Aussprache anhören</button>
     <button class="btn-text" id="speakSkipBtn" type="button">Weiß ich nicht</button>
     <button class="btn-primary hidden" id="speakNextBtn" type="button">Weiter</button>
   </div>
@@ -1267,6 +1272,13 @@ Wasser; water"></textarea>
         '<span class="vocab-actions-col"><button class="btn-star' + (pair.star ? ' on' : '') + '" data-idx="' + i + '" type="button" aria-pressed="' + (pair.star ? 'true' : 'false') + '" title="Als wichtig markieren" aria-label="Stern setzen oder entfernen">' + (pair.star ? '★' : '☆') + '</button>' +
         '<button class="btn-reset" data-idx="' + i + '" type="button" title="Lernstufe dieses Wortes zurücksetzen" aria-label="Lernstufe zurücksetzen">↺</button>' +
         '<button class="btn-delete" data-idx="' + i + '" type="button" aria-label="Zeile löschen">✕</button></span></div>';
+      var listenA = ttsAvailableForLang(list.langA), listenB = ttsAvailableForLang(list.langB);
+      if (listenA || listenB) {
+        html += '<div class="listen-row">' +
+          (listenA ? '<button class="btn-listen" data-idx="' + i + '" data-field="a" type="button" title="' + escapeHtml(list.langA) + ' anhören">🔊 ' + escapeHtml(list.langA) + '</button>' : '') +
+          (listenB ? '<button class="btn-listen" data-idx="' + i + '" data-field="b" type="button" title="' + escapeHtml(list.langB) + ' anhören">🔊 ' + escapeHtml(list.langB) + '</button>' : '') +
+          '</div>';
+      }
       if (list.showPhon) {
         html += '<div class="phon-row"><span class="phon-label">Lautschrift</span>' +
           '<input type="text" class="phon-input" data-idx="' + i + '" readonly inputmode="none" value="' + escapeHtml(pair.phon || '') + '" placeholder="antippen zum Eingeben"></div>';
@@ -1896,6 +1908,29 @@ Wasser; water"></textarea>
   var speak = null;
   var speakRecognizer = null;
 
+  // Vorlesen (Text-to-Speech): bewusst nur auf iOS, weil dort die eingebauten Stimmen deutlich
+  // besser klingen als auf den meisten anderen Plattformen. Geräte-Erkennung, keine Annahme.
+  function isIOS() {
+    try {
+      var ua = navigator.userAgent || navigator.vendor || '';
+      if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return true;
+      // iPadOS 13+ meldet sich als "Mac", ist aber über Touch-Punkte erkennbar
+      if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) return true;
+    } catch (e) { }
+    return false;
+  }
+  var speechSynthSupported = isIOS() && ('speechSynthesis' in window) && (typeof SpeechSynthesisUtterance !== 'undefined');
+  function ttsAvailableForLang(langName) { return speechSynthSupported && !!SPEECH_LOCALES[langName]; }
+  function speakWord(text, langName) {
+    if (!ttsAvailableForLang(langName) || !text || !String(text).trim()) return;
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(String(text).trim());
+      u.lang = SPEECH_LOCALES[langName];
+      window.speechSynthesis.speak(u);
+    } catch (e) { }
+  }
+
   function foreignLangOf(list) {
     var dir = smartDir(list);
     return dir === 'aToB' ? list.langB : list.langA;
@@ -1930,11 +1965,55 @@ Wasser; water"></textarea>
     el.classList.toggle('hidden', !ok);
   }
 
+  function cleanSpeechText(s) {
+    return String(s || '').trim().replace(/[.。!！?？,，]+$/, '').trim();
+  }
+
+  // Grosszügigere, aber immer noch sinnvolle Bewertung für gesprochene Antworten:
+  // - erkennt das Zielwort auch, wenn die Spracherkennung ein Füllwort/einen Artikel mit erkannt hat
+  // - toleriert kleine Erkennungsfehler (Tippfehler-Toleranz skaliert mit Wortlänge, nicht starr auf 1 Zeichen)
+  function gradeSpeechText(typedRaw, main, alts, half) {
+    var cleaned = cleanSpeechText(typedRaw);
+    var user = normalizeAnswer(cleaned);
+    if (!user) return { kind: 'empty' };
+    var cands = [main].concat(alts || []).filter(function (s) { return s && String(s).trim(); });
+    var norms = cands.map(normalizeAnswer);
+    var halfN = (half || []).map(normalizeAnswer);
+    function isHalfAt(i) { return i > 0 && norms[i] !== norms[0] && halfN.indexOf(norms[i]) !== -1; }
+    var i;
+    for (i = 0; i < norms.length; i++) if (norms[i] === user) return isHalfAt(i) ? { kind: 'half', raw: cands[i] } : { kind: 'exact', raw: cands[i] };
+    var su = simplifyAnswer(user);
+    for (i = 0; i < norms.length; i++) if (simplifyAnswer(norms[i]) === su) return isHalfAt(i) ? { kind: 'half', raw: cands[i] } : { kind: 'accent', raw: cands[i] };
+    // Mehrere Wörter erkannt (z.B. "the house" statt "house") — einzelne Wörter prüfen
+    var tokens = user.split(/\s+/).filter(Boolean);
+    if (tokens.length > 1) {
+      for (i = 0; i < norms.length; i++) if (tokens.indexOf(norms[i]) !== -1) return isHalfAt(i) ? { kind: 'half', raw: cands[i] } : { kind: 'exact', raw: cands[i] };
+      var stoks = tokens.map(simplifyAnswer);
+      for (i = 0; i < norms.length; i++) if (stoks.indexOf(simplifyAnswer(norms[i])) !== -1) return isHalfAt(i) ? { kind: 'half', raw: cands[i] } : { kind: 'accent', raw: cands[i] };
+    }
+    // Fuzzy: Toleranz wächst mit der Wortlänge (kurze Wörter bleiben streng, lange dürfen 1-3 Zeichen abweichen)
+    var bestIdx = -1, bestDist = Infinity;
+    for (i = 0; i < norms.length; i++) {
+      if (norms[i].length < 2) continue;
+      var tol = Math.max(1, Math.min(3, Math.round(norms[i].length * 0.34)));
+      var d = levenshtein(user, norms[i]);
+      if (d <= tol && d < bestDist) { bestDist = d; bestIdx = i; }
+      if (tokens.length > 1) {
+        tokens.forEach(function (tok) {
+          var d2 = levenshtein(tok, norms[i]);
+          if (d2 <= tol && d2 < bestDist) { bestDist = d2; bestIdx = i; }
+        });
+      }
+    }
+    if (bestIdx !== -1) return isHalfAt(bestIdx) ? { kind: 'half', raw: cands[bestIdx] } : { kind: 'typo', raw: cands[bestIdx] };
+    return { kind: 'wrong' };
+  }
+
   function gradeSpeech(alternatives, main, alts, half) {
     var order = { exact: 4, typo: 3, accent: 3, half: 2, wrong: 0, empty: -1 };
     var best = { kind: 'empty', heard: '' };
     (alternatives || []).forEach(function (t) {
-      var r = gradeTyped(t, main, alts, half);
+      var r = gradeSpeechText(t, main, alts, half);
       r.heard = t;
       if ((order[r.kind] || 0) > (order[best.kind] || 0)) best = r;
     });
@@ -1992,11 +2071,12 @@ Wasser; water"></textarea>
     gid('speakInstruction').textContent = speak.mode === 'read'
       ? 'Lies das Wort laut und deutlich vor.'
       : 'Sag die Übersetzung auf ' + speakLang + ' laut.';
-    gid('speakNote').textContent = '';
+    gid('speakNote').textContent = (speak.mode === 'read' && t.v && t.v.phon) ? phonDisplay(t.v.phon) : '';
     gid('speakHeard').textContent = '';
     gid('speakFeedback').className = 'feedback hidden';
     gid('speakFbText').textContent = ''; gid('speakPhon').textContent = ''; gid('speakEx').textContent = '';
     gid('speakNextBtn').classList.add('hidden');
+    gid('speakListenBtn').classList.add('hidden');
     gid('speakSkipBtn').classList.remove('hidden');
     var rb = gid('speakRecordBtn');
     rb.disabled = false; rb.classList.remove('recording'); rb.textContent = '🎙️ Aufnehmen';
@@ -2017,32 +2097,61 @@ Wasser; water"></textarea>
     try { speakRecognizer = new SpeechRecognitionCtor(); } catch (e) { speakRecordError('Spracherkennung konnte nicht gestartet werden.'); return; }
     speakRecognizer.lang = speak.locale;
     speakRecognizer.maxAlternatives = 5;
-    speakRecognizer.interimResults = false;
-    speakRecognizer.continuous = false;
+    // interimResults + continuous: wir bekommen laufend Zwischenergebnisse. Klickt man auf "Fertig",
+    // bevor ein sauberes Endergebnis da ist, nutzen wir das letzte Zwischenergebnis als Rückfallebene —
+    // dadurch bricht "Fertig" nicht mehr einfach ohne Auswertung ab.
+    speakRecognizer.interimResults = true;
+    speakRecognizer.continuous = true;
     speak.recording = true;
     speak.cancelling = false;
+    speak.finalReceived = false;
+    speak.lastInterimAlts = [];
     var rb = gid('speakRecordBtn');
     rb.classList.add('recording'); rb.textContent = '⏹ Fertig — Aufnahme beenden';
     gid('speakCancelBtn').classList.remove('hidden');
-    gid('speakHeard').textContent = '';
+    gid('speakHeard').textContent = 'Höre zu…';
     speakRecognizer.onresult = function (e) {
+      var res = e.results && e.results[e.results.length - 1];
+      if (!res) return;
       var alts = [];
-      var res = e.results && e.results[0];
-      if (res) for (var i = 0; i < res.length; i++) alts.push(res[i].transcript);
-      speak.recording = false;
-      speakResetRecordUi();
-      speakProcessResult(alts);
+      for (var i = 0; i < res.length; i++) alts.push(res[i].transcript);
+      if (res.isFinal) {
+        speak.finalReceived = true;
+        speak.recording = false;
+        speakResetRecordUi();
+        speakProcessResult(alts);
+      } else {
+        speak.lastInterimAlts = alts;
+        gid('speakHeard').textContent = alts[0] ? ('Gehört bisher: „' + alts[0] + '“') : 'Höre zu…';
+      }
     };
     speakRecognizer.onerror = function (e) {
       speak.recording = false;
       if (speak.answered) return;
+      if (speak.cancelling) { speakResetRecordUi(); gid('speakHeard').textContent = ''; return; }
+      if (speak.lastInterimAlts && speak.lastInterimAlts.length && speak.lastInterimAlts[0]) {
+        speak.finalReceived = true;
+        speakResetRecordUi();
+        speakProcessResult(speak.lastInterimAlts);
+        return;
+      }
       speakResetRecordUi();
-      if (speak.cancelling && (e.error === 'aborted' || e.error === 'no-speech')) { gid('speakHeard').textContent = ''; return; }
       speakRecordError(speechErrorMessage(e.error));
     };
     speakRecognizer.onend = function () {
       speak.recording = false;
-      if (!speak.answered) speakResetRecordUi();
+      if (speak.answered) return;
+      if (speak.cancelling) { speakResetRecordUi(); gid('speakHeard').textContent = ''; return; }
+      if (!speak.finalReceived) {
+        if (speak.lastInterimAlts && speak.lastInterimAlts.length && speak.lastInterimAlts[0]) {
+          speak.finalReceived = true;
+          speakResetRecordUi();
+          speakProcessResult(speak.lastInterimAlts);
+        } else {
+          speakResetRecordUi();
+          speakRecordError('Nichts erkannt — versuch\'s nochmal.');
+        }
+      }
     };
     try { speakRecognizer.start(); } catch (e) { speak.recording = false; speakRecordError('Aufnahme konnte nicht gestartet werden.'); }
   }
@@ -2115,6 +2224,7 @@ Wasser; water"></textarea>
     gid('speakPhon').textContent = t.v ? phonDisplay(t.v.phon) : '';
     gid('speakSkipBtn').classList.add('hidden');
     gid('speakNextBtn').classList.remove('hidden');
+    gid('speakListenBtn').classList.toggle('hidden', !ttsAvailableForLang(foreignLangOf(speak.list)));
     var rb = gid('speakRecordBtn');
     rb.disabled = true; rb.classList.remove('recording');
     gid('speakScore').textContent = '✓ ' + formatScore(speak.ok);
@@ -4163,7 +4273,13 @@ Wasser; water"></textarea>
     gid('vocabList').addEventListener('mousedown', function (e) { if (e.target.closest('.ex-mark-btn')) e.preventDefault(); });
     gid('vocabList').addEventListener('click', function (e) {
       var t = e.target;
-      if (t.closest('.btn-star')) {
+      if (t.closest('.btn-listen')) {
+        var lsBtn = t.closest('.btn-listen');
+        var lsList = getCurrentList();
+        var lsV = lsList.vocab[parseInt(lsBtn.dataset.idx, 10)];
+        var lsField = lsBtn.dataset.field;
+        speakWord(lsV[lsField], lsField === 'a' ? lsList.langA : lsList.langB);
+      } else if (t.closest('.btn-star')) {
         var stBtn = t.closest('.btn-star');
         var stV = getCurrentList().vocab[parseInt(stBtn.dataset.idx, 10)];
         stV.star = !stV.star;
@@ -4388,6 +4504,7 @@ Wasser; water"></textarea>
       if (speak.recording) speakRecordFinish(); else speakRecordStart();
     });
     gid('speakCancelBtn').addEventListener('click', speakRecordCancel);
+    gid('speakListenBtn').addEventListener('click', function () { if (speak && speak.current) speakWord(speak.current.target, foreignLangOf(speak.list)); });
     gid('speakSkipBtn').addEventListener('click', speakSkip);
     gid('speakNextBtn').addEventListener('click', speakNext);
     gid('speakQuitBtn').addEventListener('click', function () { speakRecordCancel(); showScreen('setup'); renderVocabList(); });
