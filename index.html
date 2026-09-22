@@ -565,6 +565,7 @@ Wasser; water"></textarea>
       <label class="section-label">Gesamt-Backup</label>
       <p class="hint">Dein Lernstand liegt nur im Browser-Speicher. Ein Backup sichert <strong>alle Listen</strong> samt Lernstufen, Verlauf, Verwechslungen, Eselsbrücken und Einstellungen in <strong>einer Datei</strong>. Beim Einlesen wird sie wieder in die einzelnen Listen aufgeteilt.</p>
       <div class="share-actions">
+        <button class="btn-outline" id="examSheetBtn" type="button">Prüfungsbogen (PDF)</button>
         <button class="btn-outline" id="backupMakeBtn" type="button">Backup erstellen</button>
         <button class="btn-outline" id="backupLoadBtn" type="button">Backup einlesen</button>
       </div>
@@ -3594,6 +3595,259 @@ Wasser; water"></textarea>
     if (total > 0 && know.yes === total) launchConfetti();
   }
 
+  /* ---- Prüfungsbogen (PDF) ---- */
+  function shuffleArr(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function scrambleWord(w) {
+    var letters = w.split('');
+    if (letters.length < 3) return letters.join('');
+    var tries = 0, out;
+    do { out = shuffleArr(letters).join(''); tries++; } while (out.toLowerCase() === w.toLowerCase() && tries < 8);
+    return out;
+  }
+  function buildExamRows(list) {
+    var items = list.vocab.filter(function (v) { return v.a.trim() && v.b.trim(); });
+    var base = items.map(function (v) {
+      var aToB = Math.random() < 0.5;
+      var frage = aToB ? v.a.trim() : v.b.trim();
+      var antwort = aToB ? v.b.trim() : v.a.trim();
+      var richtung = aToB ? (list.langA + ' -> ' + list.langB) : (list.langB + ' -> ' + list.langA);
+      return { frage: frage, antwort: antwort, richtung: richtung };
+    });
+    // Aufgabentypen abwechselnd verteilen: 0=normal, 1=Anfangsbuchstabe, 2=Buchstaben ordnen, 3=Multiple Choice
+    var types = [0, 1, 2, 3];
+    var pool = shuffleArr(base);
+    var allAnswers = base.map(function (r) { return r.antwort; });
+    var items2 = pool.map(function (r, i) {
+      var type = types[i % types.length];
+      var row = { frage: r.frage, antwort: r.antwort, richtung: r.richtung, type: type };
+      if (type === 1) {
+        row.hint = r.antwort.charAt(0).toUpperCase() + '_____ (' + r.antwort.length + ' Buchstaben)';
+      } else if (type === 2) {
+        row.scramble = scrambleWord(r.antwort);
+      } else if (type === 3) {
+        var distractors = shuffleArr(allAnswers.filter(function (a) { return a.toLowerCase() !== r.antwort.toLowerCase(); })).slice(0, 3);
+        var options = shuffleArr([r.antwort].concat(distractors));
+        row.options = options;
+      }
+      return row;
+    });
+    // Mehrere Wörter pro Aufgabe gruppieren: jede Aufgabe hat bis zu 3 Unterpunkte (a, b, c) vom selben Typ
+    var perTask = 3;
+    var tasks = [];
+    for (var i = 0; i < items2.length; i += perTask) {
+      tasks.push(items2.slice(i, i + perTask));
+    }
+    return tasks;
+  }
+
+  /* Minimaler eigenständiger PDF-Writer (keine externe Bibliothek, offline-fähig). */
+  function pdfEscapeBytes(str) {
+    // Wandelt Text in WinAnsi-kodierte Bytes um (deckt deutsche Umlaute ab) und escaped PDF-Sonderzeichen.
+    var out = [];
+    for (var i = 0; i < str.length; i++) {
+      var code = str.charCodeAt(i);
+      var b;
+      if (code < 0x80) b = code;
+      else {
+        var map = { 0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
+          0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91, 0x2019: 0x92,
+          0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97, 0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A,
+          0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F };
+        if (code >= 0xA0 && code <= 0xFF) b = code;
+        else if (map[code] !== undefined) b = map[code];
+        else b = 0x3F; // '?' für nicht darstellbare Zeichen
+      }
+      if (b === 0x5C || b === 0x28 || b === 0x29) out.push(0x5C, b);
+      else out.push(b);
+    }
+    return out;
+  }
+  function buildExamPdfBytes(list) {
+    var rows = buildExamRows(list);
+    var title = list.name || 'Liste';
+    var dateStr = new Date().toLocaleDateString('de-DE');
+    var pageW = 595.28, pageH = 841.89, margin = 50, top = pageH - margin;
+    var contentW = pageW - 2 * margin;
+    var pages = []; // each page: { ops: [{x,y,size,bold,text}], lines: [{x1,y1,x2,y2}], rects: [{x,y,w,h}] }
+    function newPage() { var p = { ops: [], lines: [], rects: [] }; pages.push(p); return p; }
+    function addText(page, x, y, size, bold, text) { page.ops.push({ x: x, y: y, size: size, bold: bold, text: text }); }
+    function addLine(page, x1, y1, x2, y2) { page.lines.push({ x1: x1, y1: y1, x2: x2, y2: y2 }); }
+    function addRect(page, x, y, w, h) { page.rects.push({ x: x, y: y, w: w, h: h }); }
+
+    function wrapText(s, maxChars) {
+      s = String(s);
+      if (s.length <= maxChars) return [s];
+      var out = [], cur = '';
+      s.split(' ').forEach(function (w) {
+        if ((cur + ' ' + w).trim().length > maxChars) { out.push(cur.trim()); cur = w; }
+        else cur = (cur + ' ' + w).trim();
+      });
+      if (cur) out.push(cur.trim());
+      return out;
+    }
+
+    function headerBlock(page, headline, sub, y) {
+      addText(page, margin, y, 18, true, headline); y -= 6;
+      addLine(page, margin, y, margin + contentW, y); y -= 18;
+      addText(page, margin, y, 10, false, sub); y -= 10;
+      addLine(page, margin, y, margin + contentW, y); y -= 26;
+      return y;
+    }
+
+    // Ein Kästchen mit fortlaufender Aufgaben-Nummer + mehreren Wort-Unterpunkten (a, b, c), schulheft-artig mit Rahmen
+    function renderTasks(tasks, headline, sub, showAnswers) {
+      var page = newPage();
+      var y = headerBlock(page, headline, sub, top);
+      var boxPad = 8;
+      var letters = 'abcdefgh';
+      tasks.forEach(function (task, ti) {
+        var num = String(ti + 1) + '.';
+        var lines = [];
+        task.forEach(function (r, ri) {
+          var prefix = (ri === 0 ? num + ' ' : '   ') + letters.charAt(ri) + ') ';
+          var isMc = r.type === 3;
+          var frageLines = wrapText(r.frage, 42);
+          frageLines.forEach(function (fl, li) { lines.push({ size: 11, bold: false, text: (li === 0 ? prefix : '      ') + fl }); });
+          if (r.type === 1) {
+            lines.push({ size: 10, bold: false, text: '      Ergänze: ' + r.hint });
+            lines.push({ size: 10, bold: false, text: '      Antwort: ' + (showAnswers ? r.antwort : '________________________') });
+          } else if (r.type === 2) {
+            lines.push({ size: 10, bold: false, text: '      Buchstaben ordnen: ' + r.scramble.toUpperCase() });
+            lines.push({ size: 10, bold: false, text: '      Lösung: ' + (showAnswers ? r.antwort : '________________________') });
+          } else if (isMc) {
+            var optLine = r.options.map(function (o, oi) { return String.fromCharCode(65 + oi) + ') ' + o; }).join('    ');
+            wrapText(optLine, 56).forEach(function (ol) { lines.push({ size: 10, bold: false, text: '      ' + ol }); });
+            var correctLetter = showAnswers ? String.fromCharCode(65 + r.options.indexOf(r.antwort)) : '___';
+            lines.push({ size: 10, bold: false, text: '      Richtige Antwort:  ' + (showAnswers ? correctLetter + ')  ' + r.antwort : '(   )') });
+          } else {
+            lines.push({ size: 10, bold: false, text: '      Antwort: ' + (showAnswers ? r.antwort : '________________________') });
+          }
+          lines.push({ size: 8, bold: false, text: '      [' + r.richtung + ']' });
+        });
+
+        var lineGap = 13;
+        var boxH = lines.length * lineGap + boxPad * 2;
+        if (y - boxH < margin + 30) {
+          page = newPage();
+          y = headerBlock(page, headline + ' (Fortsetzung)', sub, top);
+        }
+        addRect(page, margin, y - boxH, contentW, boxH);
+        var ty = y - boxPad - 9;
+        lines.forEach(function (ln) {
+          addText(page, margin + 10, ty, ln.size, ln.bold, ln.text);
+          ty -= lineGap;
+        });
+        y -= boxH + 12;
+      });
+    }
+
+    var totalWords = rows.reduce(function (n, t) { return n + t.length; }, 0);
+    renderTasks(rows, 'Prüfungsbogen: ' + title, dateStr + '   ·   ' + rows.length + ' Aufgaben (' + totalWords + ' Wörter)', false);
+    renderTasks(rows, 'Lösungen: ' + title, dateStr, true);
+
+    // --- PDF-Objekte zusammenbauen (als Byte-Arrays, um Umlaute korrekt als WinAnsi-Bytes zu schreiben) ---
+    function strBytes(s) { var a = []; for (var i = 0; i < s.length; i++) a.push(s.charCodeAt(i) & 0xFF); return a; }
+    function concatBytes(arrs) {
+      var total = 0; arrs.forEach(function (a) { total += a.length; });
+      var out = new Uint8Array(total); var pos = 0;
+      arrs.forEach(function (a) { out.set(a, pos); pos += a.length; });
+      return out;
+    }
+    var objBodies = []; // each: array of byte-arrays
+    function addObj(bodyByteArrays) { objBodies.push(bodyByteArrays); return objBodies.length; }
+    var fontRegId = addObj([strBytes('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>')]);
+    var fontBoldId = addObj([strBytes('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>')]);
+    var pageIds = [];
+    var contentIds = [];
+    pages.forEach(function (page) {
+      var parts = [strBytes('0 0 0 RG 0 0 0 rg 0.75 w\n')];
+      page.rects.forEach(function (r) {
+        parts.push(strBytes(r.x.toFixed(2) + ' ' + (r.y).toFixed(2) + ' ' + r.w.toFixed(2) + ' ' + r.h.toFixed(2) + ' re S\n'));
+      });
+      page.lines.forEach(function (l) {
+        parts.push(strBytes(l.x1.toFixed(2) + ' ' + l.y1.toFixed(2) + ' m ' + l.x2.toFixed(2) + ' ' + l.y2.toFixed(2) + ' l S\n'));
+      });
+      parts.push(strBytes('BT\n'));
+      page.ops.forEach(function (op) {
+        parts.push(strBytes('/' + (op.bold ? 'FB' : 'F1') + ' ' + op.size + ' Tf\n'));
+        parts.push(strBytes('1 0 0 1 ' + op.x.toFixed(2) + ' ' + op.y.toFixed(2) + ' Tm\n'));
+        parts.push(strBytes('('));
+        parts.push(pdfEscapeBytes(op.text));
+        parts.push(strBytes(') Tj\n'));
+      });
+      parts.push(strBytes('ET'));
+      var streamBytes = concatBytes(parts);
+      var cid = addObj([strBytes('<< /Length ' + streamBytes.length + ' >>\nstream\n'), streamBytes, strBytes('\nendstream')]);
+      contentIds.push(cid);
+    });
+    var pagesObjIndex = objBodies.length + 1 + pages.length; // reserve
+    pages.forEach(function (ops, i) {
+      var pid = addObj([strBytes('<< /Type /Page /Parent ' + pagesObjIndex + ' 0 R /MediaBox [0 0 ' + pageW + ' ' + pageH + '] ' +
+        '/Resources << /Font << /F1 ' + fontRegId + ' 0 R /FB ' + fontBoldId + ' 0 R >> >> /Contents ' + contentIds[i] + ' 0 R >>')]);
+      pageIds.push(pid);
+    });
+    var pagesId = addObj([strBytes('<< /Type /Pages /Kids [' + pageIds.map(function (id) { return id + ' 0 R'; }).join(' ') + '] /Count ' + pageIds.length + ' >>')]);
+    var catalogId = addObj([strBytes('<< /Type /Catalog /Pages ' + pagesId + ' 0 R >>')]);
+
+    var header = strBytes('%PDF-1.4\n');
+    var chunks = [header];
+    var offsets = [0];
+    var pos = header.length;
+    objBodies.forEach(function (bodyArrays, i) {
+      offsets.push(pos);
+      var pre = strBytes((i + 1) + ' 0 obj\n');
+      var post = strBytes('\nendobj\n');
+      chunks.push(pre); pos += pre.length;
+      bodyArrays.forEach(function (b) { chunks.push(b); pos += b.length; });
+      chunks.push(post); pos += post.length;
+    });
+    var xrefStart = pos;
+    var xrefLines = 'xref\n0 ' + (objBodies.length + 1) + '\n0000000000 65535 f \n';
+    for (var i = 1; i <= objBodies.length; i++) {
+      xrefLines += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+    }
+    xrefLines += 'trailer\n<< /Size ' + (objBodies.length + 1) + ' /Root ' + catalogId + ' 0 R >>\nstartxref\n' + xrefStart + '\n%%EOF';
+    var xrefBytes = strBytes(xrefLines);
+    chunks.push(xrefBytes);
+
+    return concatBytes(chunks);
+  }
+
+  function makeExamSheet() {
+    var list = getCurrentList();
+    var msg = gid('backupMsg');
+    if (!list || !list.vocab.some(function (v) { return v.a.trim() && v.b.trim(); })) {
+      msg.textContent = 'Diese Liste hat noch keine vollständigen Wörter.';
+      return;
+    }
+    var bytes;
+    try { bytes = buildExamPdfBytes(list); } catch (e) { msg.textContent = 'Prüfungsbogen konnte nicht erstellt werden.'; return; }
+    var fileName = safeFileName(list.name || 'Pruefungsbogen') .replace(/\.[^.]*$/, '') + '.pdf';
+    var blob = new Blob([bytes], { type: 'application/pdf' });
+    function fallback() {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      msg.textContent = 'Prüfungsbogen „' + fileName + '“ gespeichert.';
+    }
+    var file = null;
+    try { file = new File([blob], fileName, { type: 'application/pdf' }); } catch (e) { file = null; }
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: fileName }).then(function () { msg.textContent = 'Prüfungsbogen geteilt.'; }).catch(function (err) {
+        if (err && err.name === 'AbortError') return;
+        fallback();
+      });
+    } else fallback();
+  }
+
   /* ---- Gesamt-Backup ---- */
   function makeBackup() {
     saveAll();
@@ -4106,6 +4360,7 @@ Wasser; water"></textarea>
     gid('backToSetupBtn').addEventListener('click', function () { showScreen('setup'); renderVocabList(); });
 
     // Backup
+    gid('examSheetBtn').addEventListener('click', makeExamSheet);
     gid('backupMakeBtn').addEventListener('click', makeBackup);
     gid('backupLoadBtn').addEventListener('click', function () { gid('backupFile').click(); });
     gid('backupFile').addEventListener('change', function (e) {
