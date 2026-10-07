@@ -31,6 +31,12 @@
   details.sub-fold { margin:4px 0 8px; border-top:1px solid var(--border); }
   details.sub-fold > summary { font-size:16px; padding:8px 0; }
   .ui-hidden { display:none !important; }
+  .grp-arrows { float:right; display:inline-flex; gap:4px; }
+  .grp-arrows button { border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:6px; font-size:13px; padding:2px 8px; cursor:pointer; }
+  .ui-nomatch { display:none !important; }
+  .ui-search-show { display:block !important; }
+  #kkSearch { width:100%; box-sizing:border-box; margin:6px 0 8px; }
+  .view-chip.theme { margin-left:auto; }
 </style><style>
 @font-face {
   font-family: "Optimistic";
@@ -10200,14 +10206,13 @@ Wasser; water"></textarea>
     if (!screen || !anchor) return;
     var bar = document.createElement('div'); bar.className = 'kk-bar';
     function mk(txt) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn-small'; b.textContent = txt; bar.appendChild(b); return b; }
-    var tog = mk(''), cl = mk('Alles einklappen'), ex = mk('Alles ausklappen');
+    var cl = mk('Alles einklappen'), ex = mk('Alles ausklappen');
     function apply(v) {
-      document.body.classList.toggle('hide-settings', v);
-      tog.textContent = v ? '⚙️ Einstellungen einblenden' : '⚙️ Einstellungen ausblenden';
+      document.body.classList.remove('hide-settings'); try { localStorage.setItem(KEY, '0'); } catch (e) { }
     }
     apply(get());
     window.__kkHideApply = function () { apply(get()); };
-    tog.addEventListener('click', function () { var v = !get(); set(v); apply(v); });
+    
     function all(open) { Array.prototype.forEach.call(screen.querySelectorAll('details.fold'), function (d) { d.open = open; }); }
     cl.addEventListener('click', function () { all(false); });
     ex.addEventListener('click', function () { all(true); });
@@ -10287,6 +10292,93 @@ Wasser; water"></textarea>
     var t = document.getElementById(btn.dataset.target); var gr = t && t.closest('.group-fold');
     if (gr && gr.classList.contains('ui-hidden')) { var k = gr.id.slice(4); st[k + '_show'] = true; save(); gr.classList.remove('ui-hidden'); bar.querySelectorAll('.view-chip').forEach(function (b, i) { }); defs.forEach(function (p, i) { }); bar.querySelectorAll('.view-chip').forEach(function (b) { if (b.textContent === (defs.filter(function (p) { return p[0] === k; })[0] || [])[1]) { b.classList.add('on'); b.classList.remove('off'); } }); }
   }, true);
+})();
+</script>
+
+<script>
+(function () {
+  var scr = document.getElementById('setup-screen'); if (!scr) return;
+  var ids = ['goals','lists','vocab','learn','acct'];
+  var KEY = 'kk_ui_groups_v1', st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var bar = scr.querySelector('.view-chips');
+  var G = {}; ids.forEach(function (i) { G[i] = document.getElementById('grp_' + i); });
+  // Container für Reihenfolge; Start-Knopf bleibt oben erreichbar
+  var wrap = document.createElement('div'); wrap.id = 'grpWrap';
+  var start = document.getElementById('startQuizBtn'), status = document.getElementById('statusLine');
+  var search = document.createElement('input'); search.type = 'search'; search.id = 'kkSearch';
+  search.placeholder = '🔍 In Einstellungen suchen (z. B. Passwort, Backup, Erinnerung)'; search.autocomplete = 'off';
+  var anchor = bar || scr.firstChild;
+  anchor.parentNode.insertBefore(search, bar ? bar.nextSibling : anchor);
+  var after = search;
+  [start, status, wrap].forEach(function (n) { if (n) { after.parentNode.insertBefore(n, after.nextSibling); after = n; } });
+  var order = (st.order || []).filter(function (i) { return ids.indexOf(i) >= 0; });
+  ids.forEach(function (i) { if (order.indexOf(i) < 0) order.push(i); });
+  function place() { order.forEach(function (i) { if (G[i]) wrap.appendChild(G[i]); }); }
+  function move(id, d) {
+    var k = order.indexOf(id), n = k + d; if (n < 0 || n >= order.length) return;
+    order.splice(k, 1); order.splice(n, 0, id); st.order = order; save(); place();
+  }
+  ids.forEach(function (i) {
+    var g = G[i]; if (!g) return; var sm = g.querySelector(':scope > summary');
+    var a = document.createElement('span'); a.className = 'grp-arrows';
+    [['▲', -1, 'Nach oben'], ['▼', 1, 'Nach unten']].forEach(function (x) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = x[0]; b.title = x[2]; b.setAttribute('aria-label', x[2]);
+      b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); move(i, x[1]); });
+      a.appendChild(b);
+    });
+    sm.appendChild(a);
+  });
+  place();
+  // Suche
+  function ancestors(el) { var r = []; var a = el.parentElement; while (a) { if (a.tagName === 'DETAILS') r.push(a); a = a.parentElement; } return r; }
+  function clear() {
+    document.querySelectorAll('.ui-nomatch').forEach(function (e) { e.classList.remove('ui-nomatch'); });
+    document.querySelectorAll('.ui-search-show').forEach(function (e) { e.classList.remove('ui-search-show'); });
+  }
+  search.addEventListener('input', function () {
+    clear(); var q = search.value.trim().toLowerCase(); if (!q) return;
+    ids.forEach(function (i) {
+      var g = G[i]; if (!g) return;
+      var leaves = Array.prototype.filter.call(g.querySelectorAll('details'), function (d) { return !d.querySelector('details'); });
+      var hits = leaves.filter(function (d) { return d.textContent.toLowerCase().indexOf(q) >= 0; });
+      var selfHit = g.querySelector(':scope > summary').textContent.toLowerCase().indexOf(q) >= 0;
+      if (!hits.length && !selfHit) { g.classList.add('ui-nomatch'); return; }
+      if (g.classList.contains('ui-hidden')) g.classList.add('ui-search-show');
+      g.open = true;
+      if (hits.length) {
+        leaves.forEach(function (d) { if (hits.indexOf(d) < 0) d.classList.add('ui-nomatch'); });
+        hits.forEach(function (d) { d.open = true; ancestors(d).forEach(function (a) { a.open = true; }); });
+      }
+    });
+  });
+  // Dunkelmodus: Auto → Dunkel → Hell
+  var TK = 'kk_theme', modes = ['auto','dark','light','timer'], names = { auto: '🌓 Auto', dark: '🌙 Dunkel', light: '☀️ Hell', timer: '⏰ Zeitplan' };
+  var cur = 'auto'; try { cur = localStorage.getItem(TK) || 'auto'; } catch (e) {}
+  var tb = document.createElement('button'); tb.type = 'button'; tb.className = 'view-chip theme';
+  var TT = 'kk_theme_times', tt = { from: '20:00', to: '07:00' };
+  try { var o = JSON.parse(localStorage.getItem(TT) || 'null'); if (o && o.from && o.to) tt = o; } catch (e) {}
+  var row = document.createElement('div'); row.className = 'view-chips'; row.style.display = 'none';
+  row.innerHTML = '<span class="vc-label">Dunkel von</span><input type="time" id="kkFrom"><span class="vc-label">bis</span><input type="time" id="kkTo">';
+  if (bar) bar.parentNode.insertBefore(row, bar.nextSibling);
+  var fi = row.querySelector('#kkFrom'), ti = row.querySelector('#kkTo'); fi.value = tt.from; ti.value = tt.to;
+  function mins(v) { var a = (v || '0:0').split(':'); return (+a[0]) * 60 + (+a[1] || 0); }
+  function isNight() {
+    var n = new Date(), m = n.getHours() * 60 + n.getMinutes(), f = mins(tt.from), t = mins(tt.to);
+    if (f === t) return false;
+    return f < t ? (m >= f && m < t) : (m >= f || m < t);
+  }
+  function onTime() { tt = { from: fi.value || '20:00', to: ti.value || '07:00' }; try { localStorage.setItem(TT, JSON.stringify(tt)); } catch (e) {} applyTheme(); }
+  fi.addEventListener('change', onTime); ti.addEventListener('change', onTime);
+  setInterval(function () { if (cur === 'timer') applyTheme(); }, 60000);
+  function applyTheme() {
+    var eff = cur === 'timer' ? (isNight() ? 'dark' : 'light') : cur;
+    if (eff === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', eff);
+    tb.textContent = names[cur]; tb.title = 'Design wechseln'; row.style.display = cur === 'timer' ? '' : 'none';
+  }
+  tb.addEventListener('click', function () { cur = modes[(modes.indexOf(cur) + 1) % modes.length]; try { localStorage.setItem(TK, cur); } catch (e) {} applyTheme(); });
+  applyTheme(); if (bar) bar.appendChild(tb);
 })();
 </script>
 </body>
