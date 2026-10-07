@@ -37,6 +37,19 @@
   .ui-search-show { display:block !important; }
   #kkSearch { width:100%; box-sizing:border-box; margin:6px 0 8px; }
   .view-chip.theme { margin-left:auto; }
+  .app { zoom: var(--kk-zoom, 1); }
+  html[data-device="tablet"] .app { max-width: 780px; }
+  html[data-device="pc"] .app { max-width: 1120px; padding-left: 32px; padding-right: 32px; }
+  html[data-device="tablet"] .vocab-stack, html[data-device="pc"] .vocab-stack { max-width: 640px; }
+  html[data-device="pc"] #grpWrap { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; align-items: start; }
+  html[data-device="pc"] #grpWrap > #grp_vocab, html[data-device="pc"] #grpWrap > #grp_acct { grid-column: 1 / -1; }
+  .kk-viewrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:4px 0 8px; }
+  .kk-viewrow .view-chip { padding:4px 10px; }
+  #kkSearch, .kk-viewrow input[type="time"], .view-chips input[type="time"] { font-family: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 12px; box-sizing: border-box; -webkit-appearance: none; appearance: none; }
+  #kkSearch { width: 100%; -webkit-appearance: none; }
+  #kkSearch::placeholder { color: var(--muted); }
+  .view-chips input[type="time"] { width: auto; min-width: 110px; padding: 6px 10px; font-size: 15px; }
+  #kkSearch:focus-visible, .view-chips input[type="time"]:focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
 </style><style>
 @font-face {
   font-family: "Optimistic";
@@ -10379,6 +10392,39 @@ Wasser; water"></textarea>
   }
   tb.addEventListener('click', function () { cur = modes[(modes.indexOf(cur) + 1) % modes.length]; try { localStorage.setItem(TK, cur); } catch (e) {} applyTheme(); });
   applyTheme(); if (bar) bar.appendChild(tb);
+})();
+</script>
+
+<script>
+(function () {
+  var root = document.documentElement, bar = document.querySelector('#setup-screen .view-chips'); if (!bar) return;
+  var K = 'kk_view_prefs', p = { device: 'auto', zoom: 1 };
+  try { var o = JSON.parse(localStorage.getItem(K) || 'null'); if (o) { p.device = o.device || 'auto'; p.zoom = +o.zoom || 1; } } catch (e) {}
+  function save() { try { localStorage.setItem(K, JSON.stringify(p)); } catch (e) {} }
+  function detect() { var w = window.innerWidth; return w < 600 ? 'phone' : (w < 1024 ? 'tablet' : 'pc'); }
+  var row = document.createElement('div'); row.className = 'kk-viewrow';
+  row.innerHTML = '<span class="vc-label">Gerät:</span>';
+  var devs = [['auto','🔄 Auto'],['phone','📱 Handy'],['tablet','📋 Tablet'],['pc','🖥️ PC']], dbtn = {};
+  devs.forEach(function (d) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'view-chip'; b.textContent = d[1]; dbtn[d[0]] = b;
+    b.addEventListener('click', function () { p.device = d[0]; save(); apply(); }); row.appendChild(b);
+  });
+  var sp = document.createElement('span'); sp.className = 'vc-label'; sp.textContent = 'Schrift:'; sp.style.marginLeft = '8px'; row.appendChild(sp);
+  var minus = document.createElement('button'), plus = document.createElement('button'), lab = document.createElement('span');
+  [minus, plus].forEach(function (b) { b.type = 'button'; b.className = 'view-chip'; });
+  minus.textContent = 'A−'; plus.textContent = 'A+'; lab.className = 'vc-label'; row.appendChild(minus); row.appendChild(lab); row.appendChild(plus);
+  function step(d) { p.zoom = Math.min(1.5, Math.max(0.8, Math.round((p.zoom + d) * 100) / 100)); save(); apply(); }
+  minus.addEventListener('click', function () { step(-0.1); }); plus.addEventListener('click', function () { step(0.1); });
+  lab.addEventListener('dblclick', function () { p.zoom = 1; save(); apply(); }); lab.title = 'Doppelklick: zurücksetzen';
+  function apply() {
+    root.setAttribute('data-device', p.device === 'auto' ? detect() : p.device);
+    root.style.setProperty('--kk-zoom', p.zoom);
+    lab.textContent = Math.round(p.zoom * 100) + '%';
+    Object.keys(dbtn).forEach(function (k) { dbtn[k].classList.toggle('on', k === p.device); });
+  }
+  window.addEventListener('resize', function () { if (p.device === 'auto') apply(); });
+  bar.parentNode.insertBefore(row, bar.nextSibling);
+  apply();
 })();
 </script>
 </body>
