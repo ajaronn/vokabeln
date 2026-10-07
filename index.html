@@ -21,6 +21,16 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
+  .view-chips { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 6px; align-items:center; }
+  .view-chips .vc-label { font-size:13px; font-weight:700; color:var(--muted); margin-right:2px; }
+  .view-chip { padding:6px 11px; border-radius:999px; border:2px solid var(--border); background:transparent; color:var(--ink); font-size:14px; font-weight:700; cursor:pointer; }
+  .view-chip.on { background:var(--rust); border-color:var(--rust); color:#fff; }
+  .view-chip.off { opacity:.55; text-decoration:line-through; }
+  details.group-fold { border:2px solid var(--border); border-radius:12px; padding:2px 12px; margin:12px 0; }
+  details.group-fold > summary { font-size:19px; padding:10px 0; }
+  details.sub-fold { margin:4px 0 8px; border-top:1px solid var(--border); }
+  details.sub-fold > summary { font-size:16px; padding:8px 0; }
+  .ui-hidden { display:none !important; }
 </style><style>
 @font-face {
   font-family: "Optimistic";
@@ -7090,7 +7100,9 @@ Wasser; water"></textarea>
   var CLOUD_TABLE = 'user_data';
   var OWNER_KEY = 'karteikasten_data_owner';
   var CLOUD_EXCLUDE = { 'karteikasten_logged_in': 1, 'karteikasten_account': 1, 'karteikasten_user': 1,
-    'karteikasten_data_owner': 1, 'karteikasten_stale_last_notified': 1, 'karteikasten_install_hint_off': 1, 'karteikasten_reminder_on': 1 };
+    'karteikasten_data_owner': 1, 'karteikasten_stale_last_notified': 1, 'karteikasten_install_hint_off': 1, 'karteikasten_reminder_on': 1,
+    'karteikasten_device_id': 1, 'karteikasten_trusted_devices': 1, 'karteikasten_last_activity': 1, 'karteikasten_mfa_reset_email': 1,
+    'karteikasten_verify_pending_email': 1, 'karteikasten_email2fa_ok': 1, 'karteikasten_link_result_target': 1 };
   var cloudReady = false, cloudLastJson = '', cloudBusy = false, cloudTimer = null;
 
   function cloudLocalKeys() {
@@ -8448,7 +8460,7 @@ Wasser; water"></textarea>
 
 
   /* ================= Angemeldete Geräte + Benachrichtigung bei Anmeldung per Gerätecode ================= */
-  var DEVICE_ID_KEY = 'karteikasten_device_id';
+  var DEVICE_ID_KEY = 'kk_device_id_v2'; // bewusst ohne Präfix 'karteikasten_': wird nie mit der Cloud synchronisiert
   function getDeviceId() {
     var id = '';
     try { id = localStorage.getItem(DEVICE_ID_KEY) || ''; } catch (e) { }
@@ -8587,7 +8599,7 @@ Wasser; water"></textarea>
         d.appendChild(rn);
         if (unk && ((meTrusted && r.device_id !== me) || (!trusted.length && r.device_id === me))) {
           var tr = document.createElement('button'); tr.type = 'button'; tr.className = 'btn-text'; tr.textContent = 'Als vertraut markieren';
-          tr.addEventListener('click', function () { client.rpc('trust_device_v1', { p_device_id: r.device_id }).then(function (x) { if (x.error) setDevicesStatus('Vertrauen fehlgeschlagen.', true); refreshDeviceList(); }, function () { setDevicesStatus('Vertrauen fehlgeschlagen.', true); }); });
+          tr.addEventListener('click', function () { client.rpc('trust_device_v1', { p_device_id: r.device_id }).then(function (x) { if (x.error) setDevicesStatus('Vertrauen fehlgeschlagen: ' + (x.error.message || x.error.code || 'unbekannter Fehler'), true); refreshDeviceList(); }, function (err) { setDevicesStatus('Vertrauen fehlgeschlagen: ' + ((err && err.message) || 'Netzwerkfehler'), true); }); });
           d.appendChild(tr);
         }
         if (r.device_id !== me) {
@@ -10218,6 +10230,63 @@ Wasser; water"></textarea>
   }
   function boot() { init(); watch(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+})();
+</script>
+
+<script>
+(function () {
+  var scr = document.getElementById('setup-screen'); if (!scr) return;
+  var KEY = 'kk_ui_groups_v1', st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  function $(sel) { return scr.querySelector(sel); }
+  function subfold(sec, open) {
+    var lab = sec.querySelector(':scope > .section-label'); if (!lab) return;
+    var d = document.createElement('details'); d.className = 'fold sub-fold'; d.open = open;
+    var sm = document.createElement('summary'); sm.textContent = lab.textContent.trim();
+    d.appendChild(sm); lab.remove();
+    while (sec.firstChild) d.appendChild(sec.firstChild);
+    sec.appendChild(d);
+  }
+  function group(id, title, nodes, anchor, where, open, subs) {
+    nodes = nodes.filter(Boolean); if (!nodes.length) return;
+    var d = document.createElement('details'); d.className = 'fold group-fold'; d.id = 'grp_' + id;
+    var sm = document.createElement('summary'); sm.textContent = title; d.appendChild(sm);
+    if (st[id + '_open'] !== undefined) open = st[id + '_open'];
+    d.open = open;
+    nodes[0].parentNode.insertBefore(d, nodes[0]);
+    nodes.forEach(function (n) { if (subs && n.tagName === 'SECTION') subfold(n, subs === 'open'); d.appendChild(n); });
+    d.addEventListener('toggle', function () { st[id + '_open'] = d.open; save(); });
+    return d;
+  }
+  var C = function (c) { return $(':scope > ' + c); };
+  var g = {};
+  g.goals = group('goals', '🎯 Ziele & Erinnerung', [document.getElementById('dailyGoalDetails'), document.getElementById('reminderDetails')], null, null, false);
+  g.lists = group('lists', '📚 Meine Listen', [C('.lists-section'), C('.rename-section'), C('.lang-section')], null, null, true, 'open');
+  g.vocab = group('vocab', '🗂️ Vokabeln', [C('.vocab-section')], null, null, true);
+  g.learn = group('learn', '🧠 Lernen & Übungen', ['.direction-section','.time-section','.weak-section','.mc-section','.smart-section','.conf-section','.know-section','.browse-section','.mirror-section'].map(C), null, null, true, 'open');
+  g.acct = group('acct', '⚙️ Einstellungen & Konto', ['#mfaSection','#loginPrefsSection','#devicesSection','#backupSection','.danger-section','#emailChangeSection','#passwordChangeSection'].reduce(function (a, q) { scr.querySelectorAll(':scope > ' + q).forEach(function (n) { a.push(n); }); return a; }, []), null, null, false, 'closed');
+  // Reihenfolge: Ziele-Gruppe bleibt im Kopfbereich, Konto-Gruppe ganz unten
+  if (g.acct) { var last = g.acct; scr.appendChild(last); }
+  // Auswahl oben: was angezeigt wird
+  var defs = [['goals','🎯 Ziele'],['lists','📚 Listen'],['vocab','🗂️ Vokabeln'],['learn','🧠 Lernen'],['acct','⚙️ Einstellungen']];
+  var bar = document.createElement('div'); bar.className = 'view-chips'; bar.innerHTML = '<span class="vc-label">Anzeigen:</span>';
+  defs.forEach(function (p) {
+    if (!g[p[0]]) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'view-chip'; b.textContent = p[1];
+    function apply() { var on = st[p[0] + '_show'] !== false; b.classList.toggle('on', on); b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on); g[p[0]].classList.toggle('ui-hidden', !on); }
+    b.addEventListener('click', function () { st[p[0] + '_show'] = st[p[0] + '_show'] === false; save(); apply(); });
+    apply(); bar.appendChild(b);
+  });
+  var rule = scr.querySelector('.header-rule');
+  if (rule) rule.parentNode.insertBefore(bar, rule.nextSibling); else scr.insertBefore(bar, scr.firstChild);
+  // Menü-Sprung: ausgeblendete Gruppe wieder einblenden
+  var panel = document.getElementById('quickNavPanel');
+  if (panel) panel.addEventListener('click', function (e) {
+    var btn = e.target.closest('.quick-nav-btn'); if (!btn) return;
+    var t = document.getElementById(btn.dataset.target); var gr = t && t.closest('.group-fold');
+    if (gr && gr.classList.contains('ui-hidden')) { var k = gr.id.slice(4); st[k + '_show'] = true; save(); gr.classList.remove('ui-hidden'); bar.querySelectorAll('.view-chip').forEach(function (b, i) { }); defs.forEach(function (p, i) { }); bar.querySelectorAll('.view-chip').forEach(function (b) { if (b.textContent === (defs.filter(function (p) { return p[0] === k; })[0] || [])[1]) { b.classList.add('on'); b.classList.remove('off'); } }); }
+  }, true);
 })();
 </script>
 </body>
