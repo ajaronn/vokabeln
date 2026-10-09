@@ -21,6 +21,21 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
+
+  /* Kompakte Ansicht-Leiste */
+  #kkViewPanel { margin: 10px 0 8px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--surface); }
+  #kkViewPanel > summary { cursor: pointer; padding: 9px 12px; font-weight: 700; font-size: 14px; list-style: none; display: flex; align-items: center; gap: 8px; }
+  #kkViewPanel > summary::-webkit-details-marker { display: none; }
+  #kkViewPanel > summary .kk-vp-info { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--muted); }
+  #kkViewPanel > summary::after { content: '▾'; color: var(--muted); }
+  #kkViewPanel[open] > summary::after { content: '▴'; }
+  #kkViewPanel .kk-vp-body { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--border); }
+  #kkViewPanel .kk-vp-sec { display: flex; flex-direction: column; gap: 4px; }
+  #kkViewPanel .kk-vp-h { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-top: 8px; }
+  #kkViewPanel .view-chips, #kkViewPanel .kk-viewrow, #kkViewPanel .kk-bar { margin: 0; gap: 6px; }
+  #kkViewPanel .vc-label { display: none; }
+  #kkViewPanel .view-chip, #kkViewPanel .btn-small, #kkViewPanel label.help-toggle { font-size: 13px; padding: 5px 9px; }
+  #kkViewPanel .kk-viewrow { display: flex; flex-wrap: wrap; align-items: center; }
 </style><style>
 @font-face {
   font-family: "Optimistic";
@@ -2114,6 +2129,7 @@ Wasser; water"></textarea>
 
   function saveAll() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ lists: lists, currentListId: currentListId, folders: folders, trash: trash })); } catch (e) { }
+    try { if (window.__wpDirty) window.__wpDirty(); } catch (e) { }
   }
   function debouncedSave() { snapshotListForHistory(getCurrentList()); clearTimeout(saveTimeout); saveTimeout = setTimeout(saveAll, 400); }
 
@@ -7112,6 +7128,314 @@ Wasser; water"></textarea>
   }
 
 
+
+  /* ======== Wort-Erinnerungen: Push mit Vokabel-Frage ======== */
+  var WP_KEY = 'karteikasten_word_push';
+  var WP_DEFAULT_TIMES = ['09:00', '11:30', '14:00', '16:30', '19:00'];
+  var wpPending = null, wpLastEnsure = 0, wpDirtyT = 0, wpState = '';
+  function wpPad(n) { return (n < 10 ? '0' : '') + n; }
+  function wpValidTime(t) { return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(t)); }
+  function wpSupported() { return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+  function wpLoggedIn() { var m = gid('mainApp'); return !!(m && !m.classList.contains('hidden')); }
+  function wpLoad() {
+    var o = null; try { o = JSON.parse(localStorage.getItem(WP_KEY) || 'null'); } catch (e) { }
+    if (!o || typeof o !== 'object') o = {};
+    if (typeof o.on !== 'boolean') o.on = true;
+    o.times = (Array.isArray(o.times) ? o.times : []).filter(wpValidTime).slice(0, 12);
+    if (!o.times.length) o.times = WP_DEFAULT_TIMES.slice();
+    return o;
+  }
+  function wpSave(o) { try { localStorage.setItem(WP_KEY, JSON.stringify(o)); } catch (e) { } }
+  function wpSpread(n) {
+    n = Math.max(1, Math.min(12, n));
+    if (n === 1) return ['12:00'];
+    var out = [], a = 9 * 60, b = 20 * 60;
+    for (var i = 0; i < n; i++) { var m = Math.round((a + (b - a) * i / (n - 1)) / 5) * 5; out.push(wpPad(Math.floor(m / 60)) + ':' + wpPad(m % 60)); }
+    return out;
+  }
+  function wpTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Berlin'; } catch (e) { return 'Europe/Berlin'; } }
+  function wpCut(t, n) { t = String(t == null ? '' : t); return t.length > n ? t.slice(0, n) : t; }
+
+  // Wörter, aus denen der Server zufällig eine Frage zieht
+  function wpBuildPool() {
+    var out = [];
+    (lists || []).forEach(function (l) {
+      if (!l || !Array.isArray(l.vocab)) return;
+      var dir = l.direction || 'mixed';
+      l.vocab.forEach(function (v) {
+        if (!v || !v.a || !v.b) return;
+        var aAll = [v.a].concat(v.aAlts || []), bAll = [v.b].concat(v.bAlts || []);
+        if (dir !== 'bToA') out.push({ i: v.id, l: l.id, q: wpCut(v.a, 60), a: bAll.slice(0, 4).map(function (x) { return wpCut(x, 60); }), ql: l.langA, al: l.langB, d: 'aToB' });
+        if (dir !== 'aToB') out.push({ i: v.id, l: l.id, q: wpCut(v.b, 60), a: aAll.slice(0, 4).map(function (x) { return wpCut(x, 60); }), ql: l.langB, al: l.langA, d: 'bToA' });
+      });
+    });
+    for (var i = out.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = out[i]; out[i] = out[j]; out[j] = t; }
+    return out.slice(0, 60);
+  }
+
+  function wpSaveRow(client, user, sub, s, enabled) {
+    var json = sub.toJSON();
+    currentSubEndpoint = json.endpoint;
+    var fields = { word_enabled: !!enabled };
+    if (enabled) { fields.word_times = s.times; fields.word_tz = wpTz(); fields.word_pool = wpBuildPool(); }
+    return client.from('push_subscriptions').update(fields).eq('user_id', user.id).eq('endpoint', json.endpoint).select('endpoint').then(function (res) {
+      if (res.error) throw res.error;
+      if (res.data && res.data.length) return enabled ? 'on' : 'off';
+      if (!enabled) return 'off';
+      var remOn = false, remTimes = ['18:00'], remText = DEFAULT_REMINDER_TEXT;
+      try { remOn = localStorage.getItem('karteikasten_reminder_on') === '1'; } catch (e) { }
+      try { var rt = JSON.parse(localStorage.getItem('karteikasten_reminder_times') || 'null'); if (rt && rt.length) remTimes = rt; } catch (e) { }
+      try { remText = localStorage.getItem('karteikasten_reminder_text') || DEFAULT_REMINDER_TEXT; } catch (e) { }
+      var row = { user_id: user.id, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth, reminder_times: remTimes.map(localTimeToUTC), reminder_text: remText, reminder_enabled: remOn, last_fired_dates: {} };
+      Object.keys(fields).forEach(function (k) { row[k] = fields[k]; });
+      return client.from('push_subscriptions').insert(row).then(function (r2) {
+        if (r2.error && String(r2.error.code) !== '23505') throw r2.error;
+        try { applyReminderUI(remOn); } catch (e) { }
+        return 'on';
+      });
+    });
+  }
+
+  function wpEnsure(force) {
+    if (!wpSupported() || !wpLoggedIn()) return Promise.resolve('skip');
+    if (!force && Date.now() - wpLastEnsure < 10 * 60 * 1000) return Promise.resolve('throttled');
+    var client = getSb(); if (!client) return Promise.resolve('nosb');
+    var s = wpLoad();
+    return client.auth.getSession().then(function (r) {
+      var user = r.data && r.data.session && r.data.session.user; if (!user) return 'loggedout';
+      return navigator.serviceWorker.register('sw.js').then(function () { return navigator.serviceWorker.ready; }).then(function (reg) {
+        return reg.pushManager.getSubscription().then(function (sub) {
+          if (!s.on) { if (!sub) return 'off'; return wpSaveRow(client, user, sub, s, false); }
+          if (Notification.permission === 'denied') return 'denied';
+          if (Notification.permission !== 'granted') return 'needperm';
+          return (sub ? Promise.resolve(sub) : subscribeToPush()).then(function (n) { return wpSaveRow(client, user, n, s, true); });
+        });
+      });
+    }).then(function (st) { wpLastEnsure = Date.now(); wpRefreshUi(st); return st; })
+      .catch(function (e) { wpRefreshUi('error', e); return 'error'; });
+  }
+
+  // Abmelden (egal auf welchem Weg): Gerät sofort von Push abmelden, damit keine Fragen mehr ankommen
+  function wpOnSignedOut() {
+    if (!wpSupported()) return;
+    currentSubEndpoint = null;
+    navigator.serviceWorker.getRegistration().then(function (reg) { return reg && reg.pushManager.getSubscription(); })
+      .then(function (sub) { if (sub) return sub.unsubscribe(); }).catch(function () { });
+  }
+
+  // ---- Frage-Popup ----
+  function wpNorm(t) { return normalizeAnswer(t).replace(/[.!?]+$/, '').trim(); }
+  function wpCheck(typed, answers) {
+    var t = wpNorm(typed); if (!t) return 0;
+    for (var i = 0; i < answers.length; i++) if (wpNorm(answers[i]) === t) return 2;
+    for (var k = 0; k < answers.length; k++) if (simplifyAnswer(wpNorm(answers[k])) === simplifyAnswer(t)) return 1;
+    return 0;
+  }
+  function wpRecord(d, ok) {
+    try {
+      var list = null; (lists || []).forEach(function (l) { if (l.id === d.l) list = l; });
+      var v = null; if (list) list.vocab.forEach(function (x) { if (x.id === d.i) v = x; });
+      if (!v) return;
+      if (!v.hist) v.hist = { ab: { ok: 0, bad: 0, last: 0 }, ba: { ok: 0, bad: 0, last: 0 } };
+      var k = d.d === 'aToB' ? 'ab' : 'ba', h = v.hist[k] || (v.hist[k] = { ok: 0, bad: 0, last: 0 });
+      if (ok) h.ok++; else h.bad++;
+      h.last = Date.now();
+      if (!Array.isArray(v.log)) v.log = [];
+      v.log.push({ t: Date.now(), ok: !!ok }); if (v.log.length > 40) v.log.splice(0, v.log.length - 40);
+      var f = d.d === 'aToB' ? 'boxAB' : 'boxBA';
+      v[f] = ok ? Math.min(5, (v[f] || 1) + 1) : 1;
+      saveAll();
+    } catch (e) { }
+  }
+  function wpEnsureModalStyle() {
+    if (gid('wpStyle')) return;
+    var st = document.createElement('style'); st.id = 'wpStyle';
+    st.textContent = '#wpOverlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:16px}' +
+      '#wpCard{width:100%;max-width:420px;background:var(--surface,#fff);color:var(--ink,#222);border:2px solid var(--ink,#222);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 40px rgba(0,0,0,.4)}' +
+      '#wpCard h3{margin:0;font-size:15px;color:var(--muted,#777);font-weight:700}' +
+      '#wpQ{font-size:22px;font-weight:700;line-height:1.3;margin:0}' +
+      '#wpIn{font:inherit;font-size:18px;padding:10px 12px;border:2px solid var(--border,#999);border-radius:10px;background:transparent;color:inherit;width:100%;box-sizing:border-box}' +
+      '#wpRes{min-height:22px;font-size:16px;font-weight:600}#wpRes.ok{color:#3a9a4a}#wpRes.bad{color:#d0533a}' +
+      '#wpBtns{display:flex;gap:8px;flex-wrap:wrap}#wpBtns button{flex:1 1 120px;font:inherit;font-size:16px;padding:10px 12px;border-radius:10px;cursor:pointer;border:2px solid var(--ink,#222);background:transparent;color:inherit}' +
+      '#wpBtns button.primary{background:var(--rust,#b5593e);border-color:var(--rust,#b5593e);color:#fff}' +
+      '.wp-time-row{display:flex;gap:8px;align-items:center;margin:4px 0}.wp-time-row input{width:auto}' +
+      '#wpBanner{display:none;margin:8px 0;padding:10px 12px;border:1.5px solid var(--rust,#b5593e);border-radius:12px;font-size:14px;gap:8px;align-items:center;flex-wrap:wrap}' +
+      '#wpBanner.show{display:flex}#wpBanner span{flex:1 1 200px}';
+    document.head.appendChild(st);
+  }
+  function wpOpenModal(d) {
+    wpEnsureModalStyle();
+    var old = gid('wpOverlay'); if (old) old.remove();
+    var ov = document.createElement('div'); ov.id = 'wpOverlay';
+    var card = document.createElement('div'); card.id = 'wpCard'; ov.appendChild(card);
+    var h = document.createElement('h3'); h.textContent = '🧠 Vokabel-Frage'; card.appendChild(h);
+    var q = document.createElement('p'); q.id = 'wpQ'; q.textContent = 'Wie heißt „' + d.q + '“ auf ' + d.al + '?'; card.appendChild(q);
+    var inp = document.createElement('input'); inp.id = 'wpIn'; inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.setAttribute('autocorrect', 'off'); inp.spellcheck = false; inp.placeholder = 'Antwort auf ' + d.al; card.appendChild(inp);
+    var res = document.createElement('div'); res.id = 'wpRes'; card.appendChild(res);
+    var btns = document.createElement('div'); btns.id = 'wpBtns'; card.appendChild(btns);
+    var check = document.createElement('button'); check.type = 'button'; check.className = 'primary'; check.textContent = 'Prüfen';
+    var later = document.createElement('button'); later.type = 'button'; later.textContent = 'Später';
+    btns.appendChild(check); btns.appendChild(later);
+    var done = false;
+    function close() { ov.remove(); }
+    later.addEventListener('click', close);
+    function submit() {
+      if (done) { return; }
+      var r = wpCheck(inp.value, d.a);
+      if (!inp.value.trim()) { inp.focus(); return; }
+      done = true; inp.readOnly = true;
+      var ok = r > 0;
+      res.className = ok ? 'ok' : 'bad';
+      res.textContent = r === 2 ? '✓ Richtig!' : (r === 1 ? '✓ Richtig (kleine Abweichung bei Akzenten)' : '✗ Richtig wäre: ' + d.a.join(' / '));
+      wpRecord(d, ok);
+      check.textContent = 'Noch ein Wort'; later.textContent = 'Fertig'; done = true;
+      check.onclick = function () { var p = wpBuildPool()[0]; if (p) wpOpenModal({ uid: d.uid, i: p.i, l: p.l, q: p.q, a: p.a, ql: p.ql, al: p.al, d: p.d }); else close(); };
+    }
+    check.addEventListener('click', function () { if (!done) submit(); });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (!done) submit(); else if (check.onclick) check.onclick(); } });
+    document.body.appendChild(ov);
+    setTimeout(function () { try { inp.focus(); } catch (e) { } }, 100);
+  }
+  function wpIncoming(d) {
+    if (!d || !d.q || !Array.isArray(d.a)) return;
+    wpPending = d;
+    var tries = 0;
+    (function loop() {
+      if (!wpPending) return;
+      if (!wpLoggedIn()) { if (tries++ < 120) setTimeout(loop, 1000); return; }
+      var client = getSb(); if (!client) return;
+      client.auth.getSession().then(function (r) {
+        var u = r.data && r.data.session && r.data.session.user;
+        if (!u) { if (tries++ < 120) setTimeout(loop, 1000); return; }
+        var p = wpPending; wpPending = null;
+        if (p.uid && p.uid !== u.id) { return; } // Frage gehört zu einem anderen Konto
+        wpOpenModal(p);
+      });
+    })();
+  }
+  function wpTest() {
+    var pool = wpBuildPool(), p = pool[0];
+    if (!p) { wpSetHint('Keine Vokabeln vorhanden – lege zuerst Wörter an.'); return; }
+    var client = getSb();
+    (client ? client.auth.getSession() : Promise.resolve({})).then(function (r) {
+      var u = r && r.data && r.data.session && r.data.session.user;
+      var data = { uid: u ? u.id : '', i: p.i, l: p.l, q: p.q, a: p.a, ql: p.ql, al: p.al, d: p.d };
+      if (wpSupported() && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(function (reg) {
+          return reg.showNotification('Vokabel-Frage 🧠', { body: 'Wie heißt „' + p.q + '“ auf ' + p.al + '?', tag: 'kk-word-test', data: data });
+        }).then(function () { wpSetHint('Test-Benachrichtigung gesendet – tippe darauf.'); }).catch(function () { wpOpenModal(data); });
+      } else wpOpenModal(data);
+    });
+  }
+
+  // ---- Einstellungen ----
+  function wpSetHint(t) { var el = gid('wpHint'); if (el) el.textContent = t || ''; }
+  function wpRefreshUi(st, err) {
+    wpState = st;
+    var s = wpLoad();
+    var banner = gid('wpBanner');
+    if (banner) banner.classList.toggle('show', s.on && wpSupported() && st === 'needperm');
+    var msg = '';
+    if (!wpSupported()) msg = 'Auf diesem Gerät nicht verfügbar. iPhone/iPad: App zuerst über „Teilen“ → „Zum Home-Bildschirm“ installieren und von dort öffnen.';
+    else if (st === 'needperm') msg = 'Benachrichtigungen sind noch nicht erlaubt. Tippe auf „Benachrichtigungen erlauben“.';
+    else if (st === 'denied') msg = 'Benachrichtigungen sind blockiert. Bitte in den Geräte-/Browser-Einstellungen erlauben.';
+    else if (st === 'error') msg = 'Einrichtung fehlgeschlagen' + (err && err.message ? ': ' + err.message : '.');
+    else if (st === 'on') msg = '✓ Aktiv: ' + s.times.length + ' Fragen pro Tag, auch bei geschlossener App.';
+    else if (st === 'off') msg = 'Ausgeschaltet.';
+    wpSetHint(msg);
+  }
+  function wpAskPermission() {
+    if (!wpSupported()) return;
+    Notification.requestPermission().then(function () { return wpEnsure(true); });
+  }
+  function wpChanged(immediate) {
+    clearTimeout(wpDirtyT);
+    wpDirtyT = setTimeout(function () { wpEnsure(true); }, immediate ? 100 : 1500);
+  }
+  function wpBuildUi() {
+    var rd = gid('reminderDetails'); if (!rd || gid('wordPushDetails')) return;
+    wpEnsureModalStyle();
+    var det = document.createElement('details'); det.className = 'settings-details fold'; det.id = 'wordPushDetails';
+    var sm = document.createElement('summary'); sm.textContent = '🔔 Wort-Erinnerungen (Frage per Benachrichtigung)'; det.appendChild(sm);
+    var box = document.createElement('div'); det.appendChild(box);
+    var s = wpLoad();
+    var lab = document.createElement('label'); lab.className = 'toggle-row small';
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = s.on;
+    var sp = document.createElement('span'); sp.textContent = 'Wort-Erinnerungen an'; lab.appendChild(cb); lab.appendChild(sp); box.appendChild(lab);
+    var cntRow = document.createElement('div'); cntRow.className = 'wp-time-row';
+    var cl = document.createElement('span'); cl.textContent = 'Fragen pro Tag:';
+    var cnt = document.createElement('input'); cnt.type = 'number'; cnt.min = 1; cnt.max = 12; cnt.style.width = '70px';
+    var spread = document.createElement('button'); spread.type = 'button'; spread.className = 'btn-small'; spread.textContent = 'Gleichmäßig verteilen';
+    cntRow.appendChild(cl); cntRow.appendChild(cnt); cntRow.appendChild(spread); box.appendChild(cntRow);
+    var list = document.createElement('div'); box.appendChild(list);
+    var add = document.createElement('button'); add.type = 'button'; add.className = 'btn-small'; add.textContent = '+ Uhrzeit hinzufügen'; box.appendChild(add);
+    var act = document.createElement('div'); act.className = 'wp-time-row'; act.style.flexWrap = 'wrap'; act.style.marginTop = '8px';
+    var perm = document.createElement('button'); perm.type = 'button'; perm.className = 'btn-small'; perm.textContent = 'Benachrichtigungen erlauben';
+    var test = document.createElement('button'); test.type = 'button'; test.className = 'btn-small'; test.textContent = 'Test-Frage jetzt';
+    act.appendChild(perm); act.appendChild(test); box.appendChild(act);
+    var hint = document.createElement('p'); hint.className = 'hint'; hint.id = 'wpHint'; box.appendChild(hint);
+    function render() {
+      var cur = wpLoad(); list.innerHTML = ''; cnt.value = cur.times.length;
+      cur.times.forEach(function (t, idx) {
+        var row = document.createElement('div'); row.className = 'wp-time-row';
+        var inp = document.createElement('input'); inp.type = 'time'; inp.value = t;
+        inp.addEventListener('change', function () {
+          var c2 = wpLoad(); if (wpValidTime(inp.value)) { c2.times[idx] = inp.value; c2.times.sort(); wpSave(c2); render(); wpChanged(); }
+        });
+        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'btn-small'; rm.textContent = '✕';
+        rm.addEventListener('click', function () { var c2 = wpLoad(); if (c2.times.length <= 1) return; c2.times.splice(idx, 1); wpSave(c2); render(); wpChanged(); });
+        row.appendChild(inp); row.appendChild(rm); list.appendChild(row);
+      });
+    }
+    cb.addEventListener('change', function () {
+      var c2 = wpLoad(); c2.on = cb.checked; wpSave(c2);
+      if (cb.checked && wpSupported() && Notification.permission === 'default') wpAskPermission(); else wpChanged(true);
+    });
+    cnt.addEventListener('change', function () {
+      var n = Math.max(1, Math.min(12, parseInt(cnt.value, 10) || 1)), c2 = wpLoad();
+      if (n < c2.times.length) c2.times = c2.times.slice(0, n);
+      else if (n > c2.times.length) { var sp2 = wpSpread(n); c2.times = sp2; }
+      wpSave(c2); render(); wpChanged();
+    });
+    spread.addEventListener('click', function () { var c2 = wpLoad(); c2.times = wpSpread(c2.times.length); wpSave(c2); render(); wpChanged(); });
+    add.addEventListener('click', function () { var c2 = wpLoad(); if (c2.times.length >= 12) return; c2.times.push('18:00'); c2.times.sort(); wpSave(c2); render(); wpChanged(); });
+    perm.addEventListener('click', wpAskPermission);
+    test.addEventListener('click', wpTest);
+    rd.parentNode.insertBefore(det, rd.nextSibling);
+    render();
+    // Hinweis-Leiste, solange noch nicht erlaubt
+    var banner = document.createElement('div'); banner.id = 'wpBanner';
+    var bs = document.createElement('span'); bs.textContent = '🔔 Wort-Erinnerungen sind an – erlaube Benachrichtigungen, damit sie ankommen.';
+    var bb = document.createElement('button'); bb.type = 'button'; bb.className = 'btn-small'; bb.textContent = 'Erlauben';
+    bb.addEventListener('click', wpAskPermission); banner.appendChild(bs); banner.appendChild(bb);
+    var start = gid('startQuizBtn'); if (start && start.parentNode) start.parentNode.insertBefore(banner, start); else rd.parentNode.insertBefore(banner, rd);
+    wpRefreshUi(wpSupported() && Notification.permission === 'default' && s.on ? 'needperm' : (wpSupported() && Notification.permission === 'denied' ? 'denied' : ''));
+  }
+  window.__wpDirty = function () {
+    // Wortliste hat sich geändert: gelegentlich an den Server schicken (max. alle 10 Min.)
+    if (!wpLoggedIn() || !wpLoad().on) return;
+    clearTimeout(window.__wpDirtyT); window.__wpDirtyT = setTimeout(function () { wpEnsure(false); }, 60000);
+  };
+  function setupWordPush() {
+    if (document.readyState === 'complete') wpBuildUi(); else window.addEventListener('load', wpBuildUi);
+    if (wpSupported()) {
+      navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.type === 'kk-word') wpIncoming(e.data.data); });
+    }
+    try {
+      var u = new URL(location.href), raw = u.searchParams.get('wq');
+      if (raw) { u.searchParams.delete('wq'); history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); wpIncoming(JSON.parse(raw)); }
+    } catch (e) { }
+    var c = getSb();
+    if (c && c.auth && c.auth.onAuthStateChange) {
+      c.auth.onAuthStateChange(function (ev) {
+        if (ev === 'SIGNED_OUT') wpOnSignedOut();
+        else if (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION') setTimeout(function () { wpEnsure(false); }, 1500);
+      });
+    }
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) wpEnsure(false); });
+    setTimeout(function () { wpEnsure(false); }, 2500);
+  }
+
   /* ---- Vokabeln per Ziehen (≡) verschieben ---- */
   function setupVocabDrag() {
     var container = gid('vocabList');
@@ -7201,6 +7525,7 @@ Wasser; water"></textarea>
     refreshLoginPrefs();
     showLoggedInAsHint(getLoginEmail());
     setupReminder();
+    setupWordPush();
     setupDailyGoal();
     setupStaleListReminder();
     showScreen('setup');
@@ -7229,6 +7554,7 @@ Wasser; water"></textarea>
   function showMainApp() {
     gid('login-screen').classList.add('hidden');
     gid('mainApp').classList.remove('hidden');
+    try { setTimeout(function () { wpEnsure(true); }, 1200); } catch (e) { }
   }
 
   function setLoginError(text) {
@@ -7327,14 +7653,15 @@ Wasser; water"></textarea>
     if (!cloudReady || !code || cloudBusy) return Promise.resolve();
     try { clearTimeout(saveTimeout); saveAll(); } catch (e) { }
     var data = cloudBuild(), json = JSON.stringify(data);
-    if (json === cloudLastJson) return Promise.resolve();
+    if (json === cloudLastJson) { kkSyncState(true); return Promise.resolve(); }
     var body = JSON.stringify({ username: code, data: data, updated_at: new Date().toISOString() });
     var h = cloudHeaders(); h['Prefer'] = 'resolution=merge-duplicates,return=minimal';
     cloudBusy = true;
     return fetch(SUPABASE_URL + '/rest/v1/' + CLOUD_TABLE + '?on_conflict=username', { method: 'POST', headers: h, body: body, keepalive: !!unloading && body.length < 60000 })
-      .then(function (r) { cloudBusy = false; if (r.ok) cloudLastJson = json; })
-      .catch(function () { cloudBusy = false; });
+      .then(function (r) { cloudBusy = false; if (r.ok) { cloudLastJson = json; kkSyncState(true); } else kkSyncState(false); })
+      .catch(function () { cloudBusy = false; kkSyncState(false); });
   }
+  function kkSyncState(ok) { try { if (window.__kkSyncUI) window.__kkSyncUI(ok); } catch (e) { } }
   function cloudSync() { cloudPush(false); }
   window.__kkCloudSync = function (n) {
     n = typeof n === 'number' ? n : 0;
@@ -10981,7 +11308,25 @@ Wasser; water"></textarea>
     var timer = 0;
     function off() { clearTimeout(timer); b.classList.remove('ok'); s.textContent = '📡 Du bist offline. Anmelden und die Cloud-Synchronisierung funktionieren erst wieder mit Internet.'; b.classList.add('show'); }
     function on() { clearTimeout(timer); b.classList.add('ok'); s.textContent = '✓ Wieder online'; b.classList.add('show'); timer = setTimeout(function () { b.classList.remove('show'); }, 2500); }
-    window.addEventListener('offline', off); window.addEventListener('online', on);
+    var failed = false, retryT = 0, retryN = 0;
+    function hide() { b.classList.remove('show'); }
+    function retryNow() { try { if (window.__kkCloudSync) window.__kkCloudSync(0); } catch (e) { } }
+    window.__kkSyncUI = function (ok) {
+      clearTimeout(retryT);
+      if (ok) {
+        retryN = 0;
+        if (failed) { failed = false; clearTimeout(timer); b.classList.add('ok'); s.textContent = '✓ Synchronisiert – deine Änderungen sind gesichert'; b.classList.add('show'); timer = setTimeout(hide, 3000); }
+        return;
+      }
+      failed = true; clearTimeout(timer); b.classList.remove('ok');
+      s.textContent = '⚠️ Nicht synchronisiert – deine Änderungen sind auf diesem Gerät gespeichert und werden automatisch nachgeholt.';
+      b.classList.add('show');
+      var wait = Math.min(120000, 15000 * Math.pow(2, retryN++));
+      retryT = setTimeout(retryNow, wait);
+    };
+    window.addEventListener('offline', off);
+    window.addEventListener('online', function () { if (failed) { retryNow(); } else on(); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden && failed) retryNow(); });
     if (navigator.onLine === false) off();
   }
 
@@ -10990,5 +11335,46 @@ Wasser; water"></textarea>
 })();
 </script>
 
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script>
+<script>
+(function () {
+  var scr = document.getElementById('setup-screen'); if (!scr) return;
+  var search = document.getElementById('kkSearch');
+  var chips = scr.querySelector('.view-chips'), dev = scr.querySelector('.kk-viewrow'), bar = scr.querySelector('.kk-bar');
+  var helpLbl = document.getElementById('hideHelpCheck'); helpLbl = helpLbl && helpLbl.closest('label');
+  var inst = document.getElementById('installHelpBtn');
+  if (!chips) return;
+  var det = document.createElement('details'); det.id = 'kkViewPanel';
+  var KEY = 'kk_viewpanel_open';
+  try { det.open = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  det.addEventListener('toggle', function () { try { localStorage.setItem(KEY, det.open ? '1' : '0'); } catch (e) {} });
+  var sm = document.createElement('summary');
+  sm.innerHTML = '<span>🎛️ Ansicht</span><span class="kk-vp-info" id="kkVpInfo"></span>';
+  det.appendChild(sm);
+  var body = document.createElement('div'); body.className = 'kk-vp-body'; det.appendChild(body);
+  function sec(title, nodes) {
+    var d = document.createElement('div'); d.className = 'kk-vp-sec';
+    var h = document.createElement('div'); h.className = 'kk-vp-h'; h.textContent = title; d.appendChild(h);
+    nodes.forEach(function (n) { if (n) d.appendChild(n); });
+    body.appendChild(d);
+  }
+  sec('Bereiche anzeigen & Design', [chips]);
+  sec('Gerät & Schrift', [dev]);
+  var tools = document.createElement('div'); tools.className = 'kk-bar';
+  [bar && bar.children[0], bar && bar.children[1]].forEach(function (b) { if (b) tools.appendChild(b); });
+  if (inst) { inst.style.marginTop = '0'; tools.appendChild(inst); }
+  sec('Werkzeuge', [tools, helpLbl]);
+  if (bar && !bar.children.length) bar.remove();
+  var ref = search || scr.querySelector('#startQuizBtn');
+  if (ref) ref.parentNode.insertBefore(det, ref); else scr.insertBefore(det, scr.firstChild);
+  function info() {
+    var r = document.documentElement, d = r.getAttribute('data-device') || '', z = getComputedStyle(r).getPropertyValue('--kk-zoom').trim() || '1';
+    var names = { phone: 'Handy', tablet: 'Tablet', pc: 'PC' };
+    var el = document.getElementById('kkVpInfo'); if (el) el.textContent = (names[d] || d) + ' · ' + Math.round(parseFloat(z) * 100) + '%';
+  }
+  info();
+  new MutationObserver(info).observe(document.documentElement, { attributes: true });
+})();
+</script>
+</body>
 </html>
