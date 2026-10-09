@@ -11877,5 +11877,28 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   new MutationObserver(info).observe(document.documentElement, { attributes: true });
 })();
 </script>
+<script>
+(function () {
+  var box = document.querySelector('#kxSetOv .kx-box'); if (!box) return;
+  var g = document.getElementById('grp_goals'), a = document.getElementById('grp_acct');
+  var best = document.getElementById('kxAuto'); best = best && best.closest('details');
+  [g, a].forEach(function (n) { if (n) { n.classList.remove('ui-hidden'); n.classList.remove('hidden'); } });
+  if (g) box.insertBefore(g, best || null);
+  if (a) box.appendChild(a);
+  document.querySelectorAll('.view-chip').forEach(function (b) { var t = b.textContent; if (t.indexOf('Ziele') > -1 || t.indexOf('Einstellungen') > -1) b.remove(); });
+  var panel = document.getElementById('quickNavPanel');
+  if (panel) panel.addEventListener('click', function (e) {
+    var btn = e.target.closest('.quick-nav-btn'); if (!btn) return;
+    var t = document.getElementById(btn.dataset.target);
+    if (t && t.closest('#kxSetOv')) {
+      var gb = document.getElementById('kxGearBtn'); document.getElementById('kxSetOv').classList.contains('hidden') && gb.click();
+      var d = t.parentNode; while (d && d !== box) { if (d.tagName === 'DETAILS') d.open = true; d = d.parentNode; }
+      setTimeout(function () { t.scrollIntoView({ block: 'center' }); }, 50);
+      e.stopPropagation();
+    }
+  }, true);
+})();
+</script>
+<style>#kxSetOv .grp-arrows{display:none}#kxSetOv .group-fold{margin:0}</style>
 </body>
 </html>
