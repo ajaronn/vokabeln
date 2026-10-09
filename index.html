@@ -880,43 +880,6 @@
         </div>
       </div>
 
-      <details class="settings-details fold" id="dailyGoalDetails">
-        <summary>Tagesziel</summary>
-        <div class="goal-setting-row">
-          <label for="dailyGoalInput" class="toggle-row small" style="margin:0;"><input type="checkbox" id="dailyGoalCheck"><span>Tagesziel aktivieren</span></label>
-          <input type="number" id="dailyGoalInput" min="1" max="240" value="10"> Min
-        </div>
-        <p class="hint">Zeigt oben einen Fortschrittsbalken für deine heutige Lernzeit und zählt, wie viele Tage in Folge du dein Ziel erreichst.</p>
-      </details>
-
-      <details class="settings-details fold" id="reminderDetails">
-        <summary>Tägliche Erinnerung</summary>
-        <div class="reminder-row" id="reminderRow">
-          <label class="toggle-row small"><input type="checkbox" id="reminderCheck"><span>Tägliche Erinnerung</span></label>
-        </div>
-        <div class="reminder-extra" id="reminderExtra">
-          <div id="reminderTimesList"></div>
-          <button type="button" id="reminderAddTime" class="btn-small">+ Uhrzeit hinzufügen</button>
-          <input type="text" id="reminderText" placeholder="Erinnerungstext (z.B. Lerne deine Vokabeln!)" maxlength="120">
-        </div>
-        <p class="hint" id="reminderHint" style="display:none;"></p>
-
-        <div class="missed-list-row" id="staleListRow">
-          <label class="toggle-row small" style="margin:0;"><input type="checkbox" id="staleListCheck"><span>Hinweis bei nicht gelernten Listen nach</span></label>
-          <input type="number" id="staleListDays" min="1" max="90" value="3"> Tagen
-        </div>
-        <p class="hint" id="staleListHint" style="display:none;"></p>
-
-        <div class="missed-list-row" id="bkRemRow">
-          <label class="toggle-row small" style="margin:0;"><input type="checkbox" id="bkRemCheck"><span>Backup-Erinnerung alle</span></label>
-          <input type="number" id="bkRemWeeks" min="1" max="52" value="4"> Wochen
-        </div>
-        <div class="missed-list-row" id="bkMailRow">
-          <label class="toggle-row small" style="margin:0;"><input type="checkbox" id="bkMailCheck"><span>Auch per E-Mail an</span></label>
-          <input type="email" id="bkMailAddr" placeholder="deine@mail.de" autocomplete="email" style="min-width:180px;flex:1">
-        </div>
-        <p class="hint" id="bkRemHint"></p>
-      </details>
     </header>
 
     <div id="inviteBox"></div>
@@ -1195,6 +1158,7 @@ Wasser; water"></textarea>
       <p class="hint" id="lvlHint"></p>
       <p class="hint smart-info" id="smartInfo" aria-live="polite"></p>
       <button class="btn-primary btn-smart" id="startSmartBtn" type="button">Smart-Lernpfad starten</button>
+      <button class="btn-outline" id="kxMemBtn" type="button" style="width:100%;margin-top:8px">🃏 Memory (mind. 4 Wortpaare)</button>
     </section>
 
     <section class="conf-section">
@@ -1746,6 +1710,82 @@ Wasser; water"></textarea>
 </style>
 <button type="button" id="supportOpenBtn" class="fab-support" aria-label="Support kontaktieren"><span class="fab-ico" aria-hidden="true">&#128172;</span><span class="fab-lbl">SUPPORT</span><span class="fab-badge" id="supportBadge"></span></button>
 <button type="button" id="supportInboxBtn" class="fab-admin" style="display:none" aria-label="Admin-Panel"><span class="fab-ico" aria-hidden="true">&#9881;&#65039;</span><span class="fab-lbl">ADMIN</span></button>
+<style>
+.kx-ov{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px}
+.kx-box{background:var(--bg);color:var(--ink);border:1px solid var(--border);border-radius:14px;padding:16px;width:min(560px,100%);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.kx-row{display:flex;align-items:center;gap:8px}.kx-row h2{margin:0;flex:1;font-size:20px}
+.fab-gear{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:45;width:48px;height:48px;border-radius:50%;border:2px solid var(--rust);background:var(--bg);color:var(--rust);font-size:24px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.3);padding:0}
+.fab-fb{right:80px !important}
+#kxHourBox .bars{display:flex;align-items:flex-end;gap:2px;height:48px}
+#kxHourBox .bars i{flex:1;background:var(--muted);opacity:.5;border-radius:2px 2px 0 0;min-height:2px}
+#kxHourBox .bars i.best{background:var(--rust);opacity:1}
+.kx-stars{display:flex;gap:6px;justify-content:center}.kx-stars button{font-size:34px;background:none;border:0;color:var(--rust);cursor:pointer;padding:0 2px}
+#kxFbText{width:100%;min-height:80px;box-sizing:border-box}
+#kxMemGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kx-card{min-height:66px;border-radius:10px;border:1.5px solid var(--border);background:var(--rust);color:#fff;font-size:14px;font-weight:700;padding:4px;word-break:break-word;cursor:pointer}
+.kx-card.up{background:var(--surface);color:var(--ink)}
+.kx-card.ok{background:var(--success-bg);color:var(--success);border-color:var(--success);cursor:default}
+.kx-bar{display:flex;align-items:center;gap:8px;font-size:14px}.kx-bar .tr{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden}.kx-bar .tr i{display:block;height:100%;background:var(--rust)}
+.kx-cm{border-top:1px solid var(--border);padding:8px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+</style>
+<button type="button" id="kxFbBtn" class="fab-support fab-fb" aria-label="Feedback geben"><span class="fab-ico" aria-hidden="true">&#11088;</span><span class="fab-lbl">FEEDBACK</span></button>
+<button type="button" id="kxGearBtn" class="fab-gear" aria-label="Einstellungen">&#9881;&#65039;</button>
+<div id="kxSetOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
+<div class="kx-row"><h2>Einstellungen</h2><button type="button" class="btn-small" id="kxSetClose">Schließen</button></div>
+<details class="settings-details fold" open><summary>Rückmeldung</summary>
+<label class="toggle-row small"><input type="checkbox" id="kxSnd"><span>Töne bei richtig/falsch</span></label>
+<label class="toggle-row small"><input type="checkbox" id="kxVib"><span>Vibration bei richtig/falsch</span></label></details>
+      <details class="settings-details fold" id="dailyGoalDetails" open>
+        <summary>Tagesziel</summary>
+        <div class="goal-setting-row">
+          <label for="dailyGoalInput" class="toggle-row small" style="margin:0;"><input type="checkbox" id="dailyGoalCheck"><span>Tagesziel aktivieren</span></label>
+          <input type="number" id="dailyGoalInput" min="1" max="240" value="10"> Min
+        </div>
+        <p class="hint">Zeigt oben einen Fortschrittsbalken für deine heutige Lernzeit und zählt, wie viele Tage in Folge du dein Ziel erreichst.</p>
+      </details>
+
+      <details class="settings-details fold" id="reminderDetails" open>
+        <summary>Tägliche Erinnerung</summary>
+        <div class="reminder-row" id="reminderRow">
+          <label class="toggle-row small"><input type="checkbox" id="reminderCheck"><span>Tägliche Erinnerung</span></label>
+        </div>
+        <div class="reminder-extra" id="reminderExtra">
+          <div id="reminderTimesList"></div>
+          <button type="button" id="reminderAddTime" class="btn-small">+ Uhrzeit hinzufügen</button>
+          <input type="text" id="reminderText" placeholder="Erinnerungstext (z.B. Lerne deine Vokabeln!)" maxlength="120">
+        </div>
+        <p class="hint" id="reminderHint" style="display:none;"></p>
+
+        <div class="missed-list-row" id="staleListRow">
+          <label class="toggle-row small" style="margin:0;"><input type="checkbox" id="staleListCheck"><span>Hinweis bei nicht gelernten Listen nach</span></label>
+          <input type="number" id="staleListDays" min="1" max="90" value="3"> Tagen
+        </div>
+        <p class="hint" id="staleListHint" style="display:none;"></p>
+
+        <div class="missed-list-row" id="bkRemRow">
+          <label class="toggle-row small" style="margin:0;"><input type="checkbox" id="bkRemCheck"><span>Backup-Erinnerung alle</span></label>
+          <input type="number" id="bkRemWeeks" min="1" max="52" value="4"> Wochen
+        </div>
+        <div class="missed-list-row" id="bkMailRow">
+          <label class="toggle-row small" style="margin:0;"><input type="checkbox" id="bkMailCheck"><span>Auch per E-Mail an</span></label>
+          <input type="email" id="bkMailAddr" placeholder="deine@mail.de" autocomplete="email" style="min-width:180px;flex:1">
+        </div>
+        <p class="hint" id="bkRemHint"></p>
+      </details>
+<details class="settings-details fold" open><summary>Beste Lernzeit</summary>
+<label class="toggle-row small"><input type="checkbox" id="kxAuto"><span>Erinnerung automatisch auf meine beste Uhrzeit legen</span></label>
+<div id="kxHourBox"></div></details>
+</div></div>
+<div id="kxFbOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
+<div class="kx-row"><h2>Feedback</h2><button type="button" class="btn-small" id="kxFbClose">Schließen</button></div>
+<div class="kx-stars" id="kxStars"></div>
+<textarea id="kxFbText" maxlength="1000" placeholder="Optional: Deine Bewertung in Worten"></textarea>
+<p class="hint" id="kxFbMsg" aria-live="polite"></p>
+<button type="button" class="btn-primary" id="kxFbSend">Absenden</button></div></div>
+<div id="kxMemOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
+<div class="kx-row"><h2>Memory</h2><button type="button" class="btn-small" id="kxMemClose">Schließen</button></div>
+<div class="hint" id="kxMemInfo"></div><div id="kxMemGrid"></div>
+<div id="kxMemEnd" class="hidden"><p class="hint" id="kxMemRes"></p><button type="button" class="btn-primary" id="kxMemNext">Nächste Runde</button></div></div></div>
 <div id="supportOverlay" class="support-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
   <div class="support-box">
     <h2 id="supportTitle">Support kontaktieren</h2>
@@ -1800,7 +1840,7 @@ Wasser; water"></textarea>
     <div style="display:flex;gap:8px">
       <button type="button" id="adminTabInbox" class="support-tab active">Postfach</button>
       <button type="button" id="adminTabUsers" class="support-tab">Nutzer</button>
-      <button type="button" id="adminTabMail" class="support-tab">Rundmail</button>
+      <button type="button" id="adminTabMail" class="support-tab">Rundmail</button><button type="button" id="adminTabFb" class="support-tab">Feedback</button>
     </div>
     <div id="inboxMsg" role="status" aria-live="polite"></div>
     <div id="inboxBody" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -11039,6 +11079,112 @@ Wasser; water"></textarea>
     var lb = gid('logoutBtn');
     if (lb) lb.addEventListener('click', logout);
   });
+
+/* ===== Erweiterung: Feedback-Töne, Lernzeit, Memory, Sterne, Einstellungen ===== */
+function kxPref(k,d){try{var v=localStorage.getItem(k);return v==null?d:v==='1';}catch(e){return d;}}
+function kxSet(k,v){try{localStorage.setItem(k,v?'1':'0');}catch(e){}}
+var kxCtx=null;
+function kxBeep(f,t,d,type){try{kxCtx=kxCtx||new (window.AudioContext||window.webkitAudioContext)();var o=kxCtx.createOscillator(),g=kxCtx.createGain(),n=kxCtx.currentTime+t;o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(0.15,n);g.gain.exponentialRampToValueAtTime(0.001,n+d);o.connect(g);g.connect(kxCtx.destination);o.start(n);o.stop(n+d);}catch(e){}}
+function kxFb(ok){
+  if(kxPref('kk_snd',true)){ if(ok){kxBeep(660,0,0.12);kxBeep(880,0.1,0.16);}else{kxBeep(220,0,0.25,'sawtooth');} }
+  if(kxPref('kk_vib',true)&&navigator.vibrate){try{navigator.vibrate(ok?25:[60,40,60]);}catch(e){}}
+}
+function kxHours(){try{var d=JSON.parse(localStorage.getItem('kk_hours'));if(Array.isArray(d)&&d.length===24)return d;}catch(e){}var a=[];for(var i=0;i<24;i++)a.push([0,0]);return a;}
+var kxCnt=0;
+function kxRec(ok){var d=kxHours(),h=new Date().getHours();d[h][ok?0:1]++;try{localStorage.setItem('kk_hours',JSON.stringify(d));}catch(e){}if(++kxCnt%20===0)kxAuto();}
+function kxBest(d){var tot=0,b=null,ba=-1,bn=0;d.forEach(function(x){tot+=x[0]+x[1];});if(tot<20)return null;
+  d.forEach(function(x,h){var n=x[0]+x[1];if(n<5)return;var a=x[0]/n;if(a>ba||(a===ba&&n>bn)){ba=a;bn=n;b=h;}});return b;}
+function kxAuto(){
+  if(!kxPref('kk_autorem',true))return;var cb=gid('reminderCheck');if(!cb||!cb.checked)return;
+  var b=kxBest(kxHours());if(b==null)return;if(String(b)===localStorage.getItem('kk_autohr'))return;
+  try{renderTimeRows([(b<10?'0':'')+b+':00']);onReminderSettingsChanged();localStorage.setItem('kk_autohr',String(b));}catch(e){}
+}
+function kxHourRender(){
+  var d=kxHours(),b=kxBest(d),box=gid('kxHourBox');box.innerHTML='';
+  var bars=document.createElement('div');bars.className='bars';
+  d.forEach(function(x,h){var n=x[0]+x[1],i=document.createElement('i');i.style.height=n?Math.max(4,Math.round(x[0]/n*100))+'%':'2px';i.title=h+' Uhr: '+(n?Math.round(x[0]/n*100)+' % ('+n+' Antworten)':'keine Daten');if(h===b)i.className='best';bars.appendChild(i);});
+  var p=document.createElement('p');p.className='hint';
+  if(b==null)p.textContent='Noch zu wenig Daten. Nach ein paar Übungen siehst du hier, wann deine Trefferquote am höchsten ist.';
+  else{var x=d[b];p.textContent='Beste Uhrzeit: '+b+'–'+(b+1)+' Uhr (Trefferquote '+Math.round(x[0]/(x[0]+x[1])*100)+' %). Balken: Trefferquote pro Stunde, 0–23 Uhr.';}
+  box.appendChild(bars);box.appendChild(p);
+}
+var _kxRH=recordHist;recordHist=function(id,dir,ok){_kxRH(id,dir,ok);kxFb(ok);kxRec(ok);};
+var _kxMC=matchClick;matchClick=function(btn){var m=smart&&smart.match,dn=m?Object.keys(m.done).length:0,er=m?m.errs:0;_kxMC(btn);if(m){if(m.errs>er){kxFb(false);kxRec(false);}else if(Object.keys(m.done).length>dn){kxFb(true);kxRec(true);}}};
+/* Einstellungen */
+function kxOv(id,show){gid(id).classList.toggle('hidden',!show);}
+gid('kxGearBtn').addEventListener('click',function(){gid('kxSnd').checked=kxPref('kk_snd',true);gid('kxVib').checked=kxPref('kk_vib',true);gid('kxAuto').checked=kxPref('kk_autorem',true);kxHourRender();kxOv('kxSetOv',true);});
+gid('kxSetClose').addEventListener('click',function(){kxOv('kxSetOv',false);});
+gid('kxSnd').addEventListener('change',function(e){kxSet('kk_snd',e.target.checked);if(e.target.checked)kxFb(true);});
+gid('kxVib').addEventListener('change',function(e){kxSet('kk_vib',e.target.checked);if(e.target.checked)kxFb(true);});
+gid('kxAuto').addEventListener('change',function(e){kxSet('kk_autorem',e.target.checked);try{localStorage.removeItem('kk_autohr');}catch(x){}if(e.target.checked)kxAuto();});
+gid('reminderCheck').addEventListener('change',function(){setTimeout(kxAuto,1500);});
+setTimeout(kxAuto,4000);
+['kxSetOv','kxFbOv','kxMemOv'].forEach(function(id){gid(id).addEventListener('click',function(e){if(e.target===gid(id))kxOv(id,false);});});
+/* Feedback mit Sternen */
+var kxStarN=0;
+function kxStarsRender(){var el=gid('kxStars');el.innerHTML='';for(var i=1;i<=5;i++){(function(i){var b=document.createElement('button');b.type='button';b.textContent=i<=kxStarN?'★':'☆';b.setAttribute('aria-label',i+' Sterne');b.addEventListener('click',function(){kxStarN=i;kxStarsRender();});el.appendChild(b);})(i);}}
+gid('kxFbBtn').addEventListener('click',function(){kxStarN=0;kxStarsRender();gid('kxFbText').value='';gid('kxFbMsg').textContent='';gid('kxFbSend').disabled=false;kxOv('kxFbOv',true);});
+gid('kxFbClose').addEventListener('click',function(){kxOv('kxFbOv',false);});
+gid('kxFbSend').addEventListener('click',function(){
+  var msg=gid('kxFbMsg');if(!kxStarN){msg.textContent='Bitte wähle zuerst Sterne aus.';return;}
+  var c=getSb();if(!c||!c.from){msg.textContent='Keine Verbindung.';return;}
+  var txt=gid('kxFbText').value.trim();gid('kxFbSend').disabled=true;
+  c.auth.getSession().then(function(r){var u=r&&r.data&&r.data.session&&r.data.session.user;return c.from('app_feedback').insert({stars:kxStarN,comment:txt||null,user_email:u?u.email:null});})
+  .then(function(res){if(res.error)throw res.error;msg.textContent='Danke für dein Feedback!';setTimeout(function(){kxOv('kxFbOv',false);},1200);})
+  .catch(function(){msg.textContent='Senden fehlgeschlagen. Bitte später erneut versuchen.';gid('kxFbSend').disabled=false;});
+});
+/* Admin-Tab Feedback */
+var kxFbActive=false;
+function kxFbAdmin(){
+  var body=gid('inboxBody'),c=getSb();body.innerHTML='';setInboxMsg('');
+  if(!c||!c.from){setInboxMsg('Keine Verbindung',true);return;}
+  body.appendChild(inboxEl('div','inbox-hint','Lade …'));
+  c.from('app_feedback').select('stars,comment,user_email,created_at').order('created_at',{ascending:false}).limit(500).then(function(res){
+    if(!kxFbActive)return;body.innerHTML='';
+    if(res.error){setInboxMsg('Fehler beim Laden: '+res.error.message,true);return;}
+    var rows=res.data||[],cnt=[0,0,0,0,0,0],sum=0;rows.forEach(function(r){cnt[r.stars]++;sum+=r.stars;});
+    body.appendChild(inboxEl('div',null,rows.length?'Ø '+(sum/rows.length).toFixed(1).replace('.',',')+' ★ aus '+rows.length+' Bewertungen':'Noch keine Bewertungen.')).style.fontWeight='700';
+    for(var s=5;s>=1;s--){var row=inboxEl('div','kx-bar',s+' ★'),tr=inboxEl('span','tr'),i=document.createElement('i');i.style.width=(rows.length?cnt[s]/rows.length*100:0)+'%';tr.appendChild(i);row.appendChild(tr);row.appendChild(inboxEl('span',null,String(cnt[s])));body.appendChild(row);}
+    rows.filter(function(r){return r.comment;}).forEach(function(r){var d=inboxEl('div','kx-cm');d.appendChild(inboxEl('strong',null,'★'.repeat(r.stars)+'☆'.repeat(5-r.stars)+'  '));d.appendChild(inboxEl('small',null,inboxName(r.user_email)+' · '+inboxDate(r.created_at)));d.appendChild(document.createElement('br'));d.appendChild(document.createTextNode(r.comment));body.appendChild(d);});
+  });
+}
+var _kxAST=adminShowTab;adminShowTab=function(t){
+  kxFbActive=(t==='fb');gid('adminTabFb').classList.toggle('active',kxFbActive);
+  if(kxFbActive){['adminTabInbox','adminTabUsers','adminTabMail'].forEach(function(i){gid(i).classList.remove('active');});kxFbAdmin();return;}
+  _kxAST(t);
+};
+gid('adminTabFb').addEventListener('click',function(){adminShowTab('fb');});
+gid('inboxRefreshBtn').addEventListener('click',function(e){if(kxFbActive){e.stopImmediatePropagation();kxFbAdmin();}},true);
+/* Memory */
+var kxM=null;
+function kxShuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+gid('kxMemBtn').addEventListener('click',function(){
+  var v=validSmartVocab(getCurrentList());
+  if(v.length<4){showSetupMessage('Memory braucht mindestens 4 Wortpaare.');return;}
+  var w=kxShuf(v),r=Math.ceil(w.length/8),rounds=[];
+  for(var i=0;i<r;i++)rounds.push(w.slice(Math.round(i*w.length/r),Math.round((i+1)*w.length/r)));
+  kxM={rounds:rounds,ri:0};kxMemRound();kxOv('kxMemOv',true);
+});
+function kxMemRound(){
+  var g=kxM.rounds[kxM.ri],cards=[];
+  g.forEach(function(v){cards.push({id:v.id,t:v.a});cards.push({id:v.id,t:v.b});});
+  kxM.cards=kxShuf(cards);kxM.open=[];kxM.done=0;kxM.lock=false;kxM.moves=0;kxM.n=g.length;
+  var grid=gid('kxMemGrid');grid.innerHTML='';gid('kxMemEnd').classList.add('hidden');
+  kxM.cards.forEach(function(c,i){var b=document.createElement('button');b.type='button';b.className='kx-card';b.textContent='?';b.addEventListener('click',function(){kxFlip(i,b);});c.el=b;grid.appendChild(b);});
+  kxMemInfo();
+}
+function kxMemInfo(){gid('kxMemInfo').textContent='Runde '+(kxM.ri+1)+' von '+kxM.rounds.length+' · Paare '+kxM.done+'/'+kxM.n+' · Züge '+kxM.moves;}
+function kxFlip(i,b){
+  var c=kxM.cards[i];if(kxM.lock||c.up||c.ok)return;
+  c.up=true;b.className='kx-card up';b.textContent=c.t;kxM.open.push(c);
+  if(kxM.open.length<2)return;
+  var x=kxM.open[0],y=kxM.open[1];kxM.moves++;
+  if(x.id===y.id){x.ok=y.ok=true;x.el.className=y.el.className='kx-card ok';kxM.open=[];kxM.done++;kxFb(true);kxMemInfo();
+    if(kxM.done===kxM.n){gid('kxMemRes').textContent='Geschafft in '+kxM.moves+' Zügen!';var last=kxM.ri>=kxM.rounds.length-1;gid('kxMemNext').textContent=last?'Fertig':'Nächste Runde';gid('kxMemEnd').classList.remove('hidden');}
+  }else{kxM.lock=true;kxFb(false);kxMemInfo();setTimeout(function(){[x,y].forEach(function(z){z.up=false;z.el.className='kx-card';z.el.textContent='?';});kxM.open=[];kxM.lock=false;},900);}
+}
+gid('kxMemNext').addEventListener('click',function(){if(kxM.ri>=kxM.rounds.length-1){kxOv('kxMemOv',false);return;}kxM.ri++;kxMemRound();});
+gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 })();
 </script>
 <script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script><script>
