@@ -2306,6 +2306,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       var target = gid(btn.dataset.target);
       if (!target) return;
       setOpen(false);
+      if (target.closest('#kkDock')) { target.click(); return; }
       if (target.id === 'setup-screen') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       // Abschnitt selbst aufklappen (bei <section> steckt das <details> darin)
       if (target.tagName === 'DETAILS') target.open = true;
@@ -12457,6 +12458,8 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 
   /* ===== Seiten statt Pop-ups: gleiche Größe, Leiste unten bleibt sichtbar ===== */
   .kx-ov, .support-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: var(--kk-dock-h); z-index: 55; background: var(--bg); padding: 0; display: block; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .kx-ov, .support-overlay { background-color: var(--bg); background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, var(--rule-color) 34px, var(--rule-color) 35px); background-attachment: local; }
+  .kx-row, .inbox-head, .support-box > h2, .support-box .support-actions { background-color: var(--bg); background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, var(--rule-color) 34px, var(--rule-color) 35px); }
   .kx-ov.hidden, .support-overlay.hidden { display: none !important; }
   .kx-ov:not(.hidden), .support-overlay:not(.hidden) { animation: kkPageIn .18s ease-out; }
   @keyframes kkPageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
