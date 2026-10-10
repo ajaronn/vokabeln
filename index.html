@@ -12672,6 +12672,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   }
   function dock() {
     var d = gid('kkDock'); if (!d) { setTimeout(dock, 300); return; }
+    if (!gid('kkHomeBtn')) { var h = document.createElement('button'); h.type = 'button'; h.id = 'kkHomeBtn'; h.setAttribute('aria-label', 'Zum Hauptmenü'); h.title = 'Zum Hauptmenü'; h.textContent = 'Karteikasten'; d.insertBefore(h, d.firstChild); }
     layout();
     if (window.ResizeObserver) new ResizeObserver(layout).observe(d);
     window.addEventListener('resize', layout);
@@ -12723,7 +12724,9 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   /* ===== PC: Seitenleiste links statt Leiste unten ===== */
   html.kk-side body { padding-left: var(--kk-side-w); padding-bottom: 0; }
   html.kk-side #kkDock { top: 0; bottom: 0; left: 0; right: auto; width: 220px; box-sizing: border-box; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: 4px; padding: 18px 10px calc(64px + env(safe-area-inset-bottom, 0px)); border-top: 0; border-right: 2px solid var(--border); overflow-y: auto; }
-  html.kk-side #kkDock::before { content: 'Karteikasten'; display: block; padding: 4px 14px 16px; font-size: 20px; font-weight: 800; color: var(--ink); }
+  #kkDock > #kkHomeBtn { font-size: 20px; font-weight: 800; }
+  html:not(.kk-side) #kkDock > #kkHomeBtn { display: none !important; }
+  html.kk-side #kkDock > #kkHomeBtn { height: 46px !important; margin-bottom: 10px !important; padding: 0 14px !important; justify-content: flex-start; flex-direction: row; }
   html.kk-side #kkDock > button { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 12px; height: 46px !important; padding: 0 14px !important; }
   html.kk-side #kkDock .fab-lbl, html.kk-side #kkDock .quick-nav-toggle-label { font-size: 15px; }
   html.kk-side #quickNav .quick-nav-top { bottom: 20px !important; }
@@ -12764,11 +12767,14 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   }
   function trySync() { try { if (window.__kkCloudSync) window.__kkCloudSync(0); } catch (e) { } }
   function pending() { st = 'pending'; render(); clearTimeout(timer); timer = setTimeout(trySync, 6000); }
-  // Änderungen an den App-Daten erkennen
+  // Änderungen an den App-Daten erkennen (Schlüssel, die nie in die Cloud gehen, zählen nicht – z. B. „zuletzt aktiv“ bei jeder Mausbewegung)
+  var NOSYNC = { 'karteikasten_logged_in': 1, 'karteikasten_account': 1, 'karteikasten_user': 1, 'karteikasten_data_owner': 1, 'karteikasten_stale_last_notified': 1,
+    'karteikasten_install_hint_off': 1, 'karteikasten_reminder_on': 1, 'karteikasten_device_id': 1, 'karteikasten_trusted_devices': 1, 'karteikasten_last_activity': 1,
+    'karteikasten_mfa_reset_email': 1, 'karteikasten_verify_pending_email': 1, 'karteikasten_email2fa_ok': 1, 'karteikasten_link_result_target': 1 };
   var si = Storage.prototype.setItem;
   Storage.prototype.setItem = function (k, v) {
     var changed = false;
-    try { if (this === window.localStorage && String(k).indexOf('karteikasten_') === 0) changed = this.getItem(k) !== String(v); } catch (e) { }
+    try { if (this === window.localStorage && String(k).indexOf('karteikasten_') === 0 && !NOSYNC[k]) changed = this.getItem(k) !== String(v); } catch (e) { }
     var r = si.apply(this, arguments);
     if (changed) pending();
     return r;
