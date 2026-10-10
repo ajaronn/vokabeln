@@ -12735,7 +12735,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   html.kk-side .kk-offline { left: var(--kk-side-w); }
 
   /* ===== Speicherstatus ===== */
-  #kkSaveState { position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); right: 8px; z-index: 44; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; line-height: 1.2; padding: 5px 10px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--border); color: var(--ink); pointer-events: none; max-width: calc(100vw - 16px); }
+  #kkSaveState { position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); right: 8px; z-index: 44; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; line-height: 1.2; padding: 5px 10px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--border); color: var(--ink); max-width: calc(100vw - 16px); }
   #kkSaveState i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #2f7d4f; }
   #kkSaveState.pending i { background: #c9951a; }
   #kkSaveState.offline i, #kkSaveState.error i { background: #c0392b; }
@@ -12757,13 +12757,16 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   var el = document.createElement('div'); el.id = 'kkSaveState'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
   el.innerHTML = '<i></i><span></span>'; document.body.appendChild(el);
   var st = 'ok', last = 0, timer = 0;
+  try { last = parseInt(localStorage.getItem('kk_last_sync') || '0', 10) || 0; } catch (e) { }
   var T = { ok: 'Synchronisiert', pending: 'Gespeichert – wird synchronisiert …', offline: 'Offline – wird später gesendet', offlineok: 'Offline – alles gespeichert', error: 'Nicht synchronisiert – neuer Versuch folgt' };
   function render() {
     var off = navigator.onLine === false, k = st;
     var cls = off ? (st === 'ok' ? 'offline' : 'offline') : st, txt = off ? (st === 'ok' ? T.offlineok : T.offline) : T[st];
     el.className = ''; el.classList.add(cls === 'ok' ? 'ok' : cls);
+    var tm = last ? new Date(last).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '';
+    if (!off && st === 'ok' && tm) txt += ' · ' + tm + ' Uhr';
     el.lastChild.textContent = txt;
-    el.title = last ? 'Zuletzt synchronisiert: ' + new Date(last).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr' : '';
+    el.title = tm ? 'Zuletzt synchronisiert: ' + tm + ' Uhr' : 'Noch nicht synchronisiert';
   }
   function trySync() { try { if (window.__kkCloudSync) window.__kkCloudSync(0); } catch (e) { } }
   function pending() { st = 'pending'; render(); clearTimeout(timer); timer = setTimeout(trySync, 6000); }
@@ -12784,8 +12787,9 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
     if (!window.__kkSyncUI) { setTimeout(hook, 500); return; }
     if (window.__kkSyncUI.__kk) return;
     var orig = window.__kkSyncUI;
-    window.__kkSyncUI = function (ok) { try { orig(ok); } catch (e) { } if (ok) { st = 'ok'; last = Date.now(); clearTimeout(timer); } else st = 'error'; render(); };
+    window.__kkSyncUI = function (ok) { try { orig(ok); } catch (e) { } if (ok) { st = 'ok'; last = Date.now(); clearTimeout(timer); try { localStorage.setItem('kk_last_sync', String(last)); } catch (e) { } } else st = 'error'; render(); };
     window.__kkSyncUI.__kk = true;
+    trySync();
   }
   window.addEventListener('online', function () { render(); if (st !== 'ok') trySync(); });
   window.addEventListener('offline', render);
