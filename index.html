@@ -1782,6 +1782,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
 .kx-cm{border-top:1px solid var(--border);padding:8px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
 </style>
 <button type="button" id="kxFbBtn" class="fab-support fab-fb" aria-label="Feedback geben"><span class="fab-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span><span class="fab-lbl">FEEDBACK</span></button>
+<button type="button" id="kxHelpBtn" class="fab-support fab-help" aria-label="Hilfe"><span class="fab-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1.1 1-1.1 1.8"/><path d="M12 17.2h.01"/></svg></span><span class="fab-lbl">Hilfe</span></button>
 <button type="button" id="kxGearBtn" class="fab-gear" aria-label="Einstellungen"><span class="fab-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg></span><span class="fab-lbl">EINSTELL.</span></button>
 <div id="kxSetOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
 <div class="kx-row"><h2>Einstellungen</h2><button type="button" class="btn-small" id="kxSetClose">Schließen</button></div>
@@ -1845,7 +1846,14 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
 <textarea id="kxFbText" maxlength="1000" placeholder="Optional: Deine Bewertung in Worten"></textarea>
 <p class="hint" id="kxFbLoginHint" style="display:none">Bewertungen kannst du erst nach der Anmeldung abgeben.</p>
 <p class="hint" id="kxFbMsg" aria-live="polite"></p>
-<button type="button" class="btn-primary" id="kxFbSend">Absenden</button></div></div>
+<button type="button" class="btn-primary" id="kxFbSend">Senden</button></div></div>
+<div id="kxHelpOv" class="kx-ov hidden" role="dialog" aria-modal="true" aria-labelledby="kxHelpTitle"><div class="kx-box">
+<div class="kx-row"><h2 id="kxHelpTitle">Hilfe</h2><button type="button" class="btn-small" id="kxHelpClose">Schließen</button></div>
+<input type="search" id="kxHelpSearch" placeholder="Frage oder Stichwort suchen …" aria-label="In der Hilfe suchen" autocomplete="off">
+<div id="kxHelpList"></div>
+<p class="hint" id="kxHelpEmpty" style="display:none">Keine passende Antwort gefunden.</p>
+<button type="button" class="btn-outline" id="kxHelpSupport" style="width:100%">Support kontaktieren</button>
+</div></div>
 <div id="kxMemOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
 <div class="kx-row"><h2>Memory</h2><button type="button" class="btn-small" id="kxMemClose">Schließen</button></div>
 <div class="hint" id="kxMemInfo"></div><div id="kxMemGrid"></div>
@@ -1904,7 +1912,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     <div style="display:flex;gap:8px">
       <button type="button" id="adminTabInbox" class="support-tab active">Postfach</button>
       <button type="button" id="adminTabUsers" class="support-tab">Nutzer</button>
-      <button type="button" id="adminTabMail" class="support-tab">Rundmail</button><button type="button" id="adminTabFb" class="support-tab">Feedback</button>
+      <button type="button" id="adminTabMail" class="support-tab">Rundmail</button><button type="button" id="adminTabFb" class="support-tab">Feedback</button><button type="button" id="adminTabFaq" class="support-tab">Hilfe</button>
     </div>
     <div id="inboxMsg" role="status" aria-live="polite"></div>
     <div id="inboxBody" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -6267,8 +6275,8 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
           closeEnrollModal();
           refreshMfaStatus();
           generateBackupCodes(true);
-        }).catch(function () { setEnrollMsg('Bestätigung fehlgeschlagen.', true); });
-      }).catch(function () { setEnrollMsg('Bestätigung fehlgeschlagen.', true); });
+        }).catch(function () { setEnrollMsg('Bestätigung fehlgeschlagen. Bitte versuche es erneut.', true); });
+      }).catch(function () { setEnrollMsg('Bestätigung fehlgeschlagen. Bitte versuche es erneut.', true); });
     });
 
     gid('mfaDisableBtn').addEventListener('click', function () {
@@ -6278,7 +6286,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       gid('mfaSetupMsg').textContent = 'Wird deaktiviert …'; gid('mfaSetupMsg').style.color = '';
       client.auth.mfa.listFactors().then(function (res) {
         if (res.error) {
-          gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen.'; gid('mfaSetupMsg').style.color = '#c0392b';
+          gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen. Bitte versuche es erneut.'; gid('mfaSetupMsg').style.color = '#c0392b';
           alert('Fehler beim Laden der 2FA-Faktoren: ' + res.error.message);
           return;
         }
@@ -6295,7 +6303,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
         });
         chain.then(function () {
           if (firstErr) {
-            gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen.'; gid('mfaSetupMsg').style.color = '#c0392b';
+            gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen. Bitte versuche es erneut.'; gid('mfaSetupMsg').style.color = '#c0392b';
             alert('2FA konnte nicht deaktiviert werden: ' + firstErr.message);
             return;
           }
@@ -6303,11 +6311,11 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
           client.rpc('clear_backup_codes').then(function () {}, function () {});
           refreshMfaStatus();
         }).catch(function (err) {
-          gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen.'; gid('mfaSetupMsg').style.color = '#c0392b';
+          gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen. Bitte versuche es erneut.'; gid('mfaSetupMsg').style.color = '#c0392b';
           alert('2FA konnte nicht deaktiviert werden: ' + (err && err.message ? err.message : 'unbekannter Fehler'));
         });
       }).catch(function (err) {
-        gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen.'; gid('mfaSetupMsg').style.color = '#c0392b';
+        gid('mfaSetupMsg').textContent = 'Deaktivieren fehlgeschlagen. Bitte versuche es erneut.'; gid('mfaSetupMsg').style.color = '#c0392b';
         alert('Fehler beim Laden der 2FA-Faktoren: ' + (err && err.message ? err.message : 'unbekannter Fehler'));
       });
     });
@@ -8558,7 +8566,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     if (!confirm('Teilen beenden? Die Liste bleibt als normale Liste bei dir.')) { gid('shareCheck').checked = true; return; }
     rpc('leave_list', { p_id: l.id, p_user: getUser() }).then(function () {
       delete l.shared; delete sharedState[l.id]; saveAll(); sharedUi();
-    }).catch(function () { gid('shareCheck').checked = true; gid('shareMsg').textContent = 'Beenden fehlgeschlagen.'; });
+    }).catch(function () { gid('shareCheck').checked = true; gid('shareMsg').textContent = 'Beenden fehlgeschlagen. Bitte versuche es erneut.'; });
   }
 
   function sharedWire() {
@@ -8942,7 +8950,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       card.innerHTML = '<h3></h3><p></p><div class="kt-dots">' + dots + '</div><div class="kt-btns">' +
         (last ? '' : '<button type="button" class="kt-skip" id="ktSkip">Überspringen</button>') +
         (i > 0 ? '<button type="button" class="kt-back">Zurück</button>' : '') +
-        '<button type="button" class="kt-next">' + (last ? 'Fertig ✓' : 'Weiter') + '</button></div>';
+        '<button type="button" class="kt-next">' + (last ? 'Fertig' : 'Weiter') + '</button></div>';
       card.querySelector('h3').textContent = st.t; card.querySelector('p').textContent = st.x.replace('{n}', KT_STEPS.length - 1);
       var el = st.sel ? document.querySelector(st.sel) : null;
       if (el) openAncestors(el);
@@ -9173,7 +9181,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
         a.download = 'Karteikasten-Backup-Codes.txt';
         document.body.appendChild(a); a.click(); a.remove();
         m('Datei gespeichert.');
-      } catch (e) { m('Speichern nicht möglich.'); }
+      } catch (e) { m('Speichern nicht möglich. Bitte versuche es erneut.'); }
     });
     gid('backupCodesPrintBtn').addEventListener('click', function () {
       try {
@@ -9210,7 +9218,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       if (res.error || !res.data || !res.data.ok) {
         btn.disabled = false;
         var st = res.error && res.error.context && res.error.context.status;
-        setMfaChallengeMsg(st === 429 ? 'Zu viele Versuche. Bitte später erneut versuchen.' : 'Backup-Code ungültig.', true); return;
+        setMfaChallengeMsg(st === 429 ? 'Zu viele Versuche. Bitte versuche es später erneut.' : 'Backup-Code ungültig.', true); return;
       }
       return client.auth.refreshSession().catch(function () {}).then(function () { return client.auth.getSession(); }).then(function (g) {
         btn.disabled = false;
@@ -9268,7 +9276,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     }).then(function (res) {
       btn.disabled = false;
       try { resetAppTurnstile('mfaResetTurnstile'); } catch (e) {}
-      if (res.error) { setMfaBackupMsg('Fehler beim Senden: ' + res.error.message, true); return; }
+      if (res.error) { setMfaBackupMsg('Senden fehlgeschlagen: ' + res.error.message, true); return; }
       setMfaBackupMsg('Link gesendet. Bitte öffne ihn in deinem E-Mail-Postfach auf diesem Gerät.');
     }).catch(function (err) { btn.disabled = false; setMfaBackupMsg('Fehler: ' + (err && err.message ? err.message : 'unbekannt'), true); });
   }
@@ -9368,7 +9376,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     var redirect = window.location.href.split('#')[0].split('?')[0] + '?verify=1';
     client.auth.signInWithOtp({ email: email, options: { shouldCreateUser: false, emailRedirectTo: redirect, captchaToken: captchaToken } }).then(function (res) {
       try { if (window.turnstile) window.turnstile.reset(gid('verifyTurnstile')); } catch (e) {}
-      if (res.error) { setVerifyMsg('Fehler beim Senden: ' + res.error.message, true); return; }
+      if (res.error) { setVerifyMsg('Senden fehlgeschlagen: ' + res.error.message, true); return; }
       setVerifyMsg('Link gesendet. Bitte E-Mail-Postfach prüfen und den Link auf diesem Gerät öffnen.');
     }).catch(function () { try { if (window.turnstile) window.turnstile.reset(gid('verifyTurnstile')); } catch (e) {} setVerifyMsg('Link konnte nicht gesendet werden.', true); });
   }
@@ -9597,7 +9605,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
         btn.disabled = false;
         if (res.error || !res.data || !res.data.request_id) {
           var st = res.error && res.error.context && res.error.context.status;
-          setDeviceLoginMsg(st === 429 ? 'Zu viele Versuche. Bitte in etwa 15 Minuten erneut versuchen.' : 'Anfrage fehlgeschlagen. Bitte später erneut versuchen.', true); return;
+          setDeviceLoginMsg(st === 429 ? 'Zu viele Versuche. Bitte versuche es in etwa 15 Minuten erneut.' : 'Anfrage fehlgeschlagen. Bitte versuche es später erneut.', true); return;
         }
         deviceLogin.reqId = res.data.request_id;
         deviceLogin.until = Date.now() + 5 * 60 * 1000;
@@ -9613,7 +9621,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
         gid('deviceLoginConfirmBtn').disabled = false;
         tick(); deviceLogin.timer = setInterval(tick, 1000);
       });
-    }).catch(function () { btn.disabled = false; setDeviceLoginMsg('Anfrage fehlgeschlagen. Bitte später erneut versuchen.', true); });
+    }).catch(function () { btn.disabled = false; setDeviceLoginMsg('Anfrage fehlgeschlagen. Bitte versuche es später erneut.', true); });
   }
   function confirmDeviceLogin() {
     var code = (gid('deviceLoginCodeInput').value || '').trim();
@@ -9752,9 +9760,9 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     askText('Name für dieses Gerät (leer lassen = Standardname)', r.custom_name || '').then(function (nn) {
       if (nn === null) return;
       client.rpc('rename_device_v2', { p_device_id: r.device_id, p_name: nn.trim() }).then(function (x) {
-        if (x.error) { setDevicesStatus('Umbenennen fehlgeschlagen.', true); return; }
+        if (x.error) { setDevicesStatus('Umbenennen fehlgeschlagen. Bitte versuche es erneut.', true); return; }
         refreshDeviceList();
-      }, function () { setDevicesStatus('Umbenennen fehlgeschlagen.', true); });
+      }, function () { setDevicesStatus('Umbenennen fehlgeschlagen. Bitte versuche es erneut.', true); });
     });
   }
   function fmtAgo(iso) {
@@ -9859,9 +9867,9 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
           so.addEventListener('click', function () {
             if (!window.confirm('Dieses Gerät abmelden?')) return;
             client.rpc('sign_out_device_v2', { p_device_id: r.device_id }).then(function (x) {
-              if (x.error) { setDevicesStatus('Abmelden fehlgeschlagen.', true); return; }
+              if (x.error) { setDevicesStatus('Abmelden fehlgeschlagen. Bitte versuche es erneut.', true); return; }
               setDevicesStatus('Gerät abgemeldet.'); refreshDeviceList();
-            }, function () { setDevicesStatus('Abmelden fehlgeschlagen.', true); });
+            }, function () { setDevicesStatus('Abmelden fehlgeschlagen. Bitte versuche es erneut.', true); });
           });
           d.appendChild(so);
         }
@@ -9882,9 +9890,9 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
           var del = document.createElement('button'); del.type = 'button'; del.className = 'btn-text'; del.textContent = 'Löschen';
           del.addEventListener('click', function () {
             client.rpc('delete_device_history_v2', { p_device_id: r.device_id }).then(function (x) {
-              if (x.error) { setDevicesStatus('Löschen fehlgeschlagen.', true); return; }
+              if (x.error) { setDevicesStatus('Löschen fehlgeschlagen. Bitte versuche es erneut.', true); return; }
               refreshDeviceList();
-            }, function () { setDevicesStatus('Löschen fehlgeschlagen.', true); });
+            }, function () { setDevicesStatus('Löschen fehlgeschlagen. Bitte versuche es erneut.', true); });
           });
           d.appendChild(t); d.appendChild(u); d.appendChild(rn); d.appendChild(del); hbox.appendChild(d);
         });
@@ -9926,15 +9934,15 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       if (res.error) { setDevHistMsg('Speichern fehlgeschlagen: ' + res.error.message, true); return; }
       setDevHistMsg('Gespeichert.');
       refreshDeviceList();
-    }, function () { setDevHistMsg('Speichern fehlgeschlagen.', true); });
+    }, function () { setDevHistMsg('Speichern fehlgeschlagen. Bitte versuche es erneut.', true); });
   }
   function clearDeviceHistory() {
     var client = getSb(); if (!client) return;
     if (!window.confirm('Alle früheren Geräte aus der Liste löschen? Das kann nicht rückgängig gemacht werden.')) return;
     client.rpc('delete_device_history_v2', { p_device_id: null }).then(function (res) {
-      if (res.error) { setDevicesStatus('Löschen fehlgeschlagen.', true); return; }
+      if (res.error) { setDevicesStatus('Löschen fehlgeschlagen. Bitte versuche es erneut.', true); return; }
       refreshDeviceList();
-    }, function () { setDevicesStatus('Löschen fehlgeschlagen.', true); });
+    }, function () { setDevicesStatus('Löschen fehlgeschlagen. Bitte versuche es erneut.', true); });
   }
   // Dieses Gerät als „abgemeldet“ eintragen (vor dem Logout aufrufen, solange die Sitzung noch gültig ist)
   function markThisDeviceSignedOut(reason) {
@@ -9969,7 +9977,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
         return client.auth.signOut({ scope: 'global' });
       }).then(function (r) {
         if (r && r.error) {
-          setDevicesStatus('Fehlgeschlagen: ' + r.error.message, true);
+          setDevicesStatus('Aktion fehlgeschlagen: ' + r.error.message, true);
           registerDeviceBeat(true); setTimeout(refreshDeviceList, 600);
           return;
         }
@@ -9982,7 +9990,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     } else {
       // Erst die anderen Sitzungen beenden, dann nur genau diese in der Liste als abgemeldet markieren.
       client.auth.signOut({ scope: 'others' }).then(function (r) {
-        if (r && r.error) { setDevicesStatus('Fehlgeschlagen: ' + r.error.message, true); return; }
+        if (r && r.error) { setDevicesStatus('Aktion fehlgeschlagen: ' + r.error.message, true); return; }
         return client.rpc('sign_out_devices_v2', { p_scope: 'others', p_keep: keep }).then(function () {
           setDevicesStatus('Alle anderen Geräte wurden abgemeldet.');
           refreshDeviceList();
@@ -10687,7 +10695,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       send.disabled = true; setInboxMsg('Wird gesendet \u2026');
       inboxCall(req).then(function (d) {
         send.disabled = false;
-        if (d && d.failed) { setInboxMsg((d.sent || 0) + ' gesendet, ' + d.failed + ' fehlgeschlagen.' + (d.detail ? ' Grund: ' + d.detail : ''), true); }
+        if (d && d.failed) { setInboxMsg((d.sent || 0) + ' gesendet, ' + d.failed + ' fehlgeschlagen. Bitte versuche es erneut.' + (d.detail ? ' Grund: ' + d.detail : ''), true); }
         else { setInboxMsg('Gesendet an ' + ((d && d.sent) || count) + ' Empf\u00e4nger.'); subj.value = ''; ta.value = ''; }
       }).catch(function (e) { send.disabled = false; setInboxMsg(inboxErr(e), true); });
     });
@@ -10775,7 +10783,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
         var session = r.data && r.data.session;
         if (session) { gateMfaThen(session, false, function () { afterAuthSuccess(session, false); }); } else { showLoginScreen(); }
       });
-    }).catch(function () { gid('recoverySendBtn').disabled = false; setRecoveryMsg('Speichern fehlgeschlagen.', true); });
+    }).catch(function () { gid('recoverySendBtn').disabled = false; setRecoveryMsg('Speichern fehlgeschlagen. Bitte versuche es erneut.', true); });
   }
 
   /* ================= E-Mail-Adresse ändern (mit Bestätigung alt + neu) ================= */
@@ -11558,7 +11566,7 @@ gid('kxFbSend').addEventListener('click',function(){
   var txt=gid('kxFbText').value.trim();gid('kxFbSend').disabled=true;
   c.auth.getSession().then(function(r){var u=r&&r.data&&r.data.session&&r.data.session.user;if(!u)throw 'noauth';return c.from('app_feedback').insert({stars:kxStarN,comment:txt||null,user_email:u?u.email:null});})
   .then(function(res){if(res.error)throw res.error;msg.textContent='Danke für dein Feedback!';kxFbSummary();setTimeout(function(){kxOv('kxFbOv',false);},1200);})
-  .catch(function(e){msg.textContent=(e==='noauth')?'Bitte melde dich an, um Feedback zu senden.':'Senden fehlgeschlagen. Bitte später erneut versuchen.';gid('kxFbSend').disabled=false;});
+  .catch(function(e){msg.textContent=(e==='noauth')?'Bitte melde dich an, um Feedback zu senden.':'Senden fehlgeschlagen. Bitte versuche es später erneut.';gid('kxFbSend').disabled=false;});
 });
 /* Admin-Tab Feedback */
 var kxFbActive=false;
@@ -11582,6 +11590,113 @@ var _kxAST=adminShowTab;adminShowTab=function(t){
 };
 gid('adminTabFb').addEventListener('click',function(){adminShowTab('fb');});
 gid('inboxRefreshBtn').addEventListener('click',function(e){if(kxFbActive){e.stopImmediatePropagation();kxFbAdmin();}},true);
+
+/* ===== Hilfe (FAQ) – Antworten kommen aus der Tabelle faq_entries und werden im Admin-Panel gepflegt ===== */
+var FAQ_DEFAULTS=[
+ {category:'Erste Schritte',question:'Wie lege ich eine Liste an?',answer:'Tippe auf „+ Neue Liste“, gib ihr einen Namen (z. B. „Englisch Unit 3“) und füge deine Vokabeln hinzu.'},
+ {category:'Erste Schritte',question:'Wie füge ich viele Vokabeln auf einmal ein?',answer:'Öffne den Bereich „Mehrere Vokabeln auf einmal einfügen“ und füge deine Wörter dort ein. So musst du nicht jede Vokabel einzeln tippen.'},
+ {category:'Lernen',question:'Wie funktioniert der Karteikasten?',answer:'Richtig beantwortete Vokabeln rücken eine Lernstufe weiter und kommen seltener dran. Falsche Vokabeln kommen früher wieder. Starte mit „Karteikasten starten“.'},
+ {category:'Lernen',question:'Wie ändere ich, wie streng meine Antworten bewertet werden?',answer:'Öffne Einstellungen → „Antwort-Toleranz“. Dort legst du fest, ob Groß-/Kleinschreibung, Akzente, Buchstabendreher und Tippfehler als richtig, halber Fehler oder falsch zählen.'},
+ {category:'Erinnerungen',question:'Wie stelle ich ein Tagesziel oder eine Erinnerung ein?',answer:'Öffne Einstellungen. Unter „Tagesziel“ legst du deine Lernzeit pro Tag fest, unter „Tägliche Erinnerung“ die Uhrzeiten.'},
+ {category:'Konto & Daten',question:'Ich habe mein Passwort vergessen. Was tun?',answer:'Tippe auf der Anmeldeseite auf „Passwort vergessen?“. Du bekommst einen Link zum Zurücksetzen per E-Mail.'},
+ {category:'Konto & Daten',question:'Wie sichere ich meine Daten?',answer:'Deine Daten werden mit deinem Konto synchronisiert. Oben oder unten siehst du den Speicherstatus. Zusätzlich kannst du im Bereich „Backup“ eine Sicherungsdatei erstellen.'},
+ {category:'Konto & Daten',question:'Wie lösche ich mein Konto?',answer:'Im Menü unter „Konto & Sicherheit“ findest du „Konto löschen“. Das Löschen kann nicht rückgängig gemacht werden.'},
+ {category:'Hilfe',question:'Ich habe einen Fehler gefunden oder brauche Hilfe.',answer:'Schreibe uns über „Support“ in der Leiste. Bitte beschreibe kurz, was du gemacht hast und was passiert ist.'}
+];
+var faqItems=null;
+function faqLoad(force){
+  if(faqItems&&!force)return Promise.resolve(faqItems);
+  var c=getSb();if(!c||!c.from){faqItems=FAQ_DEFAULTS.slice();return Promise.resolve(faqItems);}
+  return Promise.resolve(c.from('faq_entries').select('id,category,question,answer,sort_order').eq('published',true).order('sort_order',{ascending:true}).order('created_at',{ascending:true}).limit(500))
+    .then(function(r){faqItems=(r&&!r.error&&Array.isArray(r.data)&&r.data.length)?r.data:FAQ_DEFAULTS.slice();return faqItems;})
+    .catch(function(){faqItems=FAQ_DEFAULTS.slice();return faqItems;});
+}
+function faqNorm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function faqRender(){
+  var list=gid('kxHelpList'),q=faqNorm(gid('kxHelpSearch').value).split(/\s+/).filter(Boolean),items=faqItems||[],shown=0,cat=null,wrap=null;
+  list.innerHTML='';
+  items.forEach(function(it){
+    var hay=faqNorm(it.category+' '+it.question+' '+it.answer);
+    if(!q.every(function(w){return hay.indexOf(w)>=0;}))return;
+    if(it.category!==cat){cat=it.category;var h=document.createElement('div');h.className='kx-faq-cat';h.textContent=cat||'Allgemein';list.appendChild(h);}
+    var d=document.createElement('details');d.className='kx-faq-item';if(q.length)d.open=true;
+    var sm=document.createElement('summary');sm.textContent=it.question;d.appendChild(sm);
+    var a=document.createElement('div');a.className='kx-faq-a';a.textContent=it.answer;d.appendChild(a);
+    list.appendChild(d);shown++;
+  });
+  gid('kxHelpEmpty').style.display=shown?'none':'block';
+  if(!shown&&!faqItems)gid('kxHelpEmpty').textContent='Hilfe wird geladen …';
+  else if(!shown)gid('kxHelpEmpty').textContent='Keine passende Antwort gefunden. Schreib uns gern über „Support“.';
+}
+gid('kxHelpBtn').addEventListener('click',function(){
+  gid('kxHelpSearch').value='';kxOv('kxHelpOv',true);faqRender();
+  faqLoad(true).then(faqRender);
+});
+gid('kxHelpClose').addEventListener('click',function(){kxOv('kxHelpOv',false);});
+gid('kxHelpSearch').addEventListener('input',faqRender);
+gid('kxHelpSupport').addEventListener('click',function(){gid('supportOpenBtn').click();});
+
+/* Admin-Tab „Hilfe“: Einträge hinzufügen, bearbeiten, ausblenden, löschen, verschieben */
+var faqAdminActive=false;
+function faqAdmin(editId){
+  var body=gid('inboxBody'),c=getSb();body.innerHTML='';setInboxMsg('');
+  if(!c||!c.from){setInboxMsg('Keine Verbindung',true);return;}
+  body.appendChild(inboxEl('div','inbox-hint','Lade …'));
+  Promise.resolve(c.from('faq_entries').select('*').order('sort_order',{ascending:true}).order('created_at',{ascending:true}).limit(500)).then(function(res){
+    if(!faqAdminActive)return;body.innerHTML='';
+    if(res.error){setInboxMsg('Die Tabelle „faq_entries“ ist nicht erreichbar: '+res.error.message+'. Führe zuerst die Datei faq_tabelle.sql in Supabase aus.',true);return;}
+    var rows=res.data||[];
+    var top=inboxEl('div',null);top.style.cssText='display:flex;gap:8px;flex-wrap:wrap';
+    var add=inboxEl('button',null,'Neuer Eintrag');add.type='button';add.addEventListener('click',function(){faqForm(null,rows);});top.appendChild(add);
+    if(!rows.length){var seed=inboxEl('button',null,'Standardantworten übernehmen');seed.type='button';seed.addEventListener('click',function(){
+      seed.disabled=true;var recs=FAQ_DEFAULTS.map(function(d,i){return {category:d.category,question:d.question,answer:d.answer,sort_order:(i+1)*10,published:true};});
+      Promise.resolve(c.from('faq_entries').insert(recs)).then(function(r){if(r.error){setInboxMsg('Speichern fehlgeschlagen: '+r.error.message,true);seed.disabled=false;return;}faqItems=null;setInboxMsg('Standardantworten übernommen.');faqAdmin();});
+    });top.appendChild(seed);}
+    body.appendChild(top);
+    if(!rows.length)body.appendChild(inboxEl('div','inbox-hint','Noch keine Einträge. Bis dahin sehen Nutzer die Standardantworten.'));
+    rows.forEach(function(r,i){
+      var card=inboxEl('div','inbox-item');card.style.cursor='default';
+      var meta=inboxEl('div','meta');meta.appendChild(inboxEl('span',null,r.category||'Allgemein'));meta.appendChild(inboxEl('span','inbox-badge'+(r.published?' answered':' closed'),r.published?'veröffentlicht':'Entwurf'));card.appendChild(meta);
+      card.appendChild(inboxEl('div','from',r.question));
+      var prev=inboxEl('div','prev',r.answer);card.appendChild(prev);
+      var act=inboxEl('div','inbox-thread-actions');
+      function b(t,fn,dis){var x=inboxEl('button',null,t);x.type='button';x.disabled=!!dis;x.addEventListener('click',function(e){e.stopPropagation();fn();});act.appendChild(x);return x;}
+      b('Bearbeiten',function(){faqForm(r,rows);});
+      b(r.published?'Ausblenden':'Veröffentlichen',function(){Promise.resolve(c.from('faq_entries').update({published:!r.published,updated_at:new Date().toISOString()}).eq('id',r.id)).then(function(x){if(x.error){setInboxMsg('Speichern fehlgeschlagen: '+x.error.message,true);return;}faqItems=null;faqAdmin();});});
+      function swap(o){var a1=r.sort_order,a2=o.sort_order;if(a1===a2){a1=i*10;a2=(rows.indexOf(o))*10;}
+        Promise.all([c.from('faq_entries').update({sort_order:a2}).eq('id',r.id),c.from('faq_entries').update({sort_order:a1}).eq('id',o.id)]).then(function(){faqItems=null;faqAdmin();});}
+      b('▲',function(){swap(rows[i-1]);},i===0);b('▼',function(){swap(rows[i+1]);},i===rows.length-1);
+      b('Löschen',function(){if(!confirm('Diesen Eintrag wirklich löschen?'))return;Promise.resolve(c.from('faq_entries').delete().eq('id',r.id)).then(function(x){if(x.error){setInboxMsg('Löschen fehlgeschlagen: '+x.error.message,true);return;}faqItems=null;faqAdmin();});});
+      card.appendChild(act);body.appendChild(card);
+    });
+  }).catch(function(e){setInboxMsg('Laden fehlgeschlagen: '+((e&&e.message)||'unbekannter Fehler')+'. Bitte versuche es erneut.',true);});
+}
+function faqForm(row,rows){
+  var body=gid('inboxBody'),c=getSb();body.innerHTML='';setInboxMsg('');
+  function field(label,el){var l=inboxEl('label',null,label);l.style.fontWeight='700';body.appendChild(l);body.appendChild(el);return el;}
+  var cat=document.createElement('input');cat.type='text';cat.maxLength=60;cat.value=row?row.category:'Allgemein';field('Kategorie',cat);
+  var q=document.createElement('input');q.type='text';q.maxLength=200;q.value=row?row.question:'';field('Frage',q);
+  var a=document.createElement('textarea');a.maxLength=4000;a.value=row?row.answer:'';a.style.minHeight='160px';field('Antwort',a);
+  var pl=inboxEl('label',null);pl.style.cssText='display:flex;gap:8px;align-items:center';var pc=document.createElement('input');pc.type='checkbox';pc.style.width='auto';pc.checked=row?!!row.published:true;pl.appendChild(pc);pl.appendChild(inboxEl('span',null,'Für Nutzer sichtbar'));body.appendChild(pl);
+  var act=inboxEl('div','inbox-thread-actions');
+  var save=inboxEl('button',null,'Speichern');save.type='button';var cancel=inboxEl('button',null,'Abbrechen');cancel.type='button';act.appendChild(save);act.appendChild(cancel);body.appendChild(act);
+  cancel.addEventListener('click',function(){faqAdmin();});
+  save.addEventListener('click',function(){
+    var rec={category:cat.value.trim()||'Allgemein',question:q.value.trim(),answer:a.value.trim(),published:pc.checked,updated_at:new Date().toISOString()};
+    if(!rec.question||!rec.answer){setInboxMsg('Bitte fülle Frage und Antwort aus.',true);return;}
+    save.disabled=true;
+    var p;if(row)p=c.from('faq_entries').update(rec).eq('id',row.id);
+    else{var mx=0;(rows||[]).forEach(function(r){if(r.sort_order>mx)mx=r.sort_order;});rec.sort_order=mx+10;p=c.from('faq_entries').insert(rec);}
+    Promise.resolve(p).then(function(x){if(x.error){setInboxMsg('Speichern fehlgeschlagen: '+x.error.message,true);save.disabled=false;return;}faqItems=null;faqAdmin();setInboxMsg('Gespeichert.');});
+  });
+}
+var _kxAST2=adminShowTab;adminShowTab=function(t){
+  faqAdminActive=(t==='faq');gid('adminTabFaq').classList.toggle('active',faqAdminActive);
+  if(faqAdminActive){kxFbActive=false;['adminTabInbox','adminTabUsers','adminTabMail','adminTabFb'].forEach(function(i){gid(i).classList.remove('active');});faqAdmin();return;}
+  _kxAST2(t);
+};
+gid('adminTabFaq').addEventListener('click',function(){adminShowTab('faq');});
+gid('inboxRefreshBtn').addEventListener('click',function(e){if(faqAdminActive){e.stopImmediatePropagation();faqAdmin();}},true);
 /* Memory */
 var kxM=null;
 function kxShuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
@@ -12395,8 +12510,8 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   #kkDock > button { position: relative !important; inset: auto !important; left: auto !important; right: auto !important; top: auto !important; bottom: auto !important; }
   /* Anmeldeseite: nur der Support-Knopf bleibt in der Leiste sichtbar */
   body:has(#login-screen:not(.hidden)) #kkDock { justify-content: center; }
-  body:has(#login-screen:not(.hidden)) #kkDock > button:not(#supportOpenBtn):not(#kxFbBtn) { display: none !important; }
-  body:has(#login-screen:not(.hidden)) #kkDock > #supportOpenBtn, body:has(#login-screen:not(.hidden)) #kkDock > #kxFbBtn { flex: 0 1 160px; }
+  body:has(#login-screen:not(.hidden)) #kkDock > button:not(#supportOpenBtn):not(#kxFbBtn):not(#kxHelpBtn) { display: none !important; }
+  body:has(#login-screen:not(.hidden)) #kkDock > #supportOpenBtn, body:has(#login-screen:not(.hidden)) #kkDock > #kxFbBtn, body:has(#login-screen:not(.hidden)) #kkDock > #kxHelpBtn { flex: 0 1 160px; }
   body:has(#quickNav.hidden) #kkDock #quickNavToggle, body:has(#quickNav.hidden) #kkDock #quickNavTop { display: none !important; }
   .quick-nav { top: auto !important; right: 8px !important; bottom: calc(76px + env(safe-area-inset-bottom)) !important; transform: none; }
   body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
@@ -12425,7 +12540,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 (function () {
   function build() {
     if (document.getElementById('kkDock')) return;
-    var order = ['quickNavToggle', 'kxGearBtn', 'kxFbBtn', 'supportOpenBtn', 'supportInboxBtn'];
+    var order = ['quickNavToggle', 'kxGearBtn', 'kxFbBtn', 'kxHelpBtn', 'supportOpenBtn', 'supportInboxBtn'];
     var els = order.map(function (i) { return document.getElementById(i); });
     if (!els[0] || !els[1]) return;
     var dock = document.createElement('div'); dock.id = 'kkDock'; dock.setAttribute('role', 'toolbar'); dock.setAttribute('aria-label', 'Schnellzugriff');
@@ -12454,10 +12569,10 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   body:has(#login-screen:not(.hidden)) #kxFbLoginHint { display: block !important; }
 </style>
 <style id="kk-pages-style">
-  :root { --kk-dock-h: calc(68px + env(safe-area-inset-bottom, 0px)); --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; }
+  :root { --kk-side-w: 0px; --kk-dock-h: calc(68px + env(safe-area-inset-bottom, 0px)); --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; }
 
   /* ===== Seiten statt Pop-ups: gleiche Größe, Leiste unten bleibt sichtbar ===== */
-  .kx-ov, .support-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: var(--kk-dock-h); z-index: 55; background: var(--bg); padding: 0; display: block; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .kx-ov, .support-overlay { position: fixed; top: 0; left: var(--kk-side-w, 0px); right: 0; bottom: var(--kk-dock-h); z-index: 55; background: var(--bg); padding: 0; display: block; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
   .kx-ov, .support-overlay { background-color: var(--bg); background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, var(--rule-color) 34px, var(--rule-color) 35px); background-attachment: local; }
   .kx-row, .inbox-head, .support-box > h2, .support-box .support-actions { background-color: var(--bg); background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, var(--rule-color) 34px, var(--rule-color) 35px); }
   .kx-ov.hidden, .support-overlay.hidden { display: none !important; }
@@ -12511,9 +12626,9 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 /* Seiten statt Pop-ups, Hoch-Knopf, Symbole */
 (function () {
   function gid(i) { return document.getElementById(i); }
-  var PAGES = { kxGearBtn: 'kxSetOv', kxFbBtn: 'kxFbOv', supportOpenBtn: 'supportOverlay', supportInboxBtn: 'inboxOverlay' };
-  var CLOSE = { kxSetOv: 'kxSetClose', kxFbOv: 'kxFbClose', kxMemOv: 'kxMemClose', supportOverlay: 'supportCancelBtn', inboxOverlay: 'inboxCloseBtn' };
-  var ALL = ['kxMemOv', 'kxSetOv', 'kxFbOv', 'supportOverlay', 'inboxOverlay'];
+  var PAGES = { kxGearBtn: 'kxSetOv', kxFbBtn: 'kxFbOv', kxHelpBtn: 'kxHelpOv', supportOpenBtn: 'supportOverlay', supportInboxBtn: 'inboxOverlay' };
+  var CLOSE = { kxSetOv: 'kxSetClose', kxFbOv: 'kxFbClose', kxHelpOv: 'kxHelpClose', kxMemOv: 'kxMemClose', supportOverlay: 'supportCancelBtn', inboxOverlay: 'inboxCloseBtn' };
+  var ALL = ['kxMemOv', 'kxSetOv', 'kxFbOv', 'kxHelpOv', 'supportOverlay', 'inboxOverlay'];
   function isOpen(id) { var e = gid(id); return !!(e && !e.classList.contains('hidden')); }
   function closeOne(id) { var b = gid(CLOSE[id]); if (b) b.click(); else if (gid(id)) gid(id).classList.add('hidden'); }
 
@@ -12545,9 +12660,24 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   }
   function watch() { ALL.forEach(function (id) { var el = gid(id); if (el) new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['class'] }); }); sync(); }
 
-  // Höhe der unteren Leiste messen (für die Seitenhöhe)
-  function dockH() { var d = gid('kkDock'); if (!d) return; document.documentElement.style.setProperty('--kk-dock-h', d.offsetHeight + 'px'); }
-  function dock() { var d = gid('kkDock'); if (!d) { setTimeout(dock, 300); return; } dockH(); if (window.ResizeObserver) new ResizeObserver(dockH).observe(d); window.addEventListener('resize', dockH); }
+  // Layout: am PC Seitenleiste links, sonst Leiste unten (misst Größe für die Seiten)
+  function layout() {
+    var d = gid('kkDock'); if (!d) return;
+    var root = document.documentElement, ls = gid('login-screen');
+    var login = !!(ls && !ls.classList.contains('hidden'));
+    var side = root.getAttribute('data-device') === 'pc' && !login;
+    root.classList.toggle('kk-side', side);
+    root.style.setProperty('--kk-dock-h', side ? '0px' : d.offsetHeight + 'px');
+    root.style.setProperty('--kk-side-w', side ? '220px' : '0px');
+  }
+  function dock() {
+    var d = gid('kkDock'); if (!d) { setTimeout(dock, 300); return; }
+    layout();
+    if (window.ResizeObserver) new ResizeObserver(layout).observe(d);
+    window.addEventListener('resize', layout);
+    new MutationObserver(layout).observe(document.documentElement, { attributes: true, attributeFilter: ['data-device'] });
+    var ls = gid('login-screen'); if (ls) new MutationObserver(layout).observe(ls, { attributes: true, attributeFilter: ['class'] });
+  }
 
   // Hoch-Knopf nur nach dem Scrollen zeigen
   function topBtn() {
@@ -12587,6 +12717,73 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 
   function init() { watch(); dock(); topBtn(); icons(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<style id="kk-side-style">
+  /* ===== PC: Seitenleiste links statt Leiste unten ===== */
+  html.kk-side body { padding-left: var(--kk-side-w); padding-bottom: 0; }
+  html.kk-side #kkDock { top: 0; bottom: 0; left: 0; right: auto; width: 220px; box-sizing: border-box; flex-direction: column; justify-content: flex-start; align-items: stretch; gap: 4px; padding: 18px 10px calc(64px + env(safe-area-inset-bottom, 0px)); border-top: 0; border-right: 2px solid var(--border); overflow-y: auto; }
+  html.kk-side #kkDock::before { content: 'Karteikasten'; display: block; padding: 4px 14px 16px; font-size: 20px; font-weight: 800; color: var(--ink); }
+  html.kk-side #kkDock > button { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; gap: 12px; height: 46px !important; padding: 0 14px !important; }
+  html.kk-side #kkDock .fab-lbl, html.kk-side #kkDock .quick-nav-toggle-label { font-size: 15px; }
+  html.kk-side #quickNav .quick-nav-top { bottom: 20px !important; }
+  html.kk-side #quickNav .quick-nav-panel { left: calc(var(--kk-side-w) + 8px); top: 12px; bottom: auto; max-height: calc(100vh - 24px); }
+  html.kk-side .undo-bar, html.kk-side .bulkbar { bottom: 16px !important; }
+  html.kk-side .kk-offline { left: var(--kk-side-w); }
+
+  /* ===== Speicherstatus ===== */
+  #kkSaveState { position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); right: 8px; z-index: 44; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; line-height: 1.2; padding: 5px 10px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--border); color: var(--ink); pointer-events: none; max-width: calc(100vw - 16px); }
+  #kkSaveState i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #2f7d4f; }
+  #kkSaveState.pending i { background: #c9951a; }
+  #kkSaveState.offline i, #kkSaveState.error i { background: #c0392b; }
+  body:has(#mainApp.hidden) #kkSaveState, body:has(#login-screen:not(.hidden)) #kkSaveState { display: none; }
+  html.kk-side #kkSaveState { top: auto; right: auto; left: 12px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: 196px; box-sizing: border-box; border-radius: var(--radius); z-index: 61; }
+
+  /* ===== Hilfe-Seite ===== */
+  #kxHelpSearch { width: 100%; box-sizing: border-box; font-family: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; -webkit-appearance: none; appearance: none; }
+  #kxHelpSearch::placeholder { color: var(--muted); }
+  .kx-faq-cat { margin: 14px 0 4px; font-size: 13px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .kx-faq-item { border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 6px 0; padding: 0 12px; }
+  .kx-faq-item > summary { cursor: pointer; font-weight: 700; padding: 12px 0; list-style: none; }
+  .kx-faq-item > summary::-webkit-details-marker { display: none; }
+  .kx-faq-a { padding: 0 0 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
+</style>
+<script>
+/* Speicherstatus: zeigt jederzeit, ob die Daten gesichert sind */
+(function () {
+  var el = document.createElement('div'); el.id = 'kkSaveState'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+  el.innerHTML = '<i></i><span></span>'; document.body.appendChild(el);
+  var st = 'ok', last = 0, timer = 0;
+  var T = { ok: 'Synchronisiert', pending: 'Gespeichert – wird synchronisiert …', offline: 'Offline – wird später gesendet', offlineok: 'Offline – alles gespeichert', error: 'Nicht synchronisiert – neuer Versuch folgt' };
+  function render() {
+    var off = navigator.onLine === false, k = st;
+    var cls = off ? (st === 'ok' ? 'offline' : 'offline') : st, txt = off ? (st === 'ok' ? T.offlineok : T.offline) : T[st];
+    el.className = ''; el.classList.add(cls === 'ok' ? 'ok' : cls);
+    el.lastChild.textContent = txt;
+    el.title = last ? 'Zuletzt synchronisiert: ' + new Date(last).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr' : '';
+  }
+  function trySync() { try { if (window.__kkCloudSync) window.__kkCloudSync(0); } catch (e) { } }
+  function pending() { st = 'pending'; render(); clearTimeout(timer); timer = setTimeout(trySync, 6000); }
+  // Änderungen an den App-Daten erkennen
+  var si = Storage.prototype.setItem;
+  Storage.prototype.setItem = function (k, v) {
+    var changed = false;
+    try { if (this === window.localStorage && String(k).indexOf('karteikasten_') === 0) changed = this.getItem(k) !== String(v); } catch (e) { }
+    var r = si.apply(this, arguments);
+    if (changed) pending();
+    return r;
+  };
+  // Ergebnis der Synchronisierung übernehmen
+  function hook() {
+    if (!window.__kkSyncUI) { setTimeout(hook, 500); return; }
+    if (window.__kkSyncUI.__kk) return;
+    var orig = window.__kkSyncUI;
+    window.__kkSyncUI = function (ok) { try { orig(ok); } catch (e) { } if (ok) { st = 'ok'; last = Date.now(); clearTimeout(timer); } else st = 'error'; render(); };
+    window.__kkSyncUI.__kk = true;
+  }
+  window.addEventListener('online', function () { render(); if (st !== 'ok') trySync(); });
+  window.addEventListener('offline', render);
+  hook(); render();
 })();
 </script>
 </body>
