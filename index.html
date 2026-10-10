@@ -119,8 +119,9 @@
   html[data-device="tablet"] .app { max-width: 780px; }
   html[data-device="pc"] .app { max-width: 1120px; padding-left: 32px; padding-right: 32px; }
   html[data-device="tablet"] .vocab-stack, html[data-device="pc"] .vocab-stack { max-width: 640px; }
-  html[data-device="pc"] #grpWrap { display: grid; grid-template-columns: 1fr 1fr; column-gap: 20px; align-items: start; }
-  html[data-device="pc"] #grpWrap > #grp_vocab, html[data-device="pc"] #grpWrap > #grp_acct { grid-column: 1 / -1; }
+  /* Alle Bereiche (Meine Listen, Lernen, Üben, Vokabeln, Konto) untereinander in voller, gleicher Breite */
+  html[data-device="pc"] #grpWrap { display: block; }
+  #grpWrap > details.group-fold { width: 100%; box-sizing: border-box; }
   .kk-viewrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:4px 0 8px; }
   .kk-viewrow .view-chip { padding:4px 10px; }
   #kkSearch, .kk-viewrow input[type="time"], .view-chips input[type="time"] { font-family: inherit; font-size: 16px; color: var(--ink); background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 9px 12px; box-sizing: border-box; -webkit-appearance: none; appearance: none; }
@@ -678,7 +679,7 @@
   .quick-row button, .quick-row label.help-toggle { font-size: 13px !important; padding: 6px 10px !important; min-height: 0 !important; line-height: 1.2; width: auto !important; }
   .quick-row label.help-toggle { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--border); border-radius: var(--radius); }
   .quick-row label.help-toggle span::before { content: ""; }
-  .quick-row .kk-bar button:nth-child(1)::before { content: "⏫ "; } .quick-row .kk-bar button:nth-child(2)::before { content: "⏬ "; }
+  
   #installHelpBtn::before { content: ""; }
   .shuf-btn { flex: 1; padding: 10px 6px; border: 2px solid var(--border); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
   .shuf-btn.active { background: var(--rust); color: #fff; border-color: var(--rust); }
@@ -1769,10 +1770,7 @@ Wasser; water"></textarea>
 .fab-gear{position:fixed;right:8px;bottom:calc(208px + env(safe-area-inset-bottom));z-index:45}
 .fab-fb{right:80px !important}
 body:has(#login-screen:not(.hidden)) .fab-gear,body:has(#setup-screen.hidden) .fab-gear{display:none}
-body:has(#login-screen:not(.hidden)) #kxFbBtn,body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
-#kxHourBox .bars{display:flex;align-items:flex-end;gap:2px;height:48px}
-#kxHourBox .bars i{flex:1;background:var(--muted);opacity:.5;border-radius:2px 2px 0 0;min-height:2px}
-#kxHourBox .bars i.best{background:var(--rust);opacity:1}
+body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
 .kx-stars{display:flex;gap:6px;justify-content:center}.kx-stars button{font-size:34px;background:none;border:0;color:var(--rust);cursor:pointer;padding:0 2px}
 #kxFbSum{display:flex;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-lg)}#kxFbSum.hidden{display:none}#kxFbSum .kx-top{text-align:center;font-size:15px}#kxFbSum .kx-top strong{font-size:22px}#kxFbSum .kx-top .st{color:var(--rust);font-size:20px;display:block;letter-spacing:2px}
 #kxFbText{width:100%;min-height:80px;box-sizing:border-box}
@@ -1787,9 +1785,6 @@ body:has(#login-screen:not(.hidden)) #kxFbBtn,body:has(#login-screen:not(.hidden
 <button type="button" id="kxGearBtn" class="fab-gear" aria-label="Einstellungen"><span class="fab-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="17" cy="18" r="2.2"/></svg></span><span class="fab-lbl">EINSTELL.</span></button>
 <div id="kxSetOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
 <div class="kx-row"><h2>Einstellungen</h2><button type="button" class="btn-small" id="kxSetClose">Schließen</button></div>
-<details class="settings-details fold" open><summary>Rückmeldung</summary>
-<label class="toggle-row small"><input type="checkbox" id="kxSnd"><span>Töne bei richtig/falsch</span></label>
-<label class="toggle-row small"><input type="checkbox" id="kxVib"><span>Vibration bei richtig/falsch</span></label></details>
       <details class="settings-details fold" id="dailyGoalDetails" open>
         <summary>Tagesziel</summary>
         <div class="goal-setting-row">
@@ -1827,9 +1822,6 @@ body:has(#login-screen:not(.hidden)) #kxFbBtn,body:has(#login-screen:not(.hidden
         </div>
         <p class="hint" id="bkRemHint"></p>
       </details>
-<details class="settings-details fold" open><summary>Beste Lernzeit</summary>
-<label class="toggle-row small"><input type="checkbox" id="kxAuto"><span>Erinnerung automatisch auf meine beste Uhrzeit legen</span></label>
-<div id="kxHourBox"></div></details>
 <details class="settings-details fold" id="kxTolDetails"><summary>Antwort-Toleranz</summary>
 <p class="hint keep" style="margin-top:0">Lege fest, wie streng deine Antworten bewertet werden.</p>
 <label class="kx-sel">Groß-/Kleinschreibung <select id="kxTolCs"><option value="richtig">zählt als richtig</option><option value="halb">halber Fehler</option><option value="falsch">falsch</option></select></label>
@@ -1851,6 +1843,7 @@ body:has(#login-screen:not(.hidden)) #kxFbBtn,body:has(#login-screen:not(.hidden
 <div id="kxFbSum" class="hidden"></div>
 <div class="kx-stars" id="kxStars"></div>
 <textarea id="kxFbText" maxlength="1000" placeholder="Optional: Deine Bewertung in Worten"></textarea>
+<p class="hint" id="kxFbLoginHint" style="display:none">Bewertungen kannst du erst nach der Anmeldung abgeben.</p>
 <p class="hint" id="kxFbMsg" aria-live="polite"></p>
 <button type="button" class="btn-primary" id="kxFbSend">Absenden</button></div></div>
 <div id="kxMemOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
@@ -8899,7 +8892,7 @@ body:has(#login-screen:not(.hidden)) #kxFbBtn,body:has(#login-screen:not(.hidden
     { t: 'Vokabeln hinzufügen', x: 'Gib Vokabeln einzeln ein oder füge viele auf einmal ein. Dafür gibt es den Bereich „Mehrere Vokabeln auf einmal einfügen“.', sel: '.bulk-import > summary' },
     { t: 'Lernen starten', x: 'Mit „Karteikasten starten“ wirst du abgefragt. Richtige Vokabeln rücken eine Lernstufe weiter, falsche kommen früher wieder dran.', sel: '#startQuizBtn' },
     { t: 'Menü', x: 'Das Menü springt zu jedem Bereich der Seite.', sel: '.quick-nav-toggle' },
-    { t: 'Einstellungen', x: 'Hier in der Leiste unten öffnest du die Einstellungen: Töne, Erinnerung, Antwort-Toleranz und automatische Abmeldung.', sel: '#kxGearBtn' },
+    { t: 'Einstellungen', x: 'Hier in der Leiste unten öffnest du die Einstellungen: Tagesziel, Erinnerung, Antwort-Toleranz und automatische Abmeldung.', sel: '#kxGearBtn' },
     { t: 'Hilfe', x: 'Hast du eine Frage oder einen Fehler gefunden? Nutze Support oder Feedback in der Leiste unten.', sel: '#supportOpenBtn' }
   ];
   function kkTourDone(uid) { try { localStorage.setItem('kk_tour_' + (uid || 'x'), '1'); } catch (e) { } }
@@ -11499,43 +11492,10 @@ body:has(#login-screen:not(.hidden)) #kxFbBtn,body:has(#login-screen:not(.hidden
 /* ===== Erweiterung: Feedback-Töne, Lernzeit, Memory, Sterne, Einstellungen ===== */
 function kxPref(k,d){try{var v=localStorage.getItem(k);return v==null?d:v==='1';}catch(e){return d;}}
 function kxSet(k,v){try{localStorage.setItem(k,v?'1':'0');}catch(e){}}
-var kxCtx=null;
-function kxCtxGet(){try{kxCtx=kxCtx||new (window.AudioContext||window.webkitAudioContext)();if(kxCtx.state==='suspended'&&kxCtx.resume)kxCtx.resume();}catch(e){kxCtx=null;}return kxCtx;}
-function kxUnlock(){
-  var c=kxCtxGet();if(!c)return;
-  try{var b=c.createBuffer(1,1,22050),src=c.createBufferSource();src.buffer=b;src.connect(c.destination);src.start(0);}catch(e){}
-  if(c.state==='running'){['pointerdown','touchend','keydown','click'].forEach(function(ev){document.removeEventListener(ev,kxUnlock,true);});}
-}
-['pointerdown','touchend','keydown','click'].forEach(function(ev){document.addEventListener(ev,kxUnlock,true);});
-function kxBeep(f,t,d,type){try{var c=kxCtxGet();if(!c)return;var o=c.createOscillator(),g=c.createGain(),n=c.currentTime+t;o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(0.15,n);g.gain.exponentialRampToValueAtTime(0.001,n+d);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+d);}catch(e){}}
-function kxFb(ok){
-  if(kxPref('kk_snd',true)){ if(ok){kxBeep(660,0,0.12);kxBeep(880,0.1,0.16);}else{kxBeep(220,0,0.25,'sawtooth');} }
-  if(kxPref('kk_vib',true)&&navigator.vibrate){try{navigator.vibrate(ok?25:[60,40,60]);}catch(e){}}
-}
-function kxHours(){try{var d=JSON.parse(localStorage.getItem('kk_hours'));if(Array.isArray(d)&&d.length===24)return d;}catch(e){}var a=[];for(var i=0;i<24;i++)a.push([0,0]);return a;}
-var kxCnt=0;
-function kxRec(ok){var d=kxHours(),h=new Date().getHours();d[h][ok?0:1]++;try{localStorage.setItem('kk_hours',JSON.stringify(d));}catch(e){}if(++kxCnt%20===0)kxAuto();}
-function kxBest(d){var tot=0,b=null,ba=-1,bn=0;d.forEach(function(x){tot+=x[0]+x[1];});if(tot<20)return null;
-  d.forEach(function(x,h){var n=x[0]+x[1];if(n<5)return;var a=x[0]/n;if(a>ba||(a===ba&&n>bn)){ba=a;bn=n;b=h;}});return b;}
-function kxAuto(){
-  if(!kxPref('kk_autorem',true))return;var cb=gid('reminderCheck');if(!cb||!cb.checked)return;
-  var b=kxBest(kxHours());if(b==null)return;if(String(b)===localStorage.getItem('kk_autohr'))return;
-  try{renderTimeRows([(b<10?'0':'')+b+':00']);onReminderSettingsChanged();localStorage.setItem('kk_autohr',String(b));}catch(e){}
-}
-function kxHourRender(){
-  var d=kxHours(),b=kxBest(d),box=gid('kxHourBox');box.innerHTML='';
-  var bars=document.createElement('div');bars.className='bars';
-  d.forEach(function(x,h){var n=x[0]+x[1],i=document.createElement('i');i.style.height=n?Math.max(4,Math.round(x[0]/n*100))+'%':'2px';i.title=h+' Uhr: '+(n?Math.round(x[0]/n*100)+' % ('+n+' Antworten)':'keine Daten');if(h===b)i.className='best';bars.appendChild(i);});
-  var p=document.createElement('p');p.className='hint';
-  if(b==null)p.textContent='Noch zu wenig Daten. Nach ein paar Übungen siehst du hier, wann deine Trefferquote am höchsten ist.';
-  else{var x=d[b];p.textContent='Beste Uhrzeit: '+b+'–'+(b+1)+' Uhr (Trefferquote '+Math.round(x[0]/(x[0]+x[1])*100)+' %). Balken: Trefferquote pro Stunde, 0–23 Uhr.';}
-  box.appendChild(bars);box.appendChild(p);
-}
-var _kxRH=recordHist;recordHist=function(id,dir,ok){_kxRH(id,dir,ok);kxFb(ok);kxRec(ok);};
-var _kxMC=matchClick;matchClick=function(btn){var m=smart&&smart.match,dn=m?Object.keys(m.done).length:0,er=m?m.errs:0;_kxMC(btn);if(m){if(m.errs>er){kxFb(false);kxRec(false);}else if(Object.keys(m.done).length>dn){kxFb(true);kxRec(true);}}};
+/* Töne, Vibration und Beste-Lernzeit-Statistik wurden entfernt */
 /* Einstellungen */
 function kxOv(id,show){gid(id).classList.toggle('hidden',!show);}
-gid('kxGearBtn').addEventListener('click',function(){gid('kxSnd').checked=kxPref('kk_snd',true);gid('kxVib').checked=kxPref('kk_vib',true);gid('kxAuto').checked=kxPref('kk_autorem',true);kxHourRender();kxOv('kxSetOv',true);});
+gid('kxGearBtn').addEventListener('click',function(){kxOv('kxSetOv',true);});
 gid('kxSetClose').addEventListener('click',function(){kxOv('kxSetOv',false);});
 
 (function(){
@@ -11562,11 +11522,6 @@ gid('kxSetClose').addEventListener('click',function(){kxOv('kxSetOv',false);});
   gid('kxGearBtn').addEventListener('click',load);
   gid('kxTourBtn').addEventListener('click',function(){kxOv('kxSetOv',false);setTimeout(function(){kkTourStart(window._kkTourUid);},250);});
 })();
-gid('kxSnd').addEventListener('change',function(e){kxSet('kk_snd',e.target.checked);if(e.target.checked)kxFb(true);});
-gid('kxVib').addEventListener('change',function(e){kxSet('kk_vib',e.target.checked);if(e.target.checked)kxFb(true);});
-gid('kxAuto').addEventListener('change',function(e){kxSet('kk_autorem',e.target.checked);try{localStorage.removeItem('kk_autohr');}catch(x){}if(e.target.checked)kxAuto();});
-gid('reminderCheck').addEventListener('change',function(){setTimeout(kxAuto,1500);});
-setTimeout(kxAuto,4000);
 ['kxSetOv','kxFbOv','kxMemOv'].forEach(function(id){gid(id).addEventListener('click',function(e){if(e.target===gid(id))kxOv(id,false);});});
 /* Feedback mit Sternen */
 var kxStarN=0;
@@ -11574,9 +11529,11 @@ function kxStarsRender(){var el=gid('kxStars');el.innerHTML='';for(var i=1;i<=5;
 function kxFbSummary(){
   var box=gid('kxFbSum');box.innerHTML='';box.classList.add('hidden');
   var c=getSb();if(!c||!c.from)return;
+  box.textContent='Bewertungen werden geladen …';box.classList.remove('hidden');
   function show(cnt){
+    box.textContent='';
     var total=0,sum=0,k;for(k=1;k<=5;k++){total+=cnt[k];sum+=cnt[k]*k;}
-    if(!total)return;
+    if(!total){var em=document.createElement('p');em.className='hint';em.textContent='Noch keine Bewertungen vorhanden.';box.appendChild(em);return;}
     var avg=sum/total,top=document.createElement('div');top.className='kx-top';
     var st='';for(k=1;k<=5;k++)st+=k<=Math.round(avg)?'★':'☆';
     top.innerHTML='<strong>Ø '+avg.toFixed(1).replace('.',',')+'</strong><span class="st">'+st+'</span><small>aus '+total+' Bewertung'+(total===1?'':'en')+'</small>';
@@ -11588,12 +11545,13 @@ function kxFbSummary(){
   var p=c.rpc?c.rpc('app_feedback_summary'):Promise.resolve({error:true});
   Promise.resolve(p).then(function(r){
     if(r&&!r.error&&Array.isArray(r.data)){show(fromRows(r.data,true));return;}
-    return c.from('app_feedback').select('stars').limit(5000).then(function(r2){if(r2&&!r2.error&&r2.data)show(fromRows(r2.data,false));});
-  }).catch(function(){});
+    return c.from('app_feedback').select('stars').limit(5000).then(function(r2){if(r2&&!r2.error&&r2.data)show(fromRows(r2.data,false));else box.classList.add('hidden');});
+  }).catch(function(){box.classList.add('hidden');});
 }
 gid('kxFbBtn').addEventListener('click',function(){kxStarN=0;kxStarsRender();kxFbSummary();gid('kxFbText').value='';gid('kxFbMsg').textContent='';gid('kxFbSend').disabled=false;kxOv('kxFbOv',true);});
 gid('kxFbClose').addEventListener('click',function(){kxOv('kxFbOv',false);});
 gid('kxFbSend').addEventListener('click',function(){
+  var ls=gid('login-screen');if(ls&&!ls.classList.contains('hidden'))return;
   var msg=gid('kxFbMsg');if(!kxStarN){msg.textContent='Bitte wähle zuerst Sterne aus.';return;}
   var c=getSb();if(!c||!c.from){msg.textContent='Keine Verbindung.';return;}
   var txt=gid('kxFbText').value.trim();gid('kxFbSend').disabled=true;
@@ -11647,9 +11605,9 @@ function kxFlip(i,b){
   c.up=true;b.className='kx-card up';b.textContent=c.t;kxM.open.push(c);
   if(kxM.open.length<2)return;
   var x=kxM.open[0],y=kxM.open[1];kxM.moves++;
-  if(x.id===y.id){x.ok=y.ok=true;x.el.className=y.el.className='kx-card ok';kxM.open=[];kxM.done++;kxFb(true);kxMemInfo();
+  if(x.id===y.id){x.ok=y.ok=true;x.el.className=y.el.className='kx-card ok';kxM.open=[];kxM.done++;kxMemInfo();
     if(kxM.done===kxM.n){gid('kxMemRes').textContent='Geschafft in '+kxM.moves+' Zügen!';var last=kxM.ri>=kxM.rounds.length-1;gid('kxMemNext').textContent=last?'Fertig':'Nächste Runde';gid('kxMemEnd').classList.remove('hidden');}
-  }else{kxM.lock=true;kxFb(false);kxMemInfo();setTimeout(function(){[x,y].forEach(function(z){z.up=false;z.el.className='kx-card';z.el.textContent='?';});kxM.open=[];kxM.lock=false;},900);}
+  }else{kxM.lock=true;kxMemInfo();setTimeout(function(){[x,y].forEach(function(z){z.up=false;z.el.className='kx-card';z.el.textContent='?';});kxM.open=[];kxM.lock=false;},900);}
 }
 gid('kxMemNext').addEventListener('click',function(){if(kxM.ri>=kxM.rounds.length-1){kxOv('kxMemOv',false);return;}kxM.ri++;kxMemRound();});
 gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
@@ -12322,7 +12280,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 (function () {
   var box = document.querySelector('#kxSetOv .kx-box'); if (!box) return;
   var g = document.getElementById('grp_goals'), a = document.getElementById('grp_acct');
-  var best = document.getElementById('kxAuto'); best = best && best.closest('details');
+  var best = document.getElementById('kxTolDetails');
   [g, a].forEach(function (n) { if (n) { n.classList.remove('ui-hidden'); n.classList.remove('hidden'); } });
   if (g) box.insertBefore(g, best || null);
   if (a) box.appendChild(a);
@@ -12434,7 +12392,10 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   #kkDock .quick-nav-toggle-icon { font-size: 22px; line-height: 1; }
   #kkDock .fab-badge { top: 0; right: 14%; }
   #kkDock > button { position: relative !important; inset: auto !important; left: auto !important; right: auto !important; top: auto !important; bottom: auto !important; }
-  body:has(#login-screen:not(.hidden)) #kkDock { display: none; }
+  /* Anmeldeseite: nur der Support-Knopf bleibt in der Leiste sichtbar */
+  body:has(#login-screen:not(.hidden)) #kkDock { justify-content: center; }
+  body:has(#login-screen:not(.hidden)) #kkDock > button:not(#supportOpenBtn):not(#kxFbBtn) { display: none !important; }
+  body:has(#login-screen:not(.hidden)) #kkDock > #supportOpenBtn, body:has(#login-screen:not(.hidden)) #kkDock > #kxFbBtn { flex: 0 1 160px; }
   body:has(#quickNav.hidden) #kkDock #quickNavToggle, body:has(#quickNav.hidden) #kkDock #quickNavTop { display: none !important; }
   .quick-nav { top: auto !important; right: 8px !important; bottom: calc(76px + env(safe-area-inset-bottom)) !important; transform: none; }
   body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
@@ -12463,7 +12424,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
 (function () {
   function build() {
     if (document.getElementById('kkDock')) return;
-    var order = ['quickNavToggle', 'kxGearBtn', 'kxFbBtn', 'supportOpenBtn', 'supportInboxBtn', 'quickNavTop'];
+    var order = ['quickNavToggle', 'kxGearBtn', 'kxFbBtn', 'supportOpenBtn', 'supportInboxBtn'];
     var els = order.map(function (i) { return document.getElementById(i); });
     if (!els[0] || !els[1]) return;
     var dock = document.createElement('div'); dock.id = 'kkDock'; dock.setAttribute('role', 'toolbar'); dock.setAttribute('aria-label', 'Schnellzugriff');
@@ -12477,6 +12438,152 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
     var ad = document.querySelector('#supportInboxBtn .fab-lbl'); if (ad) ad.textContent = 'Admin';
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build); else build();
+})();
+</script>
+<style id="kk-chevron-style">
+  /* Auf-/Zuklapp-Symbole: einheitliche Linien-Pfeile statt Zeichen, die als Emoji dargestellt werden */
+  details.fold > summary::before, #kkViewPanel > summary::before {
+    content: '' !important; width: 14px; height: 14px; font-size: 0 !important; background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 5l7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  #kkViewPanel > summary::after, #kkViewPanel[open] > summary::after { content: none !important; }
+  /* Anmeldeseite: Bewertungen nur ansehen, nicht senden */
+  body:has(#login-screen:not(.hidden)) #kxStars, body:has(#login-screen:not(.hidden)) #kxFbText, body:has(#login-screen:not(.hidden)) #kxFbSend { display: none !important; }
+  body:has(#login-screen:not(.hidden)) #kxFbLoginHint { display: block !important; }
+</style>
+<style id="kk-pages-style">
+  :root { --kk-dock-h: calc(68px + env(safe-area-inset-bottom, 0px)); --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; }
+
+  /* ===== Seiten statt Pop-ups: gleiche Größe, Leiste unten bleibt sichtbar ===== */
+  .kx-ov, .support-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: var(--kk-dock-h); z-index: 55; background: var(--bg); padding: 0; display: block; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .kx-ov.hidden, .support-overlay.hidden { display: none !important; }
+  .kx-ov:not(.hidden), .support-overlay:not(.hidden) { animation: kkPageIn .18s ease-out; }
+  @keyframes kkPageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  body:has(.kx-ov:not(.hidden)), body:has(.support-overlay:not(.hidden)) { overflow: hidden; }
+  .kx-box, .support-box, .support-box.inbox-box { width: min(760px, 100%) !important; max-width: 760px; min-height: 100%; max-height: none !important; margin: 0 auto; box-sizing: border-box; overflow: visible !important; background: transparent !important; color: var(--ink) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 var(--sp-4) var(--sp-5) !important; gap: var(--sp-3) !important; outline: none; }
+  .kx-row, .inbox-head, .support-box > h2 { position: sticky; top: 0; z-index: 3; background: var(--bg); padding: var(--sp-4) 0 var(--sp-3) !important; margin: 0 !important; border-bottom: 1.5px solid var(--border); }
+  .support-box > h2 { font-size: 20px; }
+  .kx-row h2, .inbox-head h2 { font-size: 20px; }
+
+  /* Support/Admin-Seite im Farbschema der App (vorher helles Fenster) */
+  .support-box input, .support-box textarea, .support-box select { background: var(--surface); color: var(--ink); border: 1.5px solid var(--border); }
+  .support-box label { font-weight: 700; }
+  .support-tab { background: transparent !important; color: var(--ink) !important; border: 2px solid var(--border) !important; font-weight: 700; }
+  .support-tab.active { background: var(--rust) !important; border-color: var(--rust) !important; color: var(--rust-contrast) !important; }
+  .inbox-head button, .inbox-thread-actions button { background: transparent !important; color: var(--ink) !important; border: 2px solid var(--ink) !important; font-weight: 700; }
+  .inbox-item { background: var(--surface) !important; border-color: var(--border) !important; color: var(--ink); }
+  .inbox-item:hover { border-color: var(--rust) !important; }
+  .inbox-item .meta, .inbox-hint, .inbox-bubble small { color: var(--muted) !important; }
+  .inbox-item .prev { color: var(--ink) !important; }
+  .inbox-bubble.in { background: var(--surface) !important; border: 1px solid var(--border); }
+  .inbox-bubble.out { background: color-mix(in srgb, var(--rust) 16%, var(--bg)) !important; border: 1px solid var(--border); }
+  .support-box .support-actions { position: sticky; bottom: 0; background: var(--bg); padding: var(--sp-3) 0; border-top: 1.5px solid var(--border); margin-top: auto; }
+
+  /* Aktive Seite in der unteren Leiste markieren */
+  #kkDock > button.kk-active { color: var(--rust) !important; background: var(--surface) !important; }
+
+  /* ===== Hoch-Knopf: klein, am Rand über der Leiste, nur nach dem Scrollen ===== */
+  #quickNav { pointer-events: none; }
+  #quickNav > * { pointer-events: auto; }
+  #quickNav .quick-nav-top { position: fixed !important; right: 12px; bottom: calc(var(--kk-dock-h) + 12px) !important; left: auto; top: auto; width: 44px !important; height: 44px !important; margin: 0 !important; border-radius: 50% !important; box-shadow: 0 2px 10px rgba(0,0,0,.3); opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity .18s, transform .18s, visibility .18s; z-index: 54; }
+  #quickNav .quick-nav-top.kk-top-show { opacity: 1; visibility: visible; transform: none; }
+  #quickNav .quick-nav-top .fab-lbl { display: none !important; }
+  #quickNav .quick-nav-panel { position: fixed; left: 8px; right: auto; bottom: calc(var(--kk-dock-h) + 8px); z-index: 54; }
+
+  /* ===== Icons ===== */
+  .kk-ic { display: inline-flex; vertical-align: -3px; line-height: 0; margin-right: 6px; }
+  .kk-ic:last-child { margin-right: 0; }
+  .kk-ic svg { width: 1.1em; height: 1.1em; }
+  button > .kk-ic:only-child, .lp-caret > .kk-ic, .quick-nav-toggle-icon > .kk-ic { margin-right: 0; }
+  .quick-nav-toggle-icon .kk-ic svg { width: 22px; height: 22px; }
+  .lp-folder-head .lp-caret { width: auto; }
+
+  /* ===== Bedienbarkeit ===== */
+  :focus-visible { outline: 2px solid var(--rust); outline-offset: 2px; }
+  @media (pointer: coarse) { .kx-box button, .support-box button, .support-tab { min-height: 44px; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+</style>
+<script>
+/* Seiten statt Pop-ups, Hoch-Knopf, Symbole */
+(function () {
+  function gid(i) { return document.getElementById(i); }
+  var PAGES = { kxGearBtn: 'kxSetOv', kxFbBtn: 'kxFbOv', supportOpenBtn: 'supportOverlay', supportInboxBtn: 'inboxOverlay' };
+  var CLOSE = { kxSetOv: 'kxSetClose', kxFbOv: 'kxFbClose', kxMemOv: 'kxMemClose', supportOverlay: 'supportCancelBtn', inboxOverlay: 'inboxCloseBtn' };
+  var ALL = ['kxMemOv', 'kxSetOv', 'kxFbOv', 'supportOverlay', 'inboxOverlay'];
+  function isOpen(id) { var e = gid(id); return !!(e && !e.classList.contains('hidden')); }
+  function closeOne(id) { var b = gid(CLOSE[id]); if (b) b.click(); else if (gid(id)) gid(id).classList.add('hidden'); }
+
+  // Leistenknopf: offene Seite wieder schließen, sonst andere Seiten zuerst schließen
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#kkDock > button'); if (!b) return;
+    var tgt = PAGES[b.id];
+    if (tgt && isOpen(tgt)) { e.stopImmediatePropagation(); e.preventDefault(); closeOne(tgt); return; }
+    ALL.forEach(function (id) { if (id !== tgt && isOpen(id)) closeOne(id); });
+  }, true);
+  // Esc schließt die oberste Seite
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || gid('ktCard')) return;
+    for (var i = 0; i < ALL.length; i++) { if (isOpen(ALL[i])) { closeOne(ALL[i]); e.preventDefault(); return; } }
+  });
+
+  // Leistenknopf der geöffneten Seite hervorheben, Fokus auf die Seite setzen
+  var was = {};
+  function sync() {
+    Object.keys(PAGES).forEach(function (bid) {
+      var b = gid(bid); if (!b) return; var on = isOpen(PAGES[bid]);
+      b.classList.toggle('kk-active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    ALL.forEach(function (id) {
+      var on = isOpen(id);
+      if (on && !was[id]) { var el = gid(id); el.scrollTop = 0; var box = el.firstElementChild; if (box) { box.setAttribute('tabindex', '-1'); try { box.focus({ preventScroll: true }); } catch (x) { } } }
+      was[id] = on;
+    });
+  }
+  function watch() { ALL.forEach(function (id) { var el = gid(id); if (el) new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['class'] }); }); sync(); }
+
+  // Höhe der unteren Leiste messen (für die Seitenhöhe)
+  function dockH() { var d = gid('kkDock'); if (!d) return; document.documentElement.style.setProperty('--kk-dock-h', d.offsetHeight + 'px'); }
+  function dock() { var d = gid('kkDock'); if (!d) { setTimeout(dock, 300); return; } dockH(); if (window.ResizeObserver) new ResizeObserver(dockH).observe(d); window.addEventListener('resize', dockH); }
+
+  // Hoch-Knopf nur nach dem Scrollen zeigen
+  function topBtn() {
+    var t = gid('quickNavTop'); if (!t) return;
+    function upd() { t.classList.toggle('kk-top-show', (window.scrollY || document.documentElement.scrollTop) > 400); }
+    window.addEventListener('scroll', upd, { passive: true }); upd();
+  }
+
+  // Symbole: Zeichen, die je nach Gerät als Emoji erscheinen, durch Linien-Icons ersetzen
+  var P = { x: '<path d="M6 6l12 12M18 6L6 18"/>', up: '<path d="M12 19V6M6 11l6-6 6 6"/>', down: '<path d="M12 5v13M6 13l6 6 6-6"/>',
+    chev: '<path d="M9 5l7 7-7 7"/>', chevd: '<path d="M5 9l7 7 7-7"/>', left: '<path d="M15 5l-7 7 7 7"/>', right: '<path d="M9 5l7 7-7 7"/>',
+    edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>', undo: '<path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12" transform="translate(0,-5)"/>',
+    menu: '<path d="M4 6h16M4 12h16M4 18h16"/>', cards: '<rect x="4" y="6" width="13" height="14" rx="2"/><path d="M8 3h11a1 1 0 0 1 1 1v12"/>' };
+  var G = { '✕': 'x', '✖': 'x', '▲': 'up', '▼': 'down', '▸': 'chev', '▾': 'chevd', '◀': 'left', '▶': 'right', '✎': 'edit', '↩️': 'undo', '↩': 'undo', '☰': 'menu', '🂠': 'cards', '🃏': 'cards' };
+  var RE = /^\s*(✕|✖|▲|▼|▸|▾|◀|▶|✎|↩️|↩|☰|🂠|🃏)\uFE0F?\s*/;
+  function svg(n) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P[n] + '</svg>'; }
+  function fix(root) {
+    if (!root || root.nodeType !== 1 && root.nodeType !== 3) return;
+    var base = root.nodeType === 3 ? root.parentNode : root; if (!base) return;
+    var w = document.createTreeWalker(base, NodeFilter.SHOW_TEXT, null), list = [], n;
+    while ((n = w.nextNode())) { if (RE.test(n.nodeValue)) { var pt = n.parentNode && n.parentNode.nodeName; if (pt !== 'SCRIPT' && pt !== 'STYLE' && pt !== 'TEXTAREA' && pt !== 'OPTION') list.push(n); } }
+    list.forEach(function (t) {
+      var m = t.nodeValue.match(RE); if (!m) return;
+      var sp = document.createElement('span'); sp.className = 'kk-ic'; sp.setAttribute('aria-hidden', 'true'); sp.innerHTML = svg(G[m[1]]);
+      var rest = t.nodeValue.slice(m[0].length); t.parentNode.insertBefore(sp, t);
+      if (rest) t.nodeValue = rest; else t.parentNode.removeChild(t);
+    });
+  }
+  var q = [], busy = false;
+  function flush() { busy = false; var l = q; q = []; l.forEach(fix); }
+  function schedule(n) { q.push(n); if (!busy) { busy = true; (window.requestAnimationFrame || setTimeout)(flush); } }
+  function icons() {
+    fix(document.body);
+    new MutationObserver(function (ms) { ms.forEach(function (m) { if (m.type === 'characterData') schedule(m.target); else Array.prototype.forEach.call(m.addedNodes, schedule); }); })
+      .observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+  function init() { watch(); dock(); topBtn(); icons(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
 </body>
