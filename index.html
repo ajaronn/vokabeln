@@ -243,7 +243,10 @@
   .app-header { margin-bottom: 24px; }
   .header-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
   .app-title { font-weight: 700; font-size: 40px; margin: 0; letter-spacing: 0.01em; }
-  .app-logo { height: 1.7em; width: auto; vertical-align: -0.45em; margin-right: 0.25em; }
+  .app-logo { height: 1.7em; width: 1.7em; border-radius: 22%; object-fit: cover; vertical-align: -0.45em; margin-right: 0.3em; }
+  .kk-screen-logo { display: flex; align-items: center; margin: 0 0 12px; }
+  .kk-screen-logo .app-logo { height: 48px; width: 48px; margin: 0; vertical-align: middle; }
+  .kx-box > .kk-screen-logo .app-logo, .support-box > .kk-screen-logo .app-logo, .lang-modal > .kk-screen-logo .app-logo { height: 40px; width: 40px; }
   .header-lang { font-style: italic; font-size: 19px; color: var(--muted); font-weight: 600; white-space: nowrap; }
   .swap-icon-inline { color: var(--rust); font-style: normal; margin: 0 2px; }
   .header-rule { height: 3px; background: var(--ink); margin: 16px 0 4px 0; }
@@ -796,7 +799,7 @@
 
 <div id="login-screen" class="screen">
   <div class="login-box">
-    <h1 class="app-title"><svg class="app-logo" viewBox="4 2 56 58" role="img" aria-label="Karteikasten Logo"><rect x="14" y="8" width="26" height="36" rx="4" transform="rotate(-12 27 44)" fill="#D9A441"/><rect x="24" y="8" width="26" height="36" rx="4" transform="rotate(10 37 44)" fill="#A8442E"/><rect x="19" y="12" width="26" height="36" rx="4" fill="#FBF6EA" stroke="#241A10" stroke-width="2.5"/><path d="M25 22h14M25 28h9" stroke="#241A10" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="8" y="36" width="48" height="22" rx="5" fill="#241A10"/><rect x="25" y="43" width="14" height="6" rx="3" fill="#D9A441"/></svg>Karteikasten</h1>
+    <h1 class="app-title"><img class="app-logo" data-kk-logo alt="Karteikasten Logo" src="icon-rost-192.png">Karteikasten</h1>
 
     <div id="loginModeNormal">
       <p class="hint">Anmelden mit E-Mail und Passwort.</p>
@@ -921,7 +924,7 @@
   <div id="setup-screen" class="screen">
     <header class="app-header">
       <div class="header-row">
-        <h1 class="app-title"><svg class="app-logo" viewBox="4 2 56 58" role="img" aria-label="Karteikasten Logo"><rect x="14" y="8" width="26" height="36" rx="4" transform="rotate(-12 27 44)" fill="#D9A441"/><rect x="24" y="8" width="26" height="36" rx="4" transform="rotate(10 37 44)" fill="#A8442E"/><rect x="19" y="12" width="26" height="36" rx="4" fill="#FBF6EA" stroke="#241A10" stroke-width="2.5"/><path d="M25 22h14M25 28h9" stroke="#241A10" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="8" y="36" width="48" height="22" rx="5" fill="#241A10"/><rect x="25" y="43" width="14" height="6" rx="3" fill="#D9A441"/></svg>Karteikasten</h1>
+        <h1 class="app-title"><img class="app-logo" data-kk-logo alt="Karteikasten Logo" src="icon-rost-192.png">Karteikasten</h1>
         <div class="header-lang">
           <span id="headerLangSubtitleA">Deutsch</span><span class="swap-icon-inline">⇄</span><span id="headerLangSubtitleB">Englisch</span>
         </div>
@@ -13364,7 +13367,10 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
   var KEY = 'kk_appicon', V = [['rost', 'Rost'], ['tinte', 'Tinte'], ['papier', 'Papier'], ['gold', 'Gold']];
   function abs(f) { return new URL(f, location.href).href; }
   function cur() { try { var v = localStorage.getItem(KEY); if (V.some(function (x) { return x[0] === v; })) return v; } catch (e) { } return 'rost'; }
+  function logos(k) { document.querySelectorAll('img[data-kk-logo]').forEach(function (i) { i.src = 'icon-' + k + '-192.png'; }); }
+  function ensure() { document.querySelectorAll('.screen, .kx-box, .support-box, .lang-modal').forEach(function (sc) { if (sc.querySelector('[data-kk-logo]')) return; var d = document.createElement('div'); d.className = 'kk-screen-logo'; d.innerHTML = '<img class="app-logo" data-kk-logo alt="Karteikasten Logo" src="icon-rost-192.png">'; sc.insertBefore(d, sc.firstChild); }); }
   function apply(k) {
+    ensure(); logos(k);
     var t = document.querySelector('link[rel="apple-touch-icon"]'), i = document.querySelector('link[rel="icon"][sizes]'), m = document.querySelector('link[rel="manifest"]');
     if (t) t.href = 'touch-' + k + '.png';
     if (i) i.href = 'icon-' + k + '-192.png';
@@ -13390,6 +13396,7 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
     mark(); return true;
   }
   apply(cur());
+  var t0; new MutationObserver(function () { clearTimeout(t0); t0 = setTimeout(function () { ensure(); logos(cur()); }, 250); }).observe(document.body, { childList: true, subtree: true });
   var n = 0; (function wait() { if (build() || ++n > 80) return; setTimeout(wait, 250); })();
 })();
 </script>
