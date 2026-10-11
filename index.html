@@ -13358,5 +13358,40 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
 })();
 
 </script>
+<script>
+/* ===== App-Symbol wählen (Einstellungen) ===== */
+(function () {
+  var KEY = 'kk_appicon', V = [['rost', 'Rost'], ['tinte', 'Tinte'], ['papier', 'Papier'], ['gold', 'Gold']];
+  function abs(f) { return new URL(f, location.href).href; }
+  function cur() { try { var v = localStorage.getItem(KEY); if (V.some(function (x) { return x[0] === v; })) return v; } catch (e) { } return 'rost'; }
+  function apply(k) {
+    var t = document.querySelector('link[rel="apple-touch-icon"]'), i = document.querySelector('link[rel="icon"][sizes]'), m = document.querySelector('link[rel="manifest"]');
+    if (t) t.href = 'touch-' + k + '.png';
+    if (i) i.href = 'icon-' + k + '-192.png';
+    if (m) {
+      var mf = { name: 'Karteikasten', short_name: 'Karteikasten', start_url: abs('./'), scope: abs('./'), display: 'standalone', background_color: '#F0E5C8', theme_color: '#A8442E',
+        icons: [{ src: abs('icon-' + k + '-192.png'), sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: abs('icon-' + k + '-512.png'), sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: abs('icon-' + k + '-512.png'), sizes: '512x512', type: 'image/png', purpose: 'maskable' }] };
+      m.href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' }));
+    }
+  }
+  function build() {
+    var box = document.querySelector('#kxSetOv .kx-box'); if (!box || document.getElementById('kkIconPick')) return !!box;
+    var w = document.createElement('div'); w.id = 'kkIconPick'; w.style.cssText = 'margin:12px 0;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface)';
+    w.innerHTML = '<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px">App-Symbol</div><div id="kkIconRow" style="display:flex;gap:10px;flex-wrap:wrap"></div><p id="kkIconMsg" style="font-size:13px;color:var(--muted);margin:8px 0 0"></p>';
+    box.appendChild(w); var row = w.querySelector('#kkIconRow');
+    V.forEach(function (v) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'App-Symbol ' + v[1]); b.dataset.k = v[0];
+      b.style.cssText = 'padding:3px;border-radius:16px;border:3px solid transparent;background:transparent;cursor:pointer;line-height:0';
+      b.innerHTML = '<img src="icon-' + v[0] + '-192.png" alt="" width="56" height="56" style="border-radius:13px">';
+      b.addEventListener('click', function () { try { localStorage.setItem(KEY, v[0]); } catch (e) { } apply(v[0]); mark(); w.querySelector('#kkIconMsg').textContent = v[1] + ' gewählt. Damit es auf dem Startbildschirm erscheint: App dort entfernen und neu hinzufügen.'; });
+      row.appendChild(b);
+    });
+    function mark() { var c = cur(); row.querySelectorAll('button').forEach(function (b) { b.style.borderColor = b.dataset.k === c ? 'var(--rust)' : 'transparent'; }); }
+    mark(); return true;
+  }
+  apply(cur());
+  var n = 0; (function wait() { if (build() || ++n > 80) return; setTimeout(wait, 250); })();
+})();
+</script>
 </body>
 </html>
