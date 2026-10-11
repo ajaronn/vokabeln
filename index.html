@@ -197,6 +197,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Karteikasten</title>
+<meta name="description" content="Vokabeln lernen mit Karteikasten">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Karteikasten">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="Karteikasten">
+<meta property="og:description" content="Vokabeln lernen mit Karteikasten">
+<meta property="og:url" content="https://ajaronn.github.io/vokabeln/">
+<meta property="og:image" content="https://ajaronn.github.io/vokabeln/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Karteikasten">
+<meta name="twitter:description" content="Vokabeln lernen mit Karteikasten">
+<meta name="twitter:image" content="https://ajaronn.github.io/vokabeln/og-image.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Karteikasten">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23A8442E%22/%3E%3Cg%20transform%3D%22translate%289.6%209.2%29%20scale%28.7%29%22%3E%3Crect%20x%3D%2214%22%20y%3D%228%22%20width%3D%2226%22%20height%3D%2236%22%20rx%3D%224%22%20transform%3D%22rotate%28-12%2027%2044%29%22%20fill%3D%22%23D9A441%22/%3E%3Crect%20x%3D%2224%22%20y%3D%228%22%20width%3D%2226%22%20height%3D%2236%22%20rx%3D%224%22%20transform%3D%22rotate%2810%2037%2044%29%22%20fill%3D%22%23F1DCD5%22/%3E%3Crect%20x%3D%2219%22%20y%3D%2212%22%20width%3D%2226%22%20height%3D%2236%22%20rx%3D%224%22%20fill%3D%22%23FBF6EA%22%20stroke%3D%22%23241A10%22%20stroke-width%3D%222.5%22/%3E%3Crect%20x%3D%228%22%20y%3D%2236%22%20width%3D%2248%22%20height%3D%2222%22%20rx%3D%225%22%20fill%3D%22%23241A10%22/%3E%3Crect%20x%3D%2225%22%20y%3D%2243%22%20width%3D%2214%22%20height%3D%226%22%20rx%3D%223%22%20fill%3D%22%23D9A441%22/%3E%3C/g%3E%3C/svg%3E">
@@ -245,6 +259,13 @@
   .app-title { font-weight: 700; font-size: 40px; margin: 0; letter-spacing: 0.01em; }
   .app-logo { height: 1.7em; width: 1.7em; border-radius: 22%; object-fit: cover; vertical-align: -0.45em; margin-right: 0.3em; }
   .cf-turnstile, [id$="Turnstile"] { max-width: 100%; min-width: 0; overflow: hidden; }
+  #grp_acct .danger-section { margin-top: 24px; padding-top: 16px; border-top: 2px solid var(--error, #b3261e); }
+  #kkSplash { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: var(--bg, #F0E5C8); color: var(--ink, #241A10); transition: opacity .35s ease; }
+  #kkSplash.out { opacity: 0; pointer-events: none; }
+  #kkSplash img { width: 96px; height: 96px; border-radius: 22%; box-shadow: 0 10px 28px -10px rgba(0,0,0,.45); animation: kkPulse 1.4s ease-in-out infinite; }
+  #kkSplash span { font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 30px; letter-spacing: .01em; }
+  @keyframes kkPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  @media (prefers-reduced-motion: reduce) { #kkSplash img { animation: none; } }
   .kk-screen-logo { display: flex; align-items: center; margin: 0 0 12px; }
   .kk-screen-logo .app-logo { height: 48px; width: 48px; margin: 0; vertical-align: middle; }
   .kk-h-logo { height: 32px !important; width: 32px !important; margin: 0 10px 0 0 !important; vertical-align: middle !important; display: inline-block; }
@@ -743,6 +764,8 @@
 </style>
 </head>
 <body>
+<div id="kkSplash" role="status" aria-label="Karteikasten wird geladen"><img data-kk-logo alt="" src="icon-rost-192.png"><span>Karteikasten</span></div>
+<script>(function(){var n=0,k="";try{k=localStorage.getItem("kk_appicon")||""}catch(e){}if(/^(rost|tinte|papier|gold)$/.test(k)){var i=document.querySelector("#kkSplash img");if(i)i.src="icon-"+k+"-192.png"}var t0=Date.now(),done=false;function hide(){if(done)return;done=true;var s=document.getElementById("kkSplash");if(!s)return;s.classList.add("out");setTimeout(function(){s.remove()},450)}function go(){var w=Math.max(0,700-(Date.now()-t0));setTimeout(hide,w)}if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,6000)})();</script>
 <div id="linkResultBanner" class="link-result-banner hidden" role="status" aria-live="polite">
   <span id="linkResultText"></span>
   <button type="button" id="linkResultCloseBtn" aria-label="Meldung schließen">✕</button>
@@ -12173,7 +12196,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   g.lists = group('lists', 'Meine Listen', [C('.lists-section'), C('.rename-section'), C('.lang-section')], null, null, true, 'open');
   g.vocab = group('vocab', 'Vokabeln', [C('.vocab-section')], null, null, true);
   g.learn = group('learn', 'Lernen & Übungen', ['.direction-section','.time-section','.weak-section','.mc-section','.smart-section','.conf-section','.know-section','.browse-section','.mirror-section'].map(C), null, null, true, 'open');
-  g.acct = group('acct', 'Einstellungen & Konto', ['#mfaSection','#loginPrefsSection','#deviceLoginSection','#devicesSection','#backupSection','#pzSection','.danger-section','#emailChangeSection','#passwordChangeSection'].reduce(function (a, q) { scr.querySelectorAll(':scope > ' + q).forEach(function (n) { a.push(n); }); return a; }, []), null, null, false, 'closed');
+  g.acct = group('acct', 'Einstellungen & Konto', ['#mfaSection','#loginPrefsSection','#deviceLoginSection','#devicesSection','#emailChangeSection','#passwordChangeSection','#backupSection','#pzSection','.danger-section'].reduce(function (a, q) { scr.querySelectorAll(':scope > ' + q).forEach(function (n) { a.push(n); }); return a; }, []), null, null, false, 'closed');
   // Reihenfolge: Ziele-Gruppe bleibt im Kopfbereich, Konto-Gruppe ganz unten
   if (g.acct) { var last = g.acct; scr.appendChild(last); }
   // Auswahl oben: was angezeigt wird
