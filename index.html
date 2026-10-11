@@ -246,6 +246,7 @@
   .app-logo { height: 1.7em; width: 1.7em; border-radius: 22%; object-fit: cover; vertical-align: -0.45em; margin-right: 0.3em; }
   .kk-screen-logo { display: flex; align-items: center; margin: 0 0 12px; }
   .kk-screen-logo .app-logo { height: 48px; width: 48px; margin: 0; vertical-align: middle; }
+  .kk-h-logo { height: 32px !important; width: 32px !important; margin: 0 10px 0 0 !important; vertical-align: middle !important; display: inline-block; }
   .kx-box > .kk-screen-logo .app-logo, .support-box > .kk-screen-logo .app-logo, .lang-modal > .kk-screen-logo .app-logo { height: 40px; width: 40px; }
   .header-lang { font-style: italic; font-size: 19px; color: var(--muted); font-weight: 600; white-space: nowrap; }
   .swap-icon-inline { color: var(--rust); font-style: normal; margin: 0 2px; }
@@ -799,7 +800,7 @@
 
 <div id="login-screen" class="screen">
   <div class="login-box">
-    <h1 class="app-title"><img class="app-logo" data-kk-logo alt="Karteikasten Logo" src="icon-rost-192.png">Karteikasten</h1>
+    <h1 class="app-title"><img class="app-logo" data-kk-logo alt="" src="icon-rost-192.png">Karteikasten</h1>
 
     <div id="loginModeNormal">
       <p class="hint">Anmelden mit E-Mail und Passwort.</p>
@@ -924,7 +925,7 @@
   <div id="setup-screen" class="screen">
     <header class="app-header">
       <div class="header-row">
-        <h1 class="app-title"><img class="app-logo" data-kk-logo alt="Karteikasten Logo" src="icon-rost-192.png">Karteikasten</h1>
+        <h1 class="app-title"><img class="app-logo" data-kk-logo alt="" src="icon-rost-192.png">Karteikasten</h1>
         <div class="header-lang">
           <span id="headerLangSubtitleA">Deutsch</span><span class="swap-icon-inline">⇄</span><span id="headerLangSubtitleB">Englisch</span>
         </div>
@@ -13365,10 +13366,17 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
 /* ===== App-Symbol wählen (Einstellungen) ===== */
 (function () {
   var KEY = 'kk_appicon', V = [['rost', 'Rost'], ['tinte', 'Tinte'], ['papier', 'Papier'], ['gold', 'Gold']];
-  function abs(f) { return new URL(f, location.href).href; }
+  function abs(f) { try { return new URL(f, location.href).href; } catch (e) { return f; } }
   function cur() { try { var v = localStorage.getItem(KEY); if (V.some(function (x) { return x[0] === v; })) return v; } catch (e) { } return 'rost'; }
   function logos(k) { document.querySelectorAll('img[data-kk-logo]').forEach(function (i) { i.src = 'icon-' + k + '-192.png'; }); }
-  function ensure() { document.querySelectorAll('.screen, .kx-box, .support-box, .lang-modal').forEach(function (sc) { if (sc.querySelector('[data-kk-logo]')) return; var d = document.createElement('div'); d.className = 'kk-screen-logo'; d.innerHTML = '<img class="app-logo" data-kk-logo alt="Karteikasten Logo" src="icon-rost-192.png">'; sc.insertBefore(d, sc.firstChild); }); }
+  function ensure() {
+    document.querySelectorAll('.screen, .kx-box, .support-box, .lang-modal').forEach(function (sc) {
+      if (sc.querySelector('[data-kk-logo]')) return;
+      var small = !sc.classList.contains('screen'), h = small && sc.querySelector('h2');
+      if (h) { var im = document.createElement('img'); im.className = 'app-logo kk-h-logo'; im.setAttribute('data-kk-logo', ''); im.alt = ''; im.src = 'icon-rost-192.png'; h.insertBefore(im, h.firstChild); return; }
+      var d = document.createElement('div'); d.className = 'kk-screen-logo'; d.innerHTML = '<img class="app-logo" data-kk-logo alt="" src="icon-rost-192.png">'; sc.insertBefore(d, sc.firstChild);
+    });
+  }
   function apply(k) {
     ensure(); logos(k);
     var t = document.querySelector('link[rel="apple-touch-icon"]'), i = document.querySelector('link[rel="icon"][sizes]'), m = document.querySelector('link[rel="manifest"]');
