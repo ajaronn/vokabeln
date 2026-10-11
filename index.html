@@ -199,6 +199,10 @@
 <title>Karteikasten</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Karteikasten">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23A8442E%22/%3E%3Cg%20transform%3D%22translate%289.6%209.2%29%20scale%28.7%29%22%3E%3Crect%20x%3D%2214%22%20y%3D%228%22%20width%3D%2226%22%20height%3D%2236%22%20rx%3D%224%22%20transform%3D%22rotate%28-12%2027%2044%29%22%20fill%3D%22%23D9A441%22/%3E%3Crect%20x%3D%2224%22%20y%3D%228%22%20width%3D%2226%22%20height%3D%2236%22%20rx%3D%224%22%20transform%3D%22rotate%2810%2037%2044%29%22%20fill%3D%22%23F1DCD5%22/%3E%3Crect%20x%3D%2219%22%20y%3D%2212%22%20width%3D%2226%22%20height%3D%2236%22%20rx%3D%224%22%20fill%3D%22%23FBF6EA%22%20stroke%3D%22%23241A10%22%20stroke-width%3D%222.5%22/%3E%3Crect%20x%3D%228%22%20y%3D%2236%22%20width%3D%2248%22%20height%3D%2222%22%20rx%3D%225%22%20fill%3D%22%23241A10%22/%3E%3Crect%20x%3D%2225%22%20y%3D%2243%22%20width%3D%2214%22%20height%3D%226%22%20rx%3D%223%22%20fill%3D%22%23D9A441%22/%3E%3C/g%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <meta name="theme-color" content="#A8442E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -239,6 +243,7 @@
   .app-header { margin-bottom: 24px; }
   .header-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
   .app-title { font-weight: 700; font-size: 40px; margin: 0; letter-spacing: 0.01em; }
+  .app-logo { height: 1.7em; width: auto; vertical-align: -0.45em; margin-right: 0.25em; }
   .header-lang { font-style: italic; font-size: 19px; color: var(--muted); font-weight: 600; white-space: nowrap; }
   .swap-icon-inline { color: var(--rust); font-style: normal; margin: 0 2px; }
   .header-rule { height: 3px; background: var(--ink); margin: 16px 0 4px 0; }
@@ -791,7 +796,7 @@
 
 <div id="login-screen" class="screen">
   <div class="login-box">
-    <h1 class="app-title">Karteikasten</h1>
+    <h1 class="app-title"><svg class="app-logo" viewBox="4 2 56 58" role="img" aria-label="Karteikasten Logo"><rect x="14" y="8" width="26" height="36" rx="4" transform="rotate(-12 27 44)" fill="#D9A441"/><rect x="24" y="8" width="26" height="36" rx="4" transform="rotate(10 37 44)" fill="#A8442E"/><rect x="19" y="12" width="26" height="36" rx="4" fill="#FBF6EA" stroke="#241A10" stroke-width="2.5"/><path d="M25 22h14M25 28h9" stroke="#241A10" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="8" y="36" width="48" height="22" rx="5" fill="#241A10"/><rect x="25" y="43" width="14" height="6" rx="3" fill="#D9A441"/></svg>Karteikasten</h1>
 
     <div id="loginModeNormal">
       <p class="hint">Anmelden mit E-Mail und Passwort.</p>
@@ -916,7 +921,7 @@
   <div id="setup-screen" class="screen">
     <header class="app-header">
       <div class="header-row">
-        <h1 class="app-title">Karteikasten</h1>
+        <h1 class="app-title"><svg class="app-logo" viewBox="4 2 56 58" role="img" aria-label="Karteikasten Logo"><rect x="14" y="8" width="26" height="36" rx="4" transform="rotate(-12 27 44)" fill="#D9A441"/><rect x="24" y="8" width="26" height="36" rx="4" transform="rotate(10 37 44)" fill="#A8442E"/><rect x="19" y="12" width="26" height="36" rx="4" fill="#FBF6EA" stroke="#241A10" stroke-width="2.5"/><path d="M25 22h14M25 28h9" stroke="#241A10" stroke-width="2.5" stroke-linecap="round" fill="none"/><rect x="8" y="36" width="48" height="22" rx="5" fill="#241A10"/><rect x="25" y="43" width="14" height="6" rx="3" fill="#D9A441"/></svg>Karteikasten</h1>
         <div class="header-lang">
           <span id="headerLangSubtitleA">Deutsch</span><span class="swap-icon-inline">⇄</span><span id="headerLangSubtitleB">Englisch</span>
         </div>
