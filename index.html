@@ -136,7 +136,7 @@
   .ui-search-show { display:block !important; }
   #kkSearch { width:100%; box-sizing:border-box; margin:8px 0 8px; }
   .view-chip.theme { margin-left:auto; }
-  .app { zoom: var(--kk-zoom, 1); }
+  html { zoom: var(--kk-zoom, 1); }
   html[data-device="tablet"] .app { max-width: 780px; }
   html[data-device="pc"] .app { max-width: 1120px; padding-left: 32px; padding-right: 32px; }
   html[data-device="tablet"] .vocab-stack, html[data-device="pc"] .vocab-stack { max-width: 640px; }
@@ -244,6 +244,7 @@
   .header-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
   .app-title { font-weight: 700; font-size: 40px; margin: 0; letter-spacing: 0.01em; }
   .app-logo { height: 1.7em; width: 1.7em; border-radius: 22%; object-fit: cover; vertical-align: -0.45em; margin-right: 0.3em; }
+  .cf-turnstile, [id$="Turnstile"] { max-width: 100%; min-width: 0; overflow: hidden; }
   .kk-screen-logo { display: flex; align-items: center; margin: 0 0 12px; }
   .kk-screen-logo .app-logo { height: 48px; width: 48px; margin: 0; vertical-align: middle; }
   .kk-h-logo { height: 32px !important; width: 32px !important; margin: 0 10px 0 0 !important; vertical-align: middle !important; display: inline-block; }
@@ -795,6 +796,9 @@
     <button type="button" class="quick-nav-btn" data-target="openDeleteAccountBtn"><span class="qn-label">Konto löschen</span></button>
     <div class="quick-nav-group">Hilfe</div>
     <button type="button" class="quick-nav-btn" data-target="supportOpenBtn"><span class="qn-label">Support kontaktieren</span></button>
+    <div class="quick-nav-group">Rechtliches</div>
+    <button type="button" class="kk-qn-legal" data-kk-legal="imp"><span class="qn-label">Impressum</span></button>
+    <button type="button" class="kk-qn-legal" data-kk-legal="ds"><span class="qn-label">Datenschutz</span></button>
   </div>
 </nav>
 
@@ -809,20 +813,22 @@
         <input type="password" id="loginPasswordInput" autocomplete="current-password" placeholder="Passwort">
         <button type="button" class="pw-toggle-btn" data-target="loginPasswordInput">Anzeigen</button>
       </div>
-      <div class="cf-turnstile" id="loginTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" style="margin:8px 0;"></div>
+      <div class="cf-turnstile" id="loginTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" data-size="flexible" style="margin:8px 0;"></div>
       <button type="button" id="loginSubmitBtn" class="btn-small login-submit">Anmelden</button>
+      <p class="kk-consent">Mit dem Anmelden akzeptierst du die <button type="button" data-kk-legal="ds">Datenschutzerklärung</button> von Karteikasten.</p>
       <p class="hint" id="loginError" style="display:none;color:var(--error);"></p>
       <button type="button" id="forgotPwBtn" class="btn-text">Passwort vergessen?</button>
       <button type="button" id="magicLoginBtn" class="btn-text">Ohne Passwort anmelden (Link per E-Mail)</button>
       <button type="button" id="deviceLoginBtn" class="btn-text">Mit anderem Gerät anmelden</button>
       <div class="header-rule"></div>
       <button type="button" id="reqToggleBtn" class="btn-small">Neues Konto registrieren</button>
+      <div class="kk-legal-foot"><button type="button" data-kk-legal="imp">Impressum</button><button type="button" data-kk-legal="ds">Datenschutz</button></div>
     </div>
 
     <div id="forgotPwBox" style="display:none;flex-direction:column;gap:8px;">
       <p class="hint">Wir schicken dir einen Link zum Zurücksetzen an deine E-Mail-Adresse.</p>
       <input type="email" id="forgotPwEmailInput" autocomplete="email" placeholder="Deine E-Mail-Adresse">
-      <div class="cf-turnstile" id="forgotPwTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" style="margin:8px 0;"></div>
+      <div class="cf-turnstile" id="forgotPwTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" data-size="flexible" style="margin:8px 0;"></div>
       <button type="button" id="forgotPwSendBtn" class="btn-small login-submit">Link senden</button>
       <p class="hint" id="forgotPwMsg"></p>
       <button type="button" id="forgotPwBackBtn" class="btn-text">Zurück</button>
@@ -831,7 +837,7 @@
     <div id="verifyBox" style="display:none;flex-direction:column;gap:8px;">
       <p class="hint">Zu viele fehlgeschlagene Anmeldeversuche. Wir haben einen Bestätigungslink an <strong id="verifyEmailLabel"></strong> geschickt. Öffne die E-Mail auf diesem Gerät und tippe den Link an, um es erneut zu versuchen.</p>
       <p class="hint" id="verifyMsg"></p>
-      <div class="cf-turnstile" id="verifyTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" style="margin:8px 0;"></div>
+      <div class="cf-turnstile" id="verifyTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" data-size="flexible" style="margin:8px 0;"></div>
       <button type="button" id="verifyResendBtn" class="btn-small login-submit">Link erneut senden</button>
       <button type="button" id="verifyBackBtn" class="btn-text">Zurück</button>
     </div>
@@ -897,8 +903,9 @@
         <input type="password" id="reqPasswordInput2" autocomplete="new-password" placeholder="Passwort wiederholen" maxlength="72">
         <button type="button" class="pw-toggle-btn" data-target="reqPasswordInput2">Anzeigen</button>
       </div>
-      <div class="cf-turnstile" id="reqTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" style="margin:8px 0;"></div>
+      <div class="cf-turnstile" id="reqTurnstile" data-sitekey="0x4AAAAAAFEK0m3-mklp8ZEV" data-size="flexible" style="margin:8px 0;"></div>
       <button type="button" id="reqSendBtn" class="btn-small login-submit">Konto erstellen</button>
+      <p class="kk-consent">Mit dem Erstellen eines Kontos akzeptierst du die <button type="button" data-kk-legal="ds">Datenschutzerklärung</button> von Karteikasten.</p>
       <p class="hint" id="reqMsg"></p>
       <button type="button" id="reqBackBtn" class="btn-text">Zurück</button>
     </div>
@@ -1868,6 +1875,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
 <label class="kx-sel">Abmelden nach Inaktivität von <select id="kxIdleSel"><option value="0">nie</option><option value="15">15 Minuten</option><option value="30">30 Minuten</option><option value="60">1 Stunde</option><option value="240">4 Stunden</option><option value="720">12 Stunden</option><option value="1440">1 Tag</option><option value="4320">3 Tagen</option><option value="10080">7 Tagen</option></select></label>
 <p class="hint keep">Gilt nur auf diesem Gerät. Als aktiv zählt Tippen, Klicken, Scrollen und Bewegen der Maus.</p></details>
 <button type="button" class="btn-outline" id="kxTourBtn" style="margin-top:12px;width:100%">Rundfahrt noch einmal ansehen</button>
+<div id="kkLegalSet" style="display:flex;gap:8px;margin-top:12px"><button type="button" class="btn-outline" data-kk-legal="imp" style="flex:1">Impressum</button><button type="button" class="btn-outline" data-kk-legal="ds" style="flex:1">Datenschutz</button></div>
 </div></div>
 <div id="kxFbOv" class="kx-ov hidden" role="dialog" aria-modal="true"><div class="kx-box">
 <div class="kx-row"><h2>Feedback</h2><button type="button" class="btn-small" id="kxFbClose">Schließen</button></div>
@@ -2438,7 +2446,18 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     });
   }
 
-  function showSetupMessage(msg) { gid('setupMessage').textContent = msg; }
+  var kkLastBtn = null, kkLastT = 0;
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('button, a.btn-primary, a.btn-outline'); if (b) { kkLastBtn = b; kkLastT = Date.now(); } }, true);
+  function showSetupMessage(msg) {
+    var el = gid('setupMessage'); if (!el) return;
+    el.textContent = msg;
+    if (!msg || !kkLastBtn || !document.contains(kkLastBtn) || Date.now() - kkLastT > 6000) return;
+    if (kkLastBtn.closest('.kx-ov, .support-overlay, .pz-overlay')) return;
+    var anchor = kkLastBtn, par = anchor.parentNode, ds = par && getComputedStyle(par).display;
+    if (par && (ds === 'flex' || ds === 'grid' || ds === 'inline-flex') && par !== document.body) anchor = par;
+    if (anchor.nextSibling !== el) anchor.insertAdjacentElement('afterend', el);
+    try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { }
+  }
 
   function renderListSelect() { renderListPicker(); }
 
@@ -11096,7 +11115,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       return;
     }
     try {
-      appTurnstileIds[containerId] = window.turnstile.render(box, { sitekey: TURNSTILE_SITEKEY });
+      appTurnstileIds[containerId] = window.turnstile.render(box, { sitekey: TURNSTILE_SITEKEY, size: 'flexible' });
     } catch (e) { box.textContent = 'CAPTCHA konnte nicht geladen werden. Bitte lade die Seite neu.'; }
   }
   function getAppTurnstileToken(containerId) {
@@ -12097,7 +12116,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
     apply(get());
     window.__kkHideApply = function () { apply(get()); };
     
-    function all(open) { Array.prototype.forEach.call(screen.querySelectorAll('details.fold'), function (d) { d.open = open; }); }
+    function all(open) { Array.prototype.forEach.call(document.querySelectorAll('#setup-screen details.fold, #kxSetOv details'), function (d) { d.open = open; }); }
     cl.addEventListener('click', function () { all(false); });
     ex.addEventListener('click', function () { all(true); });
     anchor.parentNode.insertBefore(bar, anchor.nextSibling);
@@ -12352,7 +12371,6 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   function apply() {
     var s = load();
     groups().forEach(function (g) { itemsOf(g).forEach(splitItem); });
-    sortCont(wrap, groups(), s.order.grpWrap);
     groups().forEach(function (g) { sortCont(g, itemsOf(g), s.order[g.id]); itemsOf(g).forEach(function (it) { sortCont(contEl(it), blocksOf(it), s.order[keyOf(it)]); }); });
     var hid = function (k) { return s.hidden.indexOf(k) >= 0 && !PROTECT[k]; };
     groups().forEach(function (g) { g.classList.toggle('pz-hidden', hid(g.id)); itemsOf(g).forEach(function (it) { it.classList.toggle('pz-hidden', hid(keyOf(it))); blocksOf(it).forEach(function (b) { b.classList.toggle('pz-hidden', hid(keyOf(b))); }); }); });
@@ -12393,8 +12411,6 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
     var gv = groups().filter(function (g) { return !g.classList.contains('pz-hidden'); });
     gv.forEach(function (g) {
       var r = row(labelOf(g), 'grp');
-      r.appendChild(btn('▲', 'Nach oben', function () { move(groups(), 'grpWrap', g, -1); }, gv.indexOf(g) === 0));
-      r.appendChild(btn('▼', 'Nach unten', function () { move(groups(), 'grpWrap', g, 1); }, gv.indexOf(g) === gv.length - 1));
       body.appendChild(r);
       var iv = itemsOf(g).filter(function (x) { return !x.classList.contains('pz-hidden'); });
       iv.forEach(function (it, i) {
@@ -13365,10 +13381,29 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
 <script>
 /* ===== App-Symbol wählen (Einstellungen) ===== */
 (function () {
-  var KEY = 'kk_appicon', V = [['rost', 'Rost'], ['tinte', 'Tinte'], ['papier', 'Papier'], ['gold', 'Gold']];
+  var KEY = 'kk_appicon', CKEY = 'kk_appicon_custom';
+  var V = [['rost', 'Rost'], ['tinte', 'Tinte'], ['papier', 'Papier'], ['gold', 'Gold'], ['eigen', 'Eigene']];
+  var DEF = { bg: '#A8442E', back: '#D9A441', mid: '#F1DCD5', box: '#241A10', label: '#D9A441' };
+  var FIELDS = [['bg', 'Hintergrund'], ['back', 'Karte hinten'], ['mid', 'Karte Mitte'], ['box', 'Kasten'], ['label', 'Etikett']];
+  var url192 = '', url512 = '';
   function abs(f) { try { return new URL(f, location.href).href; } catch (e) { return f; } }
   function cur() { try { var v = localStorage.getItem(KEY); if (V.some(function (x) { return x[0] === v; })) return v; } catch (e) { } return 'rost'; }
-  function logos(k) { document.querySelectorAll('img[data-kk-logo]').forEach(function (i) { i.src = 'icon-' + k + '-192.png'; }); }
+  function colors() { var c = {}; try { c = JSON.parse(localStorage.getItem(CKEY) || '{}') || {}; } catch (e) { } var o = {}; FIELDS.forEach(function (f) { o[f[0]] = /^#[0-9a-f]{6}$/i.test(c[f[0]] || '') ? c[f[0]] : DEF[f[0]]; }); return o; }
+  function rr(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+  function draw(size, c) {
+    var cv = document.createElement('canvas'); cv.width = cv.height = size; var x = cv.getContext('2d'), k = size / 64;
+    x.fillStyle = c.bg; x.fillRect(0, 0, size, size);
+    x.scale(k, k); x.translate(4.8, 5.65); x.scale(0.85, 0.85);
+    function card(a, b, w, h, r, fill, rot, cx, cy) { x.save(); x.translate(cx, cy); x.rotate(rot * Math.PI / 180); x.translate(-cx, -cy); rr(x, a, b, w, h, r); x.fillStyle = fill; x.fill(); x.restore(); }
+    card(14, 8, 26, 36, 4, c.back, -12, 27, 44); card(24, 8, 26, 36, 4, c.mid, 10, 37, 44);
+    rr(x, 19, 12, 26, 36, 4); x.fillStyle = '#FBF6EA'; x.fill(); x.lineWidth = 2.5; x.strokeStyle = '#241A10'; x.stroke();
+    x.lineCap = 'round'; x.beginPath(); x.moveTo(25, 22); x.lineTo(39, 22); x.moveTo(25, 28); x.lineTo(34, 28); x.stroke();
+    rr(x, 8, 36, 48, 22, 5); x.fillStyle = c.box; x.fill(); rr(x, 25, 43, 14, 6, 3); x.fillStyle = c.label; x.fill();
+    return cv.toDataURL('image/png');
+  }
+  function refreshCustom() { var c = colors(); url192 = draw(192, c); url512 = draw(512, c); }
+  function src(k, sz) { if (k === 'eigen') { if (!url192) refreshCustom(); return sz === 512 ? url512 : url192; } return 'icon-' + k + '-' + sz + '.png'; }
+  function logos(k) { document.querySelectorAll('img[data-kk-logo]').forEach(function (i) { i.src = src(k, 192); }); }
   function ensure() {
     document.querySelectorAll('.screen, .kx-box, .support-box, .lang-modal').forEach(function (sc) {
       if (sc.querySelector('[data-kk-logo]')) return;
@@ -13380,32 +13415,147 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
   function apply(k) {
     ensure(); logos(k);
     var t = document.querySelector('link[rel="apple-touch-icon"]'), i = document.querySelector('link[rel="icon"][sizes]'), m = document.querySelector('link[rel="manifest"]');
-    if (t) t.href = 'touch-' + k + '.png';
-    if (i) i.href = 'icon-' + k + '-192.png';
+    var t180 = k === 'eigen' ? src(k, 192) : 'touch-' + k + '.png';
+    if (t) t.href = t180;
+    if (i) i.href = src(k, 192);
     if (m) {
+      var a192 = k === 'eigen' ? src(k, 192) : abs(src(k, 192)), a512 = k === 'eigen' ? src(k, 512) : abs(src(k, 512));
       var mf = { name: 'Karteikasten', short_name: 'Karteikasten', start_url: abs('./'), scope: abs('./'), display: 'standalone', background_color: '#F0E5C8', theme_color: '#A8442E',
-        icons: [{ src: abs('icon-' + k + '-192.png'), sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: abs('icon-' + k + '-512.png'), sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: abs('icon-' + k + '-512.png'), sizes: '512x512', type: 'image/png', purpose: 'maskable' }] };
+        icons: [{ src: a192, sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: a512, sizes: '512x512', type: 'image/png', purpose: 'any' }, { src: a512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }] };
       m.href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' }));
     }
   }
   function build() {
     var box = document.querySelector('#kxSetOv .kx-box'); if (!box || document.getElementById('kkIconPick')) return !!box;
     var w = document.createElement('div'); w.id = 'kkIconPick'; w.style.cssText = 'margin:12px 0;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface)';
-    w.innerHTML = '<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px">App-Symbol</div><div id="kkIconRow" style="display:flex;gap:10px;flex-wrap:wrap"></div><p id="kkIconMsg" style="font-size:13px;color:var(--muted);margin:8px 0 0"></p>';
-    box.appendChild(w); var row = w.querySelector('#kkIconRow');
+    w.innerHTML = '<div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px">App-Symbol</div><div id="kkIconRow" style="display:flex;gap:10px;flex-wrap:wrap"></div><div id="kkIconCustom" style="display:none;margin-top:12px"><div style="display:flex;gap:12px;flex-wrap:wrap" id="kkIconInputs"></div><button type="button" class="btn-small" id="kkIconReset" style="margin-top:10px">Standardfarben</button></div><p id="kkIconMsg" style="font-size:13px;color:var(--muted);margin:8px 0 0"></p>';
+    var lg = document.getElementById('kkLegalSet'); if (lg) box.insertBefore(w, lg); else box.appendChild(w);
+    var row = w.querySelector('#kkIconRow'), cust = w.querySelector('#kkIconCustom'), inputs = w.querySelector('#kkIconInputs'), msg = w.querySelector('#kkIconMsg');
     V.forEach(function (v) {
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'App-Symbol ' + v[1]); b.dataset.k = v[0];
-      b.style.cssText = 'padding:3px;border-radius:16px;border:3px solid transparent;background:transparent;cursor:pointer;line-height:0';
-      b.innerHTML = '<img src="icon-' + v[0] + '-192.png" alt="" width="56" height="56" style="border-radius:13px">';
-      b.addEventListener('click', function () { try { localStorage.setItem(KEY, v[0]); } catch (e) { } apply(v[0]); mark(); w.querySelector('#kkIconMsg').textContent = v[1] + ' gewählt. Damit es auf dem Startbildschirm erscheint: App dort entfernen und neu hinzufügen.'; });
+      b.style.cssText = 'padding:3px;border-radius:16px;border:3px solid transparent;background:transparent;cursor:pointer;line-height:0;text-align:center';
+      b.innerHTML = '<img src="' + src(v[0], 192) + '" alt="" width="56" height="56" style="border-radius:13px"><div style="font-size:11px;line-height:1.2;margin-top:4px;color:var(--muted)">' + v[1] + '</div>';
+      b.addEventListener('click', function () { try { localStorage.setItem(KEY, v[0]); } catch (e) { } apply(v[0]); mark(); msg.textContent = v[1] + ' gewählt. Damit es auf dem Startbildschirm erscheint: App dort entfernen und neu hinzufügen.'; });
       row.appendChild(b);
     });
-    function mark() { var c = cur(); row.querySelectorAll('button').forEach(function (b) { b.style.borderColor = b.dataset.k === c ? 'var(--rust)' : 'transparent'; }); }
+    var cs = colors();
+    FIELDS.forEach(function (f) {
+      var l = document.createElement('label'); l.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)';
+      var inp = document.createElement('input'); inp.type = 'color'; inp.value = cs[f[0]]; inp.dataset.f = f[0]; inp.style.cssText = 'width:48px;height:48px;padding:2px;border:1.5px solid var(--border);border-radius:10px;background:transparent;cursor:pointer';
+      inp.addEventListener('input', function () { var c = colors(); c[f[0]] = inp.value; try { localStorage.setItem(CKEY, JSON.stringify(c)); localStorage.setItem(KEY, 'eigen'); } catch (e) { } refreshCustom(); apply('eigen'); var im = row.querySelector('button[data-k="eigen"] img'); if (im) im.src = url192; mark(); });
+      l.appendChild(inp); l.appendChild(document.createTextNode(f[1])); inputs.appendChild(l);
+    });
+    w.querySelector('#kkIconReset').addEventListener('click', function () { try { localStorage.setItem(CKEY, JSON.stringify(DEF)); } catch (e) { } refreshCustom(); inputs.querySelectorAll('input').forEach(function (i) { i.value = DEF[i.dataset.f]; }); var im = row.querySelector('button[data-k="eigen"] img'); if (im) im.src = url192; if (cur() === 'eigen') apply('eigen'); });
+    function mark() { var c = cur(); row.querySelectorAll('button').forEach(function (b) { b.style.borderColor = b.dataset.k === c ? 'var(--rust)' : 'transparent'; }); cust.style.display = c === 'eigen' ? 'block' : 'none'; }
     mark(); return true;
   }
+  if (cur() === 'eigen') refreshCustom();
   apply(cur());
   var t0; new MutationObserver(function () { clearTimeout(t0); t0 = setTimeout(function () { ensure(); logos(cur()); }, 250); }).observe(document.body, { childList: true, subtree: true });
   var n = 0; (function wait() { if (build() || ++n > 80) return; setTimeout(wait, 250); })();
+})();
+</script>
+<script>
+/* ===== Impressum & Datenschutz ===== */
+(function () {
+  var STAND = 'Oktober 2026';
+  var IMP = '' +
+    '<h3>Angaben gemäß § 5 DDG</h3>' +
+    '<p>Jaron Ackermann<br>Leipziger Straße 4<br>91522 Ansbach<br>Deutschland</p>' +
+    '<h3>Kontakt</h3>' +
+    '<p>E-Mail: <a href="mailto:karteikasten@icloud.com">karteikasten@icloud.com</a></p>' +
+    '<h3>Hinweis zum Angebot</h3>' +
+    '<p>Karteikasten ist ein privates, nicht kommerzielles und kostenloses Angebot.</p>' +
+    '<h3>Verantwortlich für den Inhalt (§ 18 Abs. 2 MStV)</h3>' +
+    '<p>Jaron Ackermann, Anschrift wie oben.</p>' +
+    '<h3>Haftungsausschluss</h3>' +
+    '<p>Karteikasten wird privat, kostenlos und ohne Gewähr bereitgestellt. Ich übernehme keine Verantwortung und keine Haftung für die Richtigkeit und Vollständigkeit der Inhalte, für die Verfügbarkeit der App, für Datenverlust, Fehler oder Schäden jeder Art, die durch die Nutzung entstehen. Das gilt, soweit gesetzlich zulässig. Unberührt bleibt die Haftung, die gesetzlich nicht ausgeschlossen werden kann (zum Beispiel bei Vorsatz, grober Fahrlässigkeit oder Schäden an Leben, Körper und Gesundheit).</p>' +
+    '<h3>Inhalte der Nutzer</h3>' +
+    '<p>Vokabellisten und andere Inhalte, die Nutzer anlegen oder teilen, stammen von den jeweiligen Nutzern. Für diese Inhalte sind die Nutzer selbst verantwortlich. Bei Hinweisen auf rechtswidrige Inhalte bitte kurz per E-Mail melden, ich prüfe das und entferne solche Inhalte gegebenenfalls.</p>' +
+    '<h3>Haftung für Links</h3>' +
+    '<p>Soweit auf externe Seiten verlinkt wird, habe ich auf deren Inhalte keinen Einfluss. Für diese Inhalte ist immer der jeweilige Anbieter verantwortlich.</p>';
+
+  var DS = '' +
+    '<p><em>Stand: ' + STAND + '</em></p>' +
+    '<h3>1. Verantwortlicher</h3>' +
+    '<p>Verantwortlich für die Datenverarbeitung in dieser App ist:<br>Jaron Ackermann, Leipziger Straße 4, 91522 Ansbach, Deutschland<br>E-Mail: <a href="mailto:karteikasten@icloud.com">karteikasten@icloud.com</a></p>' +
+    '<h3>2. Worum es geht</h3>' +
+    '<p>Karteikasten ist eine kostenlose App zum Vokabellernen. Ich verarbeite nur die Daten, die für Betrieb und Sicherheit der App nötig sind. Es gibt keine Werbung, keine Analyse- oder Tracking-Dienste und keinen Verkauf von Daten. Es gibt keine automatisierte Entscheidungsfindung und kein Profiling.</p>' +
+    '<h3>3. Aufruf der Seite (Hosting)</h3>' +
+    '<p>Die App wird über GitHub Pages bereitgestellt (GitHub, Inc., ein Unternehmen von Microsoft, USA). Beim Aufruf verarbeitet der Hoster technisch notwendige Daten, zum Beispiel deine IP-Adresse, Datum und Uhrzeit, aufgerufene Datei und Browserangaben, um die Seite auszuliefern und die Sicherheit zu gewährleisten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (stabiler und sicherer Betrieb).</p>' +
+    '<h3>4. Konto und Anmeldung</h3>' +
+    '<p>Für die Nutzung brauchst du ein Konto. Dafür speichere ich deine E-Mail-Adresse und dein Passwort (nur in verschlüsselter Form), Zeitpunkte von Anmeldungen, Angaben zu deinen Geräten und zum Anmeldeprotokoll sowie, wenn du sie einrichtest, Daten für die Zwei-Faktor-Anmeldung. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung der App).</p>' +
+    '<p>Für Datenbank und Anmeldung nutze ich Supabase (Supabase, Inc., USA). Das Projekt ist in der Region Frankfurt am Main (Deutschland) angesiedelt. Mit dem Anbieter besteht ein Auftragsverarbeitungsverhältnis.</p>' +
+    '<h3>5. Deine Inhalte und Einstellungen</h3>' +
+    '<p>Gespeichert werden deine Vokabellisten und Ordner, dein Lernfortschritt und deine Statistik (zum Beispiel Lernzeit, Tagesziel, Serie), Einstellungen, Verlauf, Archiv und Papierkorb, Backups sowie Feedback-Bewertungen. Support-Nachrichten speichere ich mit deiner E-Mail-Adresse und dem Nachrichtentext, solange es zur Bearbeitung nötig ist. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.</p>' +
+    '<h3>6. E-Mails</h3>' +
+    '<p>Die App verschickt E-Mails, zum Beispiel zur Bestätigung der Registrierung, zum Zurücksetzen des Passworts, für Anmeldelinks, Hinweise auf neue Geräte und Antworten vom Support. Der Versand läuft über Resend (Resend, Inc., USA). Dabei werden deine E-Mail-Adresse und der Inhalt der Nachricht an den Dienst übermittelt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.</p>' +
+    '<p>In den E-Mails ist das Karteikasten-Logo eingebunden. Es wird beim Öffnen der Mail von GitHub Pages geladen. Dabei kann dessen Server die IP-Adresse deines E-Mail-Programms sehen. Die meisten E-Mail-Programme lassen sich so einstellen, dass Bilder erst nach Bestätigung geladen werden.</p>' +
+    '<h3>7. Schutz vor Missbrauch (Cloudflare Turnstile)</h3>' +
+    '<p>Bei Anmeldung, Registrierung und ähnlichen Aktionen prüft der Dienst Cloudflare Turnstile (Cloudflare, Inc., USA), ob die Eingabe von einem Menschen kommt. Dazu werden Daten wie deine IP-Adresse und Angaben zu Browser und Gerät an Cloudflare übermittelt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Missbrauch und automatisierten Angriffen).</p>' +
+    '<h3>8. Schriftarten und Programmbibliotheken</h3>' +
+    '<p>Die Schriftarten (Fraunces und Caveat) werden beim Aufruf von Servern von Google (Google Fonts) geladen. Dabei wird deine IP-Adresse an Google übermittelt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (einheitliche und ansprechende Darstellung der App).</p>' +
+    '<p>Wenn du die QR-Funktionen nutzt, werden dafür Programmbibliotheken vom Dienst jsDelivr (cdn.jsdelivr.net) geladen. Dabei wird ebenfalls deine IP-Adresse übermittelt.</p>' +
+    '<h3>9. Erinnerungen (Push-Benachrichtigungen)</h3>' +
+    '<p>Wenn du Erinnerungen aktivierst und Benachrichtigungen erlaubst, speichere ich ein Push-Abonnement (technische Adresse und Schlüssel deines Browsers). Zugestellt wird über den Push-Dienst deines Browser- oder Geräteherstellers, zum Beispiel Google, Apple oder Mozilla. Das ist freiwillig. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Du kannst sie jederzeit widerrufen, indem du die Erinnerung in den Einstellungen ausschaltest oder die Berechtigung im Browser entziehst.</p>' +
+    '<h3>10. Speicherung auf deinem Gerät</h3>' +
+    '<p>Die App speichert Daten lokal auf deinem Gerät (lokaler Speicher, Zwischenspeicher/Service Worker), zum Beispiel deine Anmeldung, Einstellungen, Erinnerungszeiten und Daten für den Offline-Betrieb. Das ist für den Betrieb erforderlich (§ 25 Abs. 2 Nr. 2 TDDDG). Es gibt keine Tracking-Cookies und keine Werbe-Cookies.</p>' +
+    '<h3>11. Speicherdauer und Löschung</h3>' +
+    '<p>Du kannst dein Konto in der App selbst löschen. Dabei wird dein Zugang zuverlässig gelöscht, einschließlich deiner E-Mail-Adresse. Inhalte wie Vokabellisten oder Statistiken können aus technischen Gründen in Einzelfällen in der Datenbank oder in Sicherungen erhalten bleiben. Sie sind nicht mit deiner E-Mail-Adresse verknüpft, sondern nur mit einer zufälligen Konto-ID. Wenn du später mit derselben E-Mail-Adresse ein neues Konto anlegst, hast du darauf keinen Zugriff.</p>' +
+    '<p>Eine nachträgliche Löschung dieser verbleibenden Inhalte ist nicht möglich. Für diese Daten übernehme ich keine Verantwortung.</p>' +
+    '<h3>12. Empfänger und Übermittlung in Drittländer</h3>' +
+    '<p>Empfänger deiner Daten sind nur die oben genannten Dienstleister (GitHub, Supabase, Resend, Cloudflare, Google, jsDelivr und die Push-Dienste der Gerätehersteller). Ich gebe keine Daten zu Werbezwecken weiter. Soweit Anbieter in den USA sitzen, erfolgt die Übermittlung auf Grundlage eines Angemessenheitsbeschlusses der EU (Data Privacy Framework) oder von EU-Standardvertragsklauseln. Nähere Angaben stehen in den Datenschutzhinweisen der Anbieter.</p>' +
+    '<h3>13. Mindestalter</h3>' +
+    '<p>Für die Nutzung ist kein Mindestalter festgelegt.</p>' +
+    '<h3>14. Deine Rechte</h3>' +
+    '<p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21). Eine erteilte Einwilligung kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3). Schreib dafür an <a href="mailto:karteikasten@icloud.com">karteikasten@icloud.com</a>.</p>' +
+    '<p>Du hast außerdem das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig ist für mich das Bayerische Landesamt für Datenschutzaufsicht, Promenade 18, 91522 Ansbach.</p>' +
+    '<h3>15. Haftung</h3>' +
+    '<p>Ich übernehme keine Verantwortung für die Daten, die du in der App speicherst, und keine Haftung für Datenverlust, Ausfälle oder Schäden durch die Nutzung der App, soweit gesetzlich zulässig. Bitte sichere wichtige Vokabellisten selbst (zum Beispiel mit der Backup-Funktion). Gesetzliche Rechte und Haftung, die nicht ausgeschlossen werden können, bleiben unberührt.</p>' +
+    '<h3>16. Änderungen</h3>' +
+    '<p>Ich passe diese Erklärung an, wenn sich die App oder die rechtlichen Vorgaben ändern. Es gilt die jeweils hier abrufbare Fassung.</p>';
+
+  var css = '.kk-legal h3{font-size:16px;margin:16px 0 4px}.kk-legal p{font-size:15px;line-height:1.5;margin:0 0 8px}.kk-legal a{color:var(--rust)}' +
+    '.kk-qn-legal{display:flex;align-items:center;gap:12px;width:100%;padding:8px 12px;border-radius:var(--radius);border:none;background:transparent;color:inherit;font-size:15px;font-family:inherit;text-align:left;cursor:pointer}.kk-qn-legal:hover,.kk-qn-legal:focus-visible{background:var(--border)}' +
+    '.kk-consent{font-size:13px;color:var(--muted);margin:8px 0 0;text-align:center}.kk-consent button,.kk-legal-foot button{display:inline!important;background:none;border:none;padding:0 !important;margin:0 !important;min-height:0 !important;font:inherit;color:var(--rust) !important;text-decoration:underline !important;cursor:pointer}' +
+    '.kk-legal-foot{display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:13px}';
+  var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+  function make(id, title, body, withDl) {
+    var ov = document.createElement('div'); ov.id = id; ov.className = 'kx-ov hidden'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = '<div class="kx-box"><div class="kx-row"><h2>' + title + '</h2><button type="button" class="btn-small" data-kk-close>Schließen</button></div>' +
+      '<div class="kk-legal">' + body + '</div>' +
+      (withDl ? '<button type="button" class="btn-outline" data-kk-dl style="width:100%">Herunterladen</button>' : '') + '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) { if (e.target === ov || e.target.hasAttribute('data-kk-close')) ov.classList.add('hidden'); });
+    return ov;
+  }
+  var impOv = make('kkImpOv', 'Impressum', IMP, false);
+  var dsOv = make('kkDsOv', 'Datenschutz', DS, true);
+  function iconData(cb) {
+    var el = document.querySelector('img[data-kk-logo]'), u = el && el.getAttribute('src');
+    if (!u) return cb('');
+    if (u.indexOf('data:') === 0) return cb(u);
+    var im = new Image();
+    im.onload = function () { try { var c = document.createElement('canvas'); c.width = c.height = 192; c.getContext('2d').drawImage(im, 0, 0, 192, 192); cb(c.toDataURL('image/png')); } catch (e) { cb(''); } };
+    im.onerror = function () { cb(''); };
+    im.src = u;
+  }
+  dsOv.querySelector('[data-kk-dl]').addEventListener('click', function () {
+    iconData(function (icon) {
+      var head = (icon ? '<img src="' + icon + '" alt="" width="56" height="56" style="border-radius:14px;vertical-align:middle;margin-right:14px">' : '') + 'Datenschutzerklärung Karteikasten';
+      var html = '<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Datenschutzerklärung Karteikasten</title>' + (icon ? '<link rel="icon" href="' + icon + '">' : '') + '<style>body{font-family:Georgia,serif;max-width:720px;margin:40px auto;padding:0 16px;line-height:1.5;color:#241A10}h1{font-size:28px;display:flex;align-items:center}h3{font-size:17px;margin:20px 0 4px}p{margin:0 0 10px}</style></head><body><h1>' + head + '</h1>' + DS + '</body></html>';
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' })); a.download = 'Karteikasten-Datenschutzerklaerung.html';
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    });
+  });
+  function openLegal(which) {
+    var np = document.getElementById('quickNavPanel'), tg = document.getElementById('quickNavToggle');
+    if (np && !np.classList.contains('hidden') && tg) tg.click();
+    var ov = which === 'imp' ? impOv : dsOv; ov.classList.remove('hidden'); var b = ov.querySelector('[data-kk-close]'); if (b) b.focus(); ov.querySelector('.kx-box').scrollTop = 0;
+  }
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-kk-legal]'); if (b) { e.preventDefault(); openLegal(b.getAttribute('data-kk-legal')); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { impOv.classList.add('hidden'); dsOv.classList.add('hidden'); } });
 })();
 </script>
 </body>
