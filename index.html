@@ -117,6 +117,59 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
+
+  /* ===== Karteikarten-Optik: Kartenstapel, Eckmarken, Rahmen, Stempel ===== */
+  .flashcard, .flip-card { position: relative; isolation: isolate; }
+  .flashcard::before, .flashcard::after, .flip-card::before, .flip-card::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; border-radius: calc(var(--radius) + 6px);
+    border: 2px solid var(--ink); transition: transform .35s ease, background-color .2s ease; pointer-events: none; }
+  .flashcard::before, .flip-card::before { background: var(--rust); transform: rotate(-2.2deg) translate(-6px, 5px); }
+  .flashcard::after,  .flip-card::after  { background: var(--warn); transform: rotate(2.6deg) translate(7px, 8px); z-index: -2; }
+  .flashcard.correct::before, .flashcard.correct::after { background: var(--success); }
+  .flashcard.almost::before, .flashcard.half::before { background: var(--warn); }
+  .flashcard.incorrect::after { background: var(--rust); }
+  .flashcard:hover::before, .flip-card:hover::before { transform: rotate(-3deg) translate(-9px, 6px); }
+  .flashcard:hover::after,  .flip-card:hover::after  { transform: rotate(3.4deg) translate(10px, 10px); }
+  .flashcard { margin-bottom: 36px; }
+  .flip-card-wrap { padding-bottom: 12px; }
+
+  /* Eckmarken + innerer Zierrahmen (bleibt in den Zustandsfarben erhalten) */
+  .flashcard, .flashcard.correct, .flashcard.almost, .flashcard.incorrect, .flashcard.half,
+  .flip-card-face {
+    background-image:
+      radial-gradient(circle at 16px 16px, var(--rust) 3.5px, transparent 4px),
+      radial-gradient(circle at calc(100% - 16px) 16px, var(--warn) 3.5px, transparent 4px),
+      radial-gradient(circle at 16px calc(100% - 16px), var(--warn) 3.5px, transparent 4px),
+      radial-gradient(circle at calc(100% - 16px) calc(100% - 16px), var(--rust) 3.5px, transparent 4px) !important; }
+  .flashcard, .flip-card-face { outline: 1px dashed var(--border); outline-offset: -9px; }
+  .flashcard.correct { outline-color: var(--success); }
+  .flashcard.incorrect { outline-color: var(--error); }
+
+  /* Zierlinie unter dem Wort und Etikett-Look */
+  .card-word::after, .flip-card-word::after { content: ""; display: block; width: 56px; height: 2px; margin: 14px auto 0;
+    background: linear-gradient(90deg, transparent, var(--rust), var(--warn), transparent); border-radius: 2px; }
+  .flip-card-front .flip-card-word::after { background: linear-gradient(90deg, transparent, var(--muted), transparent); }
+  .card-tag { box-shadow: 2px 2px 0 var(--ink); transform: rotate(-1.5deg); letter-spacing: .02em; }
+  .flip-card-lang-label { padding: 2px 10px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); }
+  .flip-card-back .flip-card-lang-label { border-color: var(--success); color: var(--success); }
+  .flip-card-back .flip-card-word { font-style: italic; color: var(--success); }
+  .flip-card-back { border-color: var(--success); }
+  .flip-card-extra { font-style: italic; }
+  .box-badge { box-shadow: 2px 2px 0 var(--ink); }
+
+  /* Stempel bei richtiger / falscher Antwort */
+  .flashcard.correct .card-word::before, .flashcard.incorrect .card-word::before {
+    display: block; width: 38px; height: 38px; margin: 0 auto 10px; border-radius: 50%; font-size: 22px; line-height: 34px;
+    font-weight: 800; border: 2.5px solid currentColor; transform: rotate(-10deg); animation: cardPulse .35s ease; }
+  .flashcard.correct .card-word::before { content: "✓"; color: var(--success); }
+  .flashcard.incorrect .card-word::before { content: "✕"; color: var(--error); }
+
+  /* Buttons wie Papier-Etiketten */
+  .stack-nav-row button, #flipCardBtn { box-shadow: 0 3px 0 var(--border); transition: transform .1s, box-shadow .1s; }
+  .stack-nav-row button:active, #flipCardBtn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--border); }
+  .stack-progress { display: inline-block; padding: 2px 14px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); }
+  .vocab-stack { text-align: center; } .vocab-stack > * { text-align: left; } .flip-card-wrap, .stack-nav-row, .hint { text-align: center; }
+  @media (prefers-reduced-motion: reduce) { .flashcard::before, .flashcard::after, .flip-card::before, .flip-card::after { transition: none; } }
 </style><style>
 
   /* Kompakte Ansicht-Leiste */
@@ -747,7 +800,7 @@
 </head>
 <body>
 <div id="kkSplash" role="status" aria-label="Karteikasten wird geladen"><img data-kk-logo alt="" src="icon-rost-192.png"><span>Karteikasten</span></div>
-<script>(function(){var n=0,k="";try{k=localStorage.getItem("kk_appicon")||""}catch(e){}if(/^(rost|tinte|papier|gold)$/.test(k)){var i=document.querySelector("#kkSplash img");if(i)i.src="icon-"+k+"-192.png"}var t0=Date.now(),done=false;function hide(){if(done)return;done=true;var s=document.getElementById("kkSplash");if(!s)return;s.classList.add("out");setTimeout(function(){s.remove()},450)}function go(){var w=Math.max(0,700-(Date.now()-t0));setTimeout(hide,w)}if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,6000)})();</script>
+<script>(function(){var n=0,k="";try{k=localStorage.getItem("karteikasten_appicon")||""}catch(e){}if(/^(rost|tinte|papier|gold)$/.test(k)){var i=document.querySelector("#kkSplash img");if(i)i.src="icon-"+k+"-192.png"}var t0=Date.now(),done=false;function hide(){if(done)return;done=true;var s=document.getElementById("kkSplash");if(!s)return;s.classList.add("out");setTimeout(function(){s.remove()},450)}function go(){var w=Math.max(0,700-(Date.now()-t0));setTimeout(hide,w)}if(document.readyState==="complete")go();else window.addEventListener("load",go);setTimeout(hide,6000)})();</script>
 <div id="linkResultBanner" class="link-result-banner hidden" role="status" aria-live="polite">
   <span id="linkResultText"></span>
   <button type="button" id="linkResultCloseBtn" aria-label="Meldung schließen">✕</button>
@@ -2352,7 +2405,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       }
     } catch (e) { }
     var seed = defaultList('Liste 1');
-    seed.vocab = [normalizeVocab({ a: 'Haus', b: 'house' }), normalizeVocab({ a: 'Auto', b: 'car' }), normalizeVocab({ a: 'Wasser', b: 'water' })];
+    seed.vocab = [];
     lists = [seed];
     folders = [];
     currentListId = seed.id;
@@ -8419,15 +8472,20 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function (rows) {
         var hasRow = rows && rows.length && rows[0].data && typeof rows[0].data === 'object';
+        var IK = ['karteikasten_appicon', 'karteikasten_appicon_custom'], keepIcon = {};
+        IK.forEach(function (k) { try { var v = localStorage.getItem(k); if (v !== null) keepIcon[k] = v; } catch (e) { } });
         if (hasRow) {
           cloudLocalKeys().forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { } });
           Object.keys(rows[0].data).forEach(function (k) {
             if (k.indexOf('karteikasten_') === 0 && !CLOUD_EXCLUDE[k]) { try { localStorage.setItem(k, rows[0].data[k]); } catch (e) { } }
           });
+          if (owner === code) IK.forEach(function (k) { if (keepIcon[k] !== undefined && localStorage.getItem(k) === null) { try { localStorage.setItem(k, keepIcon[k]); } catch (e) { } } });
           cloudLastJson = JSON.stringify(cloudBuild());
         } else {
-          // Noch nichts in der Cloud: Daten eines anderen Codes nicht übernehmen; eigene lokale Altdaten bleiben (Migration).
-          if (owner && owner !== code) cloudLocalKeys().forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { } });
+          IK.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { } });
+          // Noch nichts in der Cloud.
+          // Neues Konto: nie Listen/Vokabeln von diesem Gerät übernehmen, es startet mit einer leeren Liste.
+          if (owner !== code) cloudLocalKeys().forEach(function (k) { try { localStorage.removeItem(k); } catch (e) { } });
           cloudLastJson = '';
         }
         try { localStorage.setItem(OWNER_KEY, code); } catch (e) { }
@@ -8466,15 +8524,34 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     if (cloudBusy || !cloudReady) { if (n < 15) setTimeout(function () { window.__kkCloudSync(n + 1); }, 1000); return; }
     try { cloudPushPersonal(false); } catch (e) { }
   };
+  // Logo gilt pro Konto: Änderung von einem anderen Gerät hier übernehmen (nur wenn lokal nichts Ungespeichertes liegt)
+  window.__kkPullIcon = function () {
+    var code = getUser();
+    if (!cloudReady || cloudBusy || !code) return;
+    var IK = ['karteikasten_appicon', 'karteikasten_appicon_custom'];
+    var dirty = false; try { dirty = JSON.stringify(cloudBuild()) !== cloudLastJson; } catch (e) { dirty = true; }
+    if (dirty) return;
+    fetch(SUPABASE_URL + '/rest/v1/' + CLOUD_TABLE + '?select=data&username=eq.' + encodeURIComponent(code), { headers: cloudHeaders() })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rows) {
+        if (!rows || !rows.length || !rows[0].data || cloudBusy || getUser() !== code) return;
+        var d = rows[0].data, changed = false;
+        IK.forEach(function (k) {
+          if (typeof d[k] === 'string' && localStorage.getItem(k) !== d[k]) { try { localStorage.setItem(k, d[k]); changed = true; } catch (e) { } }
+        });
+        if (changed) { cloudLastJson = JSON.stringify(cloudBuild()); try { if (window.kkApplyIcon) window.kkApplyIcon(); } catch (e) { } }
+      })
+      .catch(function () { });
+  };
   function startCloudSync() {
     cloudReady = true;
     clearInterval(cloudTimer);
-    cloudTimer = setInterval(function () { cloudSync(); sharedTick(true); }, 5 * 60 * 1000);
+    cloudTimer = setInterval(function () { cloudSync(); sharedTick(true); window.__kkPullIcon(); }, 5 * 60 * 1000);
     if (!window.__cloudEvents) {
       window.__cloudEvents = true;
       document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'hidden') cloudPush(true, true);
-        else sharedOnVisible();
+        else { sharedOnVisible(); window.__kkPullIcon(); }
       });
       window.addEventListener('pagehide', function () { cloudPush(true, true); });
     }
@@ -8912,6 +8989,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       if (pendingLoginEmail) { setLoginEmail(pendingLoginEmail); pendingLoginEmail = ''; }
       showLoggedInAsHint(getLoginEmail());
       showMainApp();
+      try { if (window.kkApplyIcon) window.kkApplyIcon(); } catch (e) { }
       applyAccountBranding();
       init();
       startCloudSync();
@@ -12340,10 +12418,10 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
     var k = keyOf(it); if (NOSPLIT[k] || it.dataset.pzSplit) return; it.dataset.pzSplit = '1';
     var c = contEl(it), cur = null, last = null, n = 0;
     Array.prototype.slice.call(c.children).forEach(function (el) {
-      if (el.tagName === 'SUMMARY' || el.classList.contains('section-label') || /^(SCRIPT|STYLE)$/.test(el.tagName)) return;
+      if (el.tagName === 'SUMMARY' || (el.classList.contains('section-label') && !cur) || /^(SCRIPT|STYLE)$/.test(el.tagName)) return;
       var isP = el.tagName === 'P', status = isP && (el.id || el.getAttribute('aria-live') || /status|msg/i.test(el.className));
       var strongLead = isP && !status && el.firstElementChild && el.firstElementChild.tagName === 'STRONG';
-      var start = !cur || el.tagName === 'DETAILS' || el.classList.contains('toggle-row') || strongLead || (isP && !status && last && last.action);
+      var start = !cur || el.classList.contains('section-label') || el.tagName === 'DETAILS' || el.classList.contains('toggle-row') || strongLead || (isP && !status && last && last.action);
       if (start) {
         cur = document.createElement('div'); cur.className = 'pz-blk'; last = { action: false };
         c.insertBefore(cur, el);
@@ -13397,7 +13475,9 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
 <script>
 /* ===== App-Symbol wählen (Einstellungen) ===== */
 (function () {
-  var KEY = 'kk_appicon', CKEY = 'kk_appicon_custom';
+  var KEY = 'karteikasten_appicon', CKEY = 'karteikasten_appicon_custom';
+  try { var lg0 = localStorage.getItem('kk_appicon'), lc0 = localStorage.getItem('kk_appicon_custom'); if (lg0 && !localStorage.getItem(KEY)) localStorage.setItem(KEY, lg0); if (lc0 && !localStorage.getItem(CKEY)) localStorage.setItem(CKEY, lc0); localStorage.removeItem('kk_appicon'); localStorage.removeItem('kk_appicon_custom'); } catch (e) { }
+  function kkSyncIcon() { try { if (window.__kkCloudSync) window.__kkCloudSync(); } catch (e) { } }
   var V = [['rost', 'Rost'], ['tinte', 'Tinte'], ['papier', 'Papier'], ['gold', 'Gold'], ['eigen', 'Eigene']];
   var DEF = { bg: '#A8442E', back: '#D9A441', mid: '#F1DCD5', box: '#241A10', label: '#D9A441' };
   var FIELDS = [['bg', 'Hintergrund'], ['back', 'Karte hinten'], ['mid', 'Karte Mitte'], ['box', 'Kasten'], ['label', 'Etikett']];
@@ -13419,7 +13499,7 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
   }
   function refreshCustom() { var c = colors(); url192 = draw(192, c); url512 = draw(512, c); }
   function src(k, sz) { if (k === 'eigen') { if (!url192) refreshCustom(); return sz === 512 ? url512 : url192; } return (window.KK_BASE || '') + 'icon-' + k + '-' + sz + '.png'; }
-  function logos(k) { document.querySelectorAll('img[data-kk-logo]').forEach(function (i) { i.src = src(k, 192); }); }
+  function logos(k) { document.querySelectorAll('img[data-kk-logo]').forEach(function (i) { i.src = src(i.closest('#login-screen') ? 'rost' : k, 192); }); }
   function ensure() {
     document.querySelectorAll('.screen, .kx-box, .support-box, .lang-modal').forEach(function (sc) {
       if (sc.querySelector('[data-kk-logo]')) return;
@@ -13451,20 +13531,21 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'App-Symbol ' + v[1]); b.dataset.k = v[0];
       b.style.cssText = 'padding:3px;border-radius:16px;border:3px solid transparent;background:transparent;cursor:pointer;line-height:0;text-align:center';
       b.innerHTML = '<img src="' + src(v[0], 192) + '" alt="" width="56" height="56" style="border-radius:13px"><div style="font-size:11px;line-height:1.2;margin-top:4px;color:var(--muted)">' + v[1] + '</div>';
-      b.addEventListener('click', function () { try { localStorage.setItem(KEY, v[0]); } catch (e) { } apply(v[0]); mark(); msg.textContent = v[1] + ' gewählt. Damit es auf dem Startbildschirm erscheint: App dort entfernen und neu hinzufügen.'; });
+      b.addEventListener('click', function () { try { localStorage.setItem(KEY, v[0]); } catch (e) { } apply(v[0]); mark(); kkSyncIcon(); msg.textContent = v[1] + ' gewählt. Damit es auf dem Startbildschirm erscheint: App dort entfernen und neu hinzufügen.'; });
       row.appendChild(b);
     });
     var cs = colors();
     FIELDS.forEach(function (f) {
       var l = document.createElement('label'); l.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)';
       var inp = document.createElement('input'); inp.type = 'color'; inp.value = cs[f[0]]; inp.dataset.f = f[0]; inp.style.cssText = 'width:48px;height:48px;padding:2px;border:1.5px solid var(--border);border-radius:10px;background:transparent;cursor:pointer';
-      inp.addEventListener('input', function () { var c = colors(); c[f[0]] = inp.value; try { localStorage.setItem(CKEY, JSON.stringify(c)); localStorage.setItem(KEY, 'eigen'); } catch (e) { } refreshCustom(); apply('eigen'); var im = row.querySelector('button[data-k="eigen"] img'); if (im) im.src = url192; mark(); });
+      inp.addEventListener('input', function () { var c = colors(); c[f[0]] = inp.value; try { localStorage.setItem(CKEY, JSON.stringify(c)); localStorage.setItem(KEY, 'eigen'); } catch (e) { } refreshCustom(); apply('eigen'); var im = row.querySelector('button[data-k="eigen"] img'); if (im) im.src = url192; mark(); kkSyncIcon(); });
       l.appendChild(inp); l.appendChild(document.createTextNode(f[1])); inputs.appendChild(l);
     });
     w.querySelector('#kkIconReset').addEventListener('click', function () { try { localStorage.setItem(CKEY, JSON.stringify(DEF)); } catch (e) { } refreshCustom(); inputs.querySelectorAll('input').forEach(function (i) { i.value = DEF[i.dataset.f]; }); var im = row.querySelector('button[data-k="eigen"] img'); if (im) im.src = url192; if (cur() === 'eigen') apply('eigen'); });
     function mark() { var c = cur(); row.querySelectorAll('button').forEach(function (b) { b.style.borderColor = b.dataset.k === c ? 'var(--rust)' : 'transparent'; }); cust.style.display = c === 'eigen' ? 'block' : 'none'; }
     mark(); return true;
   }
+  window.kkApplyIcon = function () { if (cur() === 'eigen') refreshCustom(); apply(cur()); var r = document.getElementById('kkIconRow'); if (r) r.querySelectorAll('button').forEach(function (b) { b.style.borderColor = b.dataset.k === cur() ? 'var(--rust)' : 'transparent'; }); };
   if (cur() === 'eigen') refreshCustom();
   apply(cur());
   var t0; new MutationObserver(function () { clearTimeout(t0); t0 = setTimeout(function () { ensure(); logos(cur()); }, 250); }).observe(document.body, { childList: true, subtree: true });
@@ -13513,6 +13594,31 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
     else if (e.shiftKey && (ae === list[0] || ae === ov.firstElementChild)) { e.preventDefault(); list[list.length - 1].focus(); }
   });
   sync();
+})();
+</script>
+<script>
+/* Login-Symbol in der Leiste markieren, solange die normale Anmeldung sichtbar ist */
+(function () {
+  function gid(i) { return document.getElementById(i); }
+  var OV = ['kxMemOv', 'kxSetOv', 'kxFbOv', 'kxHelpOv', 'supportOverlay', 'inboxOverlay'];
+  function sync() {
+    var b = gid('kkLoginHome'); if (!b) return;
+    var ls = gid('login-screen'), nm = gid('loginModeNormal');
+    var on = !!(ls && !ls.classList.contains('hidden') && nm && nm.style.display !== 'none');
+    if (on) OV.forEach(function (id) { var e = gid(id); if (e && !e.classList.contains('hidden')) on = false; });
+    b.classList.toggle('kk-active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  function wire() {
+    var ls = gid('login-screen'), nm = gid('loginModeNormal');
+    if (!ls || !nm || !gid('kkLoginHome')) { setTimeout(wire, 200); return; }
+    var mo = new MutationObserver(sync);
+    mo.observe(ls, { attributes: true, attributeFilter: ['class'] });
+    mo.observe(nm, { attributes: true, attributeFilter: ['style'] });
+    OV.forEach(function (id) { var e = gid(id); if (e) mo.observe(e, { attributes: true, attributeFilter: ['class'] }); });
+    document.addEventListener('click', function () { setTimeout(sync, 60); }, true);
+    sync();
+  }
+  wire();
 })();
 </script>
 <script>
