@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="de">
-<head><style>
+<head><script>
+// Geteilte Listen: /vokabeln/geteilteliste/name/code -> an die App weiterreichen
+(function(){var p=location.pathname.replace(/^\/vokabeln\//,'');
+if(/^geteilteliste\/[^\/]+\/[A-Za-z0-9]{20,}\/?$/.test(p)){document.documentElement.style.display='none';location.replace('/vokabeln/?p='+encodeURIComponent(p));}})();
+</script><style>
 @font-face {
   font-family: "Optimistic";
   font-style: normal;
