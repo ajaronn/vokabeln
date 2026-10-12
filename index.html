@@ -117,59 +117,6 @@
 :where(code, pre, kbd, samp) {
   font-family: "Optimistic Mono", ui-monospace, monospace;
 }
-
-  /* ===== Karteikarten-Optik: Kartenstapel, Eckmarken, Rahmen, Stempel ===== */
-  .flashcard, .flip-card { position: relative; isolation: isolate; }
-  .flashcard::before, .flashcard::after, .flip-card::before, .flip-card::after {
-    content: ""; position: absolute; inset: 0; z-index: -1; border-radius: calc(var(--radius) + 6px);
-    border: 2px solid var(--ink); transition: transform .35s ease, background-color .2s ease; pointer-events: none; }
-  .flashcard::before, .flip-card::before { background: var(--rust); transform: rotate(-2.2deg) translate(-6px, 5px); }
-  .flashcard::after,  .flip-card::after  { background: var(--warn); transform: rotate(2.6deg) translate(7px, 8px); z-index: -2; }
-  .flashcard.correct::before, .flashcard.correct::after { background: var(--success); }
-  .flashcard.almost::before, .flashcard.half::before { background: var(--warn); }
-  .flashcard.incorrect::after { background: var(--rust); }
-  .flashcard:hover::before, .flip-card:hover::before { transform: rotate(-3deg) translate(-9px, 6px); }
-  .flashcard:hover::after,  .flip-card:hover::after  { transform: rotate(3.4deg) translate(10px, 10px); }
-  .flashcard { margin-bottom: 36px; }
-  .flip-card-wrap { padding-bottom: 12px; }
-
-  /* Eckmarken + innerer Zierrahmen (bleibt in den Zustandsfarben erhalten) */
-  .flashcard, .flashcard.correct, .flashcard.almost, .flashcard.incorrect, .flashcard.half,
-  .flip-card-face {
-    background-image:
-      radial-gradient(circle at 16px 16px, var(--rust) 3.5px, transparent 4px),
-      radial-gradient(circle at calc(100% - 16px) 16px, var(--warn) 3.5px, transparent 4px),
-      radial-gradient(circle at 16px calc(100% - 16px), var(--warn) 3.5px, transparent 4px),
-      radial-gradient(circle at calc(100% - 16px) calc(100% - 16px), var(--rust) 3.5px, transparent 4px) !important; }
-  .flashcard, .flip-card-face { outline: 1px dashed var(--border); outline-offset: -9px; }
-  .flashcard.correct { outline-color: var(--success); }
-  .flashcard.incorrect { outline-color: var(--error); }
-
-  /* Zierlinie unter dem Wort und Etikett-Look */
-  .card-word::after, .flip-card-word::after { content: ""; display: block; width: 56px; height: 2px; margin: 14px auto 0;
-    background: linear-gradient(90deg, transparent, var(--rust), var(--warn), transparent); border-radius: 2px; }
-  .flip-card-front .flip-card-word::after { background: linear-gradient(90deg, transparent, var(--muted), transparent); }
-  .card-tag { box-shadow: 2px 2px 0 var(--ink); transform: rotate(-1.5deg); letter-spacing: .02em; }
-  .flip-card-lang-label { padding: 2px 10px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); }
-  .flip-card-back .flip-card-lang-label { border-color: var(--success); color: var(--success); }
-  .flip-card-back .flip-card-word { font-style: italic; color: var(--success); }
-  .flip-card-back { border-color: var(--success); }
-  .flip-card-extra { font-style: italic; }
-  .box-badge { box-shadow: 2px 2px 0 var(--ink); }
-
-  /* Stempel bei richtiger / falscher Antwort */
-  .flashcard.correct .card-word::before, .flashcard.incorrect .card-word::before {
-    display: block; width: 38px; height: 38px; margin: 0 auto 10px; border-radius: 50%; font-size: 22px; line-height: 34px;
-    font-weight: 800; border: 2.5px solid currentColor; transform: rotate(-10deg); animation: cardPulse .35s ease; }
-  .flashcard.correct .card-word::before { content: "✓"; color: var(--success); }
-  .flashcard.incorrect .card-word::before { content: "✕"; color: var(--error); }
-
-  /* Buttons wie Papier-Etiketten */
-  .stack-nav-row button, #flipCardBtn { box-shadow: 0 3px 0 var(--border); transition: transform .1s, box-shadow .1s; }
-  .stack-nav-row button:active, #flipCardBtn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--border); }
-  .stack-progress { display: inline-block; padding: 2px 14px; border: 1.5px solid var(--border); border-radius: 999px; background: var(--surface); }
-  .vocab-stack { text-align: center; } .vocab-stack > * { text-align: left; } .flip-card-wrap, .stack-nav-row, .hint { text-align: center; }
-  @media (prefers-reduced-motion: reduce) { .flashcard::before, .flashcard::after, .flip-card::before, .flip-card::after { transition: none; } }
 </style><style>
 
   /* Kompakte Ansicht-Leiste */
@@ -13350,6 +13297,46 @@ html.kk-popup #supportOverlay .support-actions { margin-top: var(--sp-2) !import
 body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !important; }
 #kkDock > #supportInboxBtn[style*="none"], #supportInboxBtn[hidden] { display: none !important; }
 
+
+  /* ===== Karteikarten-Optik v2: hohe Karten, Kartenstapel dahinter, Stern ===== */
+  body .flashcard, body .flip-card { position: relative; isolation: isolate; }
+  body .flashcard { min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 36px 24px; border-width: 1.5px; border-style: solid; border-radius: 22px; margin-bottom: 44px; }
+  body .flip-card, body .flip-card-inner, body .flip-card-face { min-height: 360px; }
+  body .flip-card-face { border: 1.5px solid var(--ink); border-radius: 22px; background: var(--surface); gap: 14px; padding: 32px 24px; }
+  body .flip-card-wrap { padding-bottom: 16px; }
+
+  /* Stapel: Rost links, Gold rechts */
+  body .flashcard::before, body .flashcard::after, body .flip-card::before, body .flip-card::after {
+    content: ""; position: absolute; inset: 0; border-radius: 22px; pointer-events: none; transition: transform .35s ease, background-color .2s ease; }
+  body .flashcard::before, body .flip-card::before { z-index: -1; background: var(--rust); transform: rotate(-2.4deg) translate(-9px, 6px); }
+  body .flashcard::after,  body .flip-card::after  { z-index: -2; background: #D4A02E; transform: rotate(2.8deg) translate(10px, 9px); }
+  body .flashcard.correct::before, body .flashcard.correct::after { background: var(--success); }
+  body .flashcard.incorrect::before { background: var(--error); }
+
+  /* Stern oben rechts (rein dekorativ) */
+  body .flashcard, body .flip-card-face {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23241A10' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important; background-size: 22px 22px !important; background-position: calc(100% - 18px) 18px !important; }
+  @media (prefers-color-scheme: dark) { body .flashcard, body .flip-card-face { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EDE6D8' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/%3E%3C/svg%3E") !important; } }
+
+  /* Typografie wie auf dem Foto */
+  body .card-tag { background: none; color: var(--muted); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 0; margin: 0 0 14px; }
+  body .card-word { font-size: 40px; line-height: 1.15; }
+  body .card-word::after, body .flip-card-word::after { content: ""; display: block; width: 52px; height: 1px; margin: 16px auto 0; background: var(--border); }
+  body .flip-card-word { font-size: 34px; line-height: 1.15; }
+  body .flip-card-lang-label { font-size: 12px; letter-spacing: .14em; border: 0; padding: 0; background: none; }
+  body .flip-card-back .flip-card-word { font-style: italic; font-weight: 600; color: var(--success); }
+  body .flip-card-back .flip-card-word::after { display: none; }
+  body .flip-card-extra { font-style: italic; }
+
+  /* Tasten: „Umdrehen“ dunkel, „Zurück“ Rost-Kontur, „Weiter“ grün */
+  body #flipCardBtn { background: var(--ink); color: var(--bg); border: 0; border-radius: 14px; font-weight: 700; min-height: 52px; text-decoration: none; }
+  body #stackPrevBtn { border: 1.5px solid var(--rust); color: var(--rust); border-radius: 14px; font-weight: 700; background: var(--surface); }
+  body #stackNextBtn { background: var(--success); border: 0; color: #fff; border-radius: 14px; font-weight: 700; }
+  body .stack-nav-row { margin-top: 12px; }
+  body .stack-progress { display: block; border: 0; background: none; padding: 0; margin-bottom: 14px; }
+  @media (prefers-reduced-motion: reduce) { body .flashcard::before, body .flashcard::after, body .flip-card::before, body .flip-card::after { transition: none; } }
 </style>
 <script>
 /* ===== Navigation: Fenster "Meine Listen & Vokabeln" und "Lernen & Übungen" ===== */
