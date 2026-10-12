@@ -13946,13 +13946,12 @@ details.fold::before,details.fold::after,details.group-fold::before,details.grou
 .kk-face{box-shadow:none!important;border-width:1.5px}
 .flashcard .card-tag{margin:0 0 20px!important;font-size:11.5px!important;letter-spacing:.16em!important;color:var(--muted)!important}
 .flashcard .card-word{font-size:clamp(30px,7vw,42px)!important;line-height:1.2!important;text-align:center}
-/* Textmarker: dicker, hinter dem unteren Teil des Wortes */
-.flashcard .card-word:not(:empty)::after{content:none!important;display:none!important}
-.flashcard .card-word:not(:empty){padding:0 .18em;border-radius:.12em;
- background:linear-gradient(to bottom,transparent 52%,color-mix(in srgb,var(--warn) 55%,transparent) 52%,color-mix(in srgb,var(--warn) 55%,transparent) 94%,transparent 94%);
- -webkit-box-decoration-break:clone;box-decoration-break:clone}
-.flashcard.correct .card-word:not(:empty){background-image:linear-gradient(to bottom,transparent 52%,color-mix(in srgb,var(--success) 45%,transparent) 52%,color-mix(in srgb,var(--success) 45%,transparent) 94%,transparent 94%)}
-.flashcard.incorrect .card-word:not(:empty){background-image:linear-gradient(to bottom,transparent 52%,color-mix(in srgb,var(--error) 40%,transparent) 52%,color-mix(in srgb,var(--error) 40%,transparent) 94%,transparent 94%)}
+/* Kein Textmarker mehr; oberste Karte farbig */
+.flashcard .card-word:not(:empty){background:none!important;padding:0}
+.kk-face{background:color-mix(in srgb,var(--success) 24%,var(--surface))!important;border-color:var(--ink)!important}
+.flashcard.correct .kk-face{background:var(--success-bg)!important;border-color:var(--success)!important}
+.flashcard.almost .kk-face,.flashcard.half .kk-face{background:var(--warn-bg)!important;border-color:var(--warn)!important}
+.flashcard.incorrect .kk-face{background:var(--error-bg)!important;border-color:var(--error)!important}
 /* kleine Bewegung beim Drüberfahren / Antippen */
 @media (hover:hover){
  .flashcard:hover{translate:0 -4px;rotate:0deg}
@@ -13971,5 +13970,86 @@ details.fold,#kkViewPanel{margin:14px 0}
 .kx-box{gap:14px}
 .kx-ov,.support-overlay{background-image:none!important}
 </style>
+
+<style id="kk-calm-4">
+/* Weniger auf einmal: Erklärtexte erst auf Wunsch, Unterpunkte eingeklappt */
+details.fold:not(.kk-hints-on) p.hint:not([id]):not(.kk-always){display:none!important}
+.kk-info{margin-left:auto;flex:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--muted);font:italic 700 14px Georgia,serif;line-height:1;cursor:pointer;padding:0!important;display:inline-flex;align-items:center;justify-content:center}
+.kk-info:hover,details.kk-hints-on>summary>.kk-info{color:var(--ink);border-color:var(--ink)}
+#kkViewPanel>summary .kk-vp-info+.kk-info{margin-left:8px}
+details.kk-more{margin:10px 0 0!important;background:transparent!important}
+details.kk-more>summary{font-size:15px!important;font-weight:600!important;min-height:44px!important;color:var(--ink)}
+details.kk-more:not([open])>summary{color:var(--muted)}
+details.kk-more[open]{padding-bottom:12px!important}
+</style>
+<script id="kk-calm-4-js">
+(function(){
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function $(q,r){return (r||document).querySelector(q);}
+function $$(q,r){return Array.prototype.slice.call((r||document).querySelectorAll(q));}
+function sub(title,nodes,open){
+  nodes=nodes.filter(Boolean);
+  if(!nodes.length||nodes[0].closest('.kk-more'))return;
+  var p=nodes[0].parentNode;
+  var d=el('details','fold sub-fold kk-more');d.open=!!open;
+  var s=el('summary',null,title);d.appendChild(s);
+  p.insertBefore(d,nodes[0]);
+  nodes.forEach(function(n){d.appendChild(n);});
+}
+function settings(){
+  var rd=$('#reminderDetails');
+  if(rd){
+    sub('Uhrzeiten & Text',[$('#reminderExtra'),$('#reminderHint')]);
+    sub('Hinweis bei nicht gelernten Listen',[$('#staleListRow'),$('#staleListHint')]);
+    sub('Backup-Erinnerung',[$('#bkRemRow'),$('#bkMailRow'),$('#bkRemHint')]);
+  }
+  var td=$('#kxTolDetails');
+  if(td){
+    var hs=$$('p.hint.keep',td);
+    var nodes=[hs[1]].concat($$('.kx-tolrow',td)).concat([$('#kxTolReset')]);
+    sub('Erlaubte Tippfehler nach Wortlänge',nodes);
+  }
+}
+function viewPanel(){
+  var vp=$('#kkViewPanel');if(!vp)return;
+  $$('.kk-vp-sec',vp).forEach(function(sec){
+    if(sec.dataset.kkC)return;
+    var h=$('.kk-vp-h',sec);if(!h)return;
+    sec.dataset.kkC='1';
+    var d=el('details','fold sub-fold kk-more');
+    d.appendChild(el('summary',null,h.textContent.trim()));
+    h.remove();
+    while(sec.firstChild)d.appendChild(sec.firstChild);
+    sec.appendChild(d);
+  });
+}
+function calmFolds(){
+  $$('details.group-fold').forEach(function(g){
+    var first=true;
+    $$(':scope > section > details.sub-fold, :scope > details.sub-fold',g).forEach(function(d){
+      if(d.classList.contains('kk-dup')||d.classList.contains('kk-more'))return;
+      if(d.dataset.kkC)return;d.dataset.kkC='1';
+      if(first){first=false;return;}
+      d.open=false;
+    });
+  });
+}
+function infoButtons(){
+  $$('details.fold').forEach(function(d){
+    if(d.dataset.kkI||d.classList.contains('kk-dup'))return;
+    var has=$$('p.hint:not([id]):not(.kk-always)',d).some(function(p){return p.closest('details')===d;});
+    var sm=$(':scope > summary',d);if(!sm)return;
+    d.dataset.kkI='1';if(!has)return;
+    var b=el('button','kk-info','i');b.type='button';b.setAttribute('aria-label','Erklärung ein-/ausblenden');b.title='Erklärung anzeigen';
+    b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();d.classList.toggle('kk-hints-on');});
+    sm.appendChild(b);
+  });
+}
+function run(){try{settings();viewPanel();calmFolds();infoButtons();}catch(e){}}
+[400,1200,2500,5000].forEach(function(t){setTimeout(run,t);});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+var tm;new MutationObserver(function(){clearTimeout(tm);tm=setTimeout(run,300);}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
