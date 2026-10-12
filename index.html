@@ -965,8 +965,7 @@
         <button class="btn-outline" id="newListBtn" type="button">+ Neue Liste</button>
         <button class="btn-outline" id="newFolderBtn" type="button">+ Neuer Ordner</button>
         <button class="btn-outline" id="mixAllBtn" type="button">Alle Listen mischen</button>
-        <button class="btn-outline" id="qrShareBtn" type="button">Liste per QR teilen</button>
-        <button class="btn-outline" id="qrScanBtn" type="button">QR scannen</button>
+        <button class="btn-outline" id="linkShareBtn" type="button">Liste per Link teilen</button>
       </div>
       <div class="lock-banner" id="listLockBanner" aria-live="polite"></div>
       <details class="settings-details fold" id="listMgmtDetails">
@@ -7640,7 +7639,6 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       '.kk-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.kk-row>button{flex:1 1 110px}' +
       '.kk-pick{display:flex;gap:8px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid var(--border,#ccc)}.kk-pick.dim{opacity:.5}' +
       '.kk-card input[type=number]{font:inherit;width:80px;padding:8px;border:2px solid var(--border,#999);border-radius:var(--radius);background:transparent;color:inherit}' +
-      '.kk-qr{display:block;margin:0 auto;width:100%;max-width:340px;height:auto;image-rendering:pixelated;background:#fff;border-radius:var(--radius)}' +
       '.kk-video{width:100%;max-height:50vh;background:#000;border-radius:var(--radius);object-fit:cover}';
     document.head.appendChild(st);
   }
@@ -7724,19 +7722,8 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     return true;
   }
 
-  /* ======== Listen per QR-Code teilen / einlesen ======== */
-  var QR_GEN_URL = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
-  var QR_SCAN_URL = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-  var QR_CHUNK = 330, QR_MAX_PARTS = 40;
-  function kkLoadScript(url, test) {
-    return new Promise(function (res, rej) {
-      if (test()) return res();
-      var sc = document.createElement('script'); sc.src = url;
-      sc.onload = function () { test() ? res() : rej(new Error('QR-Bibliothek konnte nicht geladen werden.')); };
-      sc.onerror = function () { rej(new Error('Für die QR-Funktion wird einmalig eine Internetverbindung gebraucht.')); };
-      document.head.appendChild(sc);
-    });
-  }
+  /* ======== Listen per Link teilen ======== */
+  var SHARE_BASE = 'https://ajaronn.github.io/vokabeln/geteilteliste/';
   function kkB64(bytes) { var t = '', i = 0; for (; i < bytes.length; i += 0x8000) t += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(t); }
   function kkUnB64(str) { var t = atob(str), o = new Uint8Array(t.length); for (var i = 0; i < t.length; i++) o[i] = t.charCodeAt(i); return o; }
   function kkStream(bytes, Ctor, fmt) {
@@ -7771,49 +7758,6 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       return o;
     });
   }
-  function qrChunks(str) {
-    var sid = (Math.random().toString(36) + '0000').slice(2, 6), n = Math.ceil(str.length / QR_CHUNK), out = [];
-    for (var i = 0; i < n; i++) out.push('KK1.' + sid + '.' + (i + 1) + '.' + n + '.' + str.slice(i * QR_CHUNK, (i + 1) * QR_CHUNK));
-    return out;
-  }
-  function qrDraw(canvas, text) {
-    var qr = qrcode(0, 'L'); qr.addData(text); qr.make();
-    var n = qr.getModuleCount(), quiet = 4, total = n + quiet * 2, cell = Math.max(3, Math.floor(420 / total));
-    canvas.width = canvas.height = cell * total;
-    var c = canvas.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, canvas.width, canvas.height); c.fillStyle = '#000';
-    for (var r = 0; r < n; r++) for (var q = 0; q < n; q++) if (qr.isDark(r, q)) c.fillRect((q + quiet) * cell, (r + quiet) * cell, cell, cell);
-  }
-
-  function qrShareOpen() {
-    var list = getCurrentList();
-    var ok = list && list.vocab && list.vocab.some(function (v) { return v.a && v.a.trim() && v.b && v.b.trim(); });
-    if (!ok) { showSetupMessage('Diese Liste hat noch keine Vokabeln zum Teilen.'); return; }
-    var d = kkDialog('„' + list.name + '“ per QR teilen');
-    d.body.appendChild(kkEl('p', 'QR-Code wird erstellt …'));
-    Promise.all([kkLoadScript(QR_GEN_URL, function () { return typeof qrcode === 'function'; }), qrEncodeList(list)]).then(function (r) {
-      var chunks = qrChunks(r[1]), n = chunks.length;
-      d.body.innerHTML = '';
-      if (n > QR_MAX_PARTS) { d.body.appendChild(kkEl('p', 'Diese Liste ist zu groß für QR-Codes (' + n + ' Teile). Teile sie zuerst in kleinere Listen.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); return; }
-      d.body.appendChild(kkEl('p', n === 1 ? 'Dein Freund öffnet in der App „QR scannen“ und hält die Kamera auf diesen Code.' : 'Diese Liste braucht ' + n + ' Codes. Sie wechseln automatisch. Dein Freund hält die Kamera darauf, bis alle ' + n + ' gelesen sind.'));
-      var cv = kkEl('canvas', '', 'kk-qr'); d.body.appendChild(cv);
-      var lab = kkEl('p', '', 'kk-small'); lab.style.textAlign = 'center'; d.body.appendChild(lab);
-      var idx = 0, timer = 0, auto = n > 1;
-      function show() { qrDraw(cv, chunks[idx]); lab.textContent = n > 1 ? 'Code ' + (idx + 1) + ' von ' + n : kkN(list.vocab.length, 'Vokabel', 'Vokabeln'); }
-      function tick() { clearInterval(timer); if (auto && n > 1) timer = setInterval(function () { idx = (idx + 1) % n; show(); }, 1500); }
-      show(); tick();
-      if (n > 1) {
-        var row = kkEl('div', '', 'kk-row');
-        row.appendChild(kkBtn('◀', '', function () { idx = (idx - 1 + n) % n; show(); tick(); }));
-        var ab = kkBtn('Pause', '', function () { auto = !auto; ab.textContent = auto ? 'Pause' : 'Automatisch'; tick(); });
-        row.appendChild(ab);
-        row.appendChild(kkBtn('▶', '', function () { idx = (idx + 1) % n; show(); tick(); }));
-        d.body.appendChild(row);
-      }
-      d.body.appendChild(kkBtn('Schließen', 'primary', d.close));
-      d.setOnClose(function () { clearInterval(timer); });
-    }).catch(function (e) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Fehler: ' + (e && e.message || e))); d.body.appendChild(kkBtn('Schließen', '', d.close)); });
-  }
-
   function qrImportConfirm(d, o) {
     function S(x) { return String(x == null ? '' : x).slice(0, 200); }
     function A(x) { return Array.isArray(x) ? x.map(S).filter(Boolean).slice(0, 10) : undefined; }
@@ -7847,83 +7791,73 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     row.appendChild(kkBtn('Abbrechen', '', d.close)); d.body.appendChild(row);
   }
 
-  function qrScanOpen() {
-    var d = kkDialog('QR-Code einlesen');
-    var status = kkEl('p', 'Kamera wird gestartet …'); d.body.appendChild(status);
-    var video = document.createElement('video'); video.className = 'kk-video'; video.setAttribute('playsinline', ''); video.muted = true; d.body.appendChild(video);
-    var row = kkEl('div', '', 'kk-row');
-    var fileIn = document.createElement('input'); fileIn.type = 'file'; fileIn.accept = 'image/*'; fileIn.multiple = true; fileIn.style.display = 'none';
-    row.appendChild(kkBtn('Foto auswählen', '', function () { fileIn.click(); }));
-    row.appendChild(kkBtn('Schließen', '', d.close)); d.body.appendChild(row); d.body.appendChild(fileIn);
-    var stream = null, running = true, state = null, finished = false;
-    var cv = document.createElement('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
-    d.setOnClose(function () { running = false; if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); });
-
-    function onText(text) {
-      var m = /^KK1\.([a-z0-9]{4})\.(\d+)\.(\d+)\.([\s\S]*)$/.exec(text);
-      if (!m) { status.textContent = 'Das ist kein Karteikasten-QR-Code.'; return; }
-      var sid = m[1], i = parseInt(m[2], 10), n = parseInt(m[3], 10);
-      if (!(n >= 1 && n <= QR_MAX_PARTS && i >= 1 && i <= n)) return;
-      if (!state || state.sid !== sid) state = { sid: sid, n: n, parts: {}, count: 0 };
-      if (!state.parts[i]) {
-        state.parts[i] = m[4]; state.count++;
-        try { if (navigator.vibrate) navigator.vibrate(40); } catch (e) { }
-        status.textContent = n === 1 ? 'Code gelesen …' : 'Gelesen: ' + state.count + ' von ' + n + ' Codes. Weiter scannen …';
-      }
-      if (state.count === state.n && !finished) {
-        finished = true; running = false;
-        if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
-        var all = ''; for (var k = 1; k <= state.n; k++) all += state.parts[k];
-        status.textContent = 'Wird verarbeitet …';
-        qrDecodeList(all).then(function (o) { video.remove(); row.remove(); status.remove(); qrImportConfirm(d, o); })
-          .catch(function (e) { status.textContent = 'Fehler: ' + (e && e.message || e); finished = false; });
-      }
-    }
-    function decodeFrame(src, w, h) {
-      var sc = Math.min(1, 900 / Math.max(w, h));
-      cv.width = Math.max(1, Math.round(w * sc)); cv.height = Math.max(1, Math.round(h * sc));
-      ctx.drawImage(src, 0, 0, cv.width, cv.height);
-      var id = ctx.getImageData(0, 0, cv.width, cv.height);
-      var code = jsQR(id.data, id.width, id.height, { inversionAttempts: 'attemptBoth' });
-      return code && code.data ? code.data : '';
-    }
-    function loop() {
-      if (!running) return;
-      if (video.readyState >= 2 && video.videoWidth) {
-        var t = ''; try { t = decodeFrame(video, video.videoWidth, video.videoHeight); } catch (e) { }
-        if (t) onText(t);
-      }
-      setTimeout(loop, 110);
-    }
-    fileIn.addEventListener('change', function () {
-      var files = Array.prototype.slice.call(fileIn.files || []); fileIn.value = '';
-      var chain = Promise.resolve();
-      files.forEach(function (f) {
-        chain = chain.then(function () {
-          return new Promise(function (res) {
-            var img = new Image(), url = URL.createObjectURL(f);
-            img.onload = function () { var t = ''; try { t = decodeFrame(img, img.naturalWidth, img.naturalHeight); } catch (e) { } URL.revokeObjectURL(url); if (t) onText(t); else status.textContent = 'Auf dem Foto wurde kein QR-Code erkannt.'; res(); };
-            img.onerror = function () { URL.revokeObjectURL(url); res(); };
-            img.src = url;
-          });
-        });
-      });
+  function shareCode() {
+    var cs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', a = new Uint8Array(48), o = '';
+    crypto.getRandomValues(a);
+    for (var i = 0; i < a.length; i++) o += cs.charAt(a[i] % cs.length);
+    return o;
+  }
+  function shareSlug(n) {
+    var t = String(n || 'liste').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    return t || 'liste';
+  }
+  function linkShareOpen() {
+    var list = getCurrentList();
+    var ok = list && list.vocab && list.vocab.some(function (v) { return v.a && v.a.trim() && v.b && v.b.trim(); });
+    var d = kkDialog('Liste per Link teilen');
+    if (!ok) { d.body.appendChild(kkEl('p', 'Die Liste hat noch keine vollständigen Vokabeln.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); return; }
+    d.body.appendChild(kkEl('p', 'Link wird erstellt …'));
+    var c = getSb();
+    if (!c) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Keine Verbindung zum Server.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); return; }
+    var code = shareCode(), slug = shareSlug(list.name), url = SHARE_BASE + slug + '/' + code;
+    qrEncodeList(list).then(function (data) {
+      return c.rpc('link_list_create', { p_code: code, p_name: slug, p_data: data });
+    }).then(function (res) {
+      if (res && res.error) throw res.error;
+      d.body.innerHTML = '';
+      d.body.appendChild(kkEl('p', 'Jeder mit diesem Link kann eine Kopie der Liste „' + (list.name || 'Liste') + '“ importieren.'));
+      var inp = document.createElement('input'); inp.type = 'text'; inp.readOnly = true; inp.value = url;
+      inp.style.cssText = 'font:inherit;font-size:13px;padding:8px;border:2px solid var(--border,#999);border-radius:var(--radius);background:transparent;color:inherit;width:100%;box-sizing:border-box;';
+      inp.addEventListener('focus', function () { inp.select(); });
+      d.body.appendChild(inp);
+      var msg = kkEl('p', '', 'kk-small'); d.body.appendChild(msg);
+      var row = kkEl('div', '', 'kk-row');
+      row.appendChild(kkBtn('Kopieren', 'primary', function () {
+        function fb() { inp.focus(); inp.select(); var okc = false; try { okc = document.execCommand('copy'); } catch (e) { } msg.textContent = okc ? 'Link kopiert.' : 'Bitte Link manuell kopieren.'; }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { msg.textContent = 'Link kopiert.'; }, fb); else fb();
+      }));
+      if (navigator.share) row.appendChild(kkBtn('Teilen', '', function () { navigator.share({ title: list.name, url: url }).catch(function () { }); }));
+      row.appendChild(kkBtn('Schließen', '', d.close));
+      d.body.appendChild(row);
+    }).catch(function (e) {
+      d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Fehler: ' + (e && e.message || e)));
+      d.body.appendChild(kkBtn('Schließen', '', d.close));
     });
-    kkLoadScript(QR_SCAN_URL, function () { return typeof jsQR === 'function'; }).then(function () {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { status.textContent = 'Kamera nicht verfügbar. Nutze „Foto auswählen“.'; return; }
-      return navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false }).then(function (st) {
-        if (!running) { st.getTracks().forEach(function (t) { t.stop(); }); return; }
-        stream = st; video.srcObject = st;
-        return video.play().then(function () { status.textContent = 'Halte die Kamera auf den QR-Code.'; loop(); });
-      }, function () { status.textContent = 'Kein Zugriff auf die Kamera. Erlaube sie in den Einstellungen oder nutze „Foto auswählen“.'; });
-    }).catch(function (e) { status.textContent = 'Fehler: ' + (e && e.message || e); });
+  }
+  function linkOpenFromUrl() {
+    var m = null, q = null;
+    try { q = new URLSearchParams(location.search).get('p'); } catch (e) { }
+    if (q) m = /^geteilteliste\/([^\/]+)\/([A-Za-z0-9]{20,})\/?$/.exec(q);
+    if (!m) m = /\/geteilteliste\/([^\/]+)\/([A-Za-z0-9]{20,})\/?$/.exec(location.pathname);
+    if (!m) return;
+    try { history.replaceState(null, '', location.pathname.replace(/\/geteilteliste\/.*$/, '/') ); } catch (e) { }
+    var code = m[2], d = kkDialog('Geteilte Liste');
+    d.body.appendChild(kkEl('p', 'Liste wird geladen …'));
+    var c = getSb();
+    if (!c) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Keine Verbindung zum Server.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); return; }
+    c.rpc('link_list_get', { p_code: code }).then(function (res) {
+      if (res.error) throw res.error;
+      if (!res.data) throw new Error('Link ungültig oder Liste nicht mehr vorhanden.');
+      return qrDecodeList(res.data);
+    }).then(function (o) { d.body.innerHTML = ''; qrImportConfirm(d, o); })
+      .catch(function (e) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Fehler: ' + (e && e.message || e))); d.body.appendChild(kkBtn('Schließen', '', d.close)); });
   }
 
   function setupShareTools() {
-    var a = gid('mixAllBtn'), b = gid('qrShareBtn'), c = gid('qrScanBtn');
+    var a = gid('mixAllBtn'), b = gid('linkShareBtn');
     if (a) a.addEventListener('click', mixOpen);
-    if (b) b.addEventListener('click', qrShareOpen);
-    if (c) c.addEventListener('click', qrScanOpen);
+    if (b) b.addEventListener('click', linkShareOpen);
+    setTimeout(linkOpenFromUrl, 800);
   }
 
   /* ======== Vokabel-Erinnerungen: Push mit Vokabel-Frage ======== */
