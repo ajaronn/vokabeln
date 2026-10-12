@@ -13823,10 +13823,7 @@ function showRes(s){var h=s.querySelector('.result-hero');if(!h)return;var o=h.q
 .section-label{display:flex;align-items:center;gap:12px}
 .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
 .app-title{padding-bottom:10px;border-bottom:2px solid var(--ink);box-shadow:0 4px 0 -1px var(--bg),0 5px 0 -1px var(--border)}
-details.group-fold{border-left:5px solid var(--rust);background:var(--surface);box-shadow:0 8px 18px -14px rgba(36,26,16,.4)}
-.vocab-card{border-left:3px solid var(--border)}
 .quiz-header{padding-bottom:12px;border-bottom:1px dashed var(--border)}
-.mc-option{border-left:4px solid var(--border)}
 .btn-primary{box-shadow:3px 3px 0 var(--ink);transition:box-shadow .12s,translate .12s}
 .btn-primary:active{box-shadow:1px 1px 0 var(--ink);translate:2px 2px}
 .lang-modal-title{padding-bottom:8px;border-bottom:1px solid var(--border)}
@@ -13842,20 +13839,65 @@ details.group-fold{border-left:5px solid var(--rust);background:var(--surface);b
  transition:width .2s ease,height .2s ease}
 .flashcard:hover .kk-fold{width:36px;height:36px}
 @media (prefers-reduced-motion:reduce){.kk-fold{transition:none}}
+
+/* ===== Minimalistische Vokabelkarte: Karte + zwei farbige Blätter dahinter ===== */
+.kk-holes,.kk-fold,.kk-leitner,.kk-doodle{display:none!important}
+.flashcard,.flashcard.correct,.flashcard.almost,.flashcard.incorrect,.flashcard.half{
+ background:transparent!important;background-image:none!important;border-color:transparent!important;box-shadow:none;
+ rotate:none;animation:kkRing .4s ease;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;padding:56px 30px 52px;margin:14px 10px 34px;
+ transition:translate .28s ease,rotate .28s ease}
+.flashcard::before{content:'';position:absolute;inset:0;top:0;left:0;width:auto;height:auto;margin:0;clip-path:none;opacity:1;
+ background-image:none;background-color:color-mix(in srgb,var(--warn) 78%,var(--surface));border-radius:22px;z-index:-1;rotate:3deg;
+ transition:rotate .28s ease,translate .28s ease}
+.kk-sheet{position:absolute;inset:0;border-radius:22px;background:var(--rust);z-index:-1;rotate:-2.5deg;pointer-events:none;transition:rotate .28s ease,translate .28s ease}
+.kk-face{position:absolute;inset:0;border-radius:22px;border:1.5px solid var(--ink);background:var(--surface);z-index:-1;pointer-events:none;
+ box-shadow:0 16px 28px -22px rgba(36,26,16,.55);transition:background-color .2s,border-color .2s}
+.flashcard.correct .kk-face{background:var(--success-bg);border-color:var(--success)}
+.flashcard.almost .kk-face,.flashcard.half .kk-face{background:var(--warn-bg);border-color:var(--warn)}
+.flashcard.incorrect .kk-face{background:var(--error-bg);border-color:var(--error)}
+.flashcard .card-tag{background:none;color:var(--muted);padding:0;margin:0 0 18px;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.flashcard .card-word{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:clamp(32px,7vw,44px);line-height:1.15}
+.flashcard .card-word:not(:empty)::after{height:14px;width:min(58%,220px);margin:2px auto 0;opacity:.4;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M3 7C22 3 40 10 60 6s40-3 57 1' fill='none' stroke='black' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M3 7C22 3 40 10 60 6s40-3 57 1' fill='none' stroke='black' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+@keyframes kkRing{0%{box-shadow:0 0 0 0 transparent}40%{box-shadow:0 0 0 0 transparent}100%{box-shadow:none}}
+@media (hover:hover){
+ .flashcard:hover{translate:0 -5px;rotate:.4deg}
+ .flashcard:hover::before{rotate:5deg;translate:6px 2px}
+ .flashcard:hover .kk-sheet{rotate:-4.5deg;translate:-6px 2px}}
+@media (max-width:420px){.flashcard,.flashcard.correct,.flashcard.almost,.flashcard.incorrect,.flashcard.half{padding:48px 22px 44px;margin:12px 8px 30px;min-height:210px}}
+@media (prefers-reduced-motion:reduce){.flashcard,.flashcard::before,.kk-sheet{transition:none!important}.flashcard:hover{translate:none;rotate:none}}
+
+/* ===== Synchronisierungs-Feld ===== */
+#kkSaveState{--ss:var(--success);grid-template-columns:auto 1fr auto;column-gap:12px;padding:10px 12px;border-radius:12px;cursor:pointer;
+ background:linear-gradient(135deg,var(--success-bg),var(--surface));border-color:color-mix(in srgb,var(--ss) 70%,transparent);
+ box-shadow:0 10px 18px -14px rgba(0,0,0,.55);transition:border-color .2s,translate .15s}
+#kkSaveState.pending{--ss:var(--warn);background:linear-gradient(135deg,var(--warn-bg),var(--surface))}
+#kkSaveState.offline,#kkSaveState.error{--ss:var(--error);background:linear-gradient(135deg,var(--error-bg),var(--surface))}
+#kkSaveState:hover{translate:0 -1px}
+#kkSaveState i,#kkSaveState.pending i,#kkSaveState.offline i,#kkSaveState.error i{position:relative;width:28px;height:28px;border-radius:50%;animation:none;
+ background:color-mix(in srgb,var(--ss) 22%,transparent);box-shadow:inset 0 0 0 1.5px var(--ss)}
+#kkSaveState i::before,#kkSaveState::after{content:'';position:absolute;background:var(--ss);
+ -webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+#kkSaveState i::before{inset:7px;--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 25l10 10 20-22'/%3E%3C/svg%3E")}
+#kkSaveState.pending i::before{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M40 24a16 16 0 1 1-5-11.5M40 6v9h-9'/%3E%3C/svg%3E");animation:kkSpin 1s linear infinite}
+#kkSaveState.offline i::before,#kkSaveState.error i::before{--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='6' stroke-linecap='round'%3E%3Cpath d='M14 14l20 20M34 14L14 34'/%3E%3C/svg%3E")}
+#kkSaveState .kk-ss-a{color:var(--ss);font-size:14px;font-weight:700}
+#kkSaveState .kk-ss-b{font-size:12px;color:var(--muted)}
+#kkSaveState::after{position:static;grid-column:3;grid-row:1/span 2;width:16px;height:16px;opacity:.55;background:var(--muted);
+ --ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M40 24a16 16 0 1 1-5-11.5M40 6v9h-9'/%3E%3C/svg%3E")}
+html.kk-rail #kkSaveState::after{display:none}
+html.kk-rail #kkSaveState i{width:26px;height:26px}
+@media (prefers-reduced-motion:reduce){#kkSaveState.pending i::before{animation:none}}
 </style>
 <script id="kk-visuals-2-js">
 (function(){
 function ensure(c){
- if(!c.querySelector(':scope > .kk-holes')){
-  var h=document.createElement('div');h.className='kk-holes';h.setAttribute('aria-hidden','true');
-  var f=document.createElement('div');f.className='kk-fold';f.setAttribute('aria-hidden','true');
-  var l=document.createElement('div');l.className='kk-leitner';l.setAttribute('aria-hidden','true');l.hidden=true;
-  l.innerHTML='<i></i><i></i><i></i><i></i><i></i>';
-  c.insertBefore(l,c.firstChild);c.insertBefore(f,c.firstChild);c.insertBefore(h,c.firstChild);}
- var b=c.querySelector('.box-badge'),L=c.querySelector(':scope > .kk-leitner'),n=b?parseInt(b.textContent,10):NaN;
- if(isNaN(n)){L.hidden=true;return;}
- L.hidden=false;L.title='Lernstufe '+Math.min(n,5)+' von 5';
- L.querySelectorAll('i').forEach(function(i,k){i.classList.toggle('on',k<n);});}
+ if(c.querySelector(':scope > .kk-face'))return;
+ var f=document.createElement('div');f.className='kk-face';f.setAttribute('aria-hidden','true');
+ var h=document.createElement('div');h.className='kk-sheet';h.setAttribute('aria-hidden','true');
+ c.insertBefore(f,c.firstChild);c.insertBefore(h,f);}
 function prog(){
  var lab=document.getElementById('smartProgressLabel'),s=document.getElementById('smart-screen');if(!lab||!s)return;
  var bar=s.querySelector('.kk-prog');
@@ -13867,5 +13909,67 @@ var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(run,40);}).ob
 })();
 </script>
 
+
+<style id="kk-polish-3">
+/* ===== 1) Synchronisierungs-Feld: ruhig, klar, gut lesbar ===== */
+#kkSaveState{--ss:var(--success);display:grid!important;grid-template-columns:auto 1fr!important;align-items:center;column-gap:12px;row-gap:1px;
+ padding:10px 14px!important;border-radius:14px!important;cursor:pointer;
+ background:var(--surface)!important;background-image:none!important;
+ border:1.5px solid color-mix(in srgb,var(--ss) 55%,var(--border))!important;box-shadow:none!important;
+ transition:border-color .2s,background-color .2s,translate .15s}
+#kkSaveState.pending{--ss:var(--warn)}
+#kkSaveState.offline,#kkSaveState.error{--ss:var(--error)}
+#kkSaveState:hover{translate:0 -1px;background:color-mix(in srgb,var(--ss) 8%,var(--surface))!important}
+#kkSaveState:active{translate:0 0}
+#kkSaveState::after{display:none!important}
+#kkSaveState i,#kkSaveState.pending i,#kkSaveState.offline i,#kkSaveState.error i{grid-row:1/span 2;width:32px!important;height:32px!important;border-radius:50%;
+ background:color-mix(in srgb,var(--ss) 18%,transparent)!important;box-shadow:none!important}
+#kkSaveState i::before{inset:8px!important}
+#kkSaveState .kk-ss-a{grid-column:2;color:var(--ink)!important;font-size:15px!important;font-weight:700;line-height:1.2}
+#kkSaveState .kk-ss-b{grid-column:2;font-size:12.5px!important;font-weight:500;color:var(--muted)!important;line-height:1.25;white-space:normal}
+html.kk-rail #kkSaveState{display:flex!important;flex-direction:column;padding:8px 2px!important;border-radius:12px!important}
+html.kk-rail #kkSaveState i{width:26px!important;height:26px!important}
+html.kk-rail #kkSaveState i::before{inset:6px!important}
+
+/* ===== 2) Kein Strich mehr links bei einzelnen Bereichen: alle Kästen gleich ===== */
+details.fold,details.group-fold,details.sub-fold,#kkViewPanel,.kx-box>details{
+ border-image:none!important;border-left:var(--bd,2px) solid var(--border)!important;box-shadow:none!important;background-image:none!important}
+details.fold::before,details.fold::after,details.group-fold::before,details.group-fold::after,details.sub-fold::before,details.sub-fold::after,#kkViewPanel::before,#kkViewPanel::after{content:none!important;display:none!important}
+
+/* ===== 3) Minimalistische Vokabelkarte (Karte + zwei Blätter dahinter) ===== */
+.flashcard::after,.flashcard.correct::after,.flashcard.almost::after,.flashcard.incorrect::after,.flashcard.half::after,
+#knowCard.correct::after,#knowCard.incorrect::after{content:none!important;display:none!important}
+.kk-holes,.kk-fold,.kk-leitner,.kk-doodle{display:none!important}
+.flashcard,.flashcard.correct,.flashcard.almost,.flashcard.incorrect,.flashcard.half{padding:56px 28px 52px!important;
+ transition:translate .3s cubic-bezier(.2,.8,.3,1),rotate .3s cubic-bezier(.2,.8,.3,1)!important}
+.flashcard::before{background-color:color-mix(in srgb,var(--warn) 78%,var(--surface))!important;opacity:1!important}
+.kk-face{box-shadow:none!important;border-width:1.5px}
+.flashcard .card-tag{margin:0 0 20px!important;font-size:11.5px!important;letter-spacing:.16em!important;color:var(--muted)!important}
+.flashcard .card-word{font-size:clamp(30px,7vw,42px)!important;line-height:1.2!important;text-align:center}
+/* Textmarker: dicker, hinter dem unteren Teil des Wortes */
+.flashcard .card-word:not(:empty)::after{content:none!important;display:none!important}
+.flashcard .card-word:not(:empty){padding:0 .18em;border-radius:.12em;
+ background:linear-gradient(to bottom,transparent 52%,color-mix(in srgb,var(--warn) 55%,transparent) 52%,color-mix(in srgb,var(--warn) 55%,transparent) 94%,transparent 94%);
+ -webkit-box-decoration-break:clone;box-decoration-break:clone}
+.flashcard.correct .card-word:not(:empty){background-image:linear-gradient(to bottom,transparent 52%,color-mix(in srgb,var(--success) 45%,transparent) 52%,color-mix(in srgb,var(--success) 45%,transparent) 94%,transparent 94%)}
+.flashcard.incorrect .card-word:not(:empty){background-image:linear-gradient(to bottom,transparent 52%,color-mix(in srgb,var(--error) 40%,transparent) 52%,color-mix(in srgb,var(--error) 40%,transparent) 94%,transparent 94%)}
+/* kleine Bewegung beim Drüberfahren / Antippen */
+@media (hover:hover){
+ .flashcard:hover{translate:0 -4px;rotate:0deg}
+ .flashcard:hover::before{rotate:5deg;translate:7px 2px}
+ .flashcard:hover .kk-sheet{rotate:-4.5deg;translate:-7px 2px}}
+.flashcard:active{translate:0 -1px}
+@media (max-width:420px){.flashcard,.flashcard.correct,.flashcard.almost,.flashcard.incorrect,.flashcard.half{padding:48px 20px 44px!important}}
+
+/* ===== 4) Übersichtlicher: ruhigere Flächen, mehr Luft (nichts entfernt) ===== */
+.app-title{box-shadow:none!important}
+.section-label::after{background:var(--border);opacity:.6}
+.quiz-header,.result-hero{border-bottom-style:solid!important;border-bottom-width:1px!important}
+.btn-primary{box-shadow:none!important}
+.btn-primary:active{translate:0 1px}
+details.fold,#kkViewPanel{margin:14px 0}
+.kx-box{gap:14px}
+.kx-ov,.support-overlay{background-image:none!important}
+</style>
 </body>
 </html>
