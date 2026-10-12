@@ -13753,7 +13753,6 @@ function svg(k,c){return '<svg class="'+c+'" viewBox="0 0 48 48" fill="none" str
 function hash(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h);}
 function decorate(c,t){var h=hash(t||'x'),o=c.querySelector(':scope > .kk-doodle');if(o)o.remove();
  c.style.setProperty('--tape',TAPES[h%4]);c.style.setProperty('--tilt',((h%7)-3)+'deg');c.style.setProperty('--cardtilt',((((h>>3)%5)-2)*.3)+'deg');
- c.insertAdjacentHTML('beforeend',svg(K[(h>>2)%K.length],'kk-doodle'));c.lastChild.style.transform='rotate('+((h%30)-15)+'deg)';
  if(!rm&&c.animate)c.animate([{translate:'24px 0',opacity:.2},{translate:'0 0',opacity:1}],{duration:240,easing:'ease-out'});}
 var seen=new WeakMap();
 function scan(){document.querySelectorAll('.flashcard').forEach(function(c){var w=c.querySelector('.card-word'),t=w?w.textContent:'';if(seen.get(c)!==t){seen.set(c,t);decorate(c,t);}});}
@@ -13763,10 +13762,75 @@ function confetti(){if(rm)return;var w=document.createElement('div'),v=['--rust'
  document.body.appendChild(w);setTimeout(function(){w.remove();},3800);}
 function showRes(s){var h=s.querySelector('.result-hero');if(!h)return;var o=h.querySelector('.kk-res');if(o)o.remove();
  var m=(h.textContent.match(/(\d+)\s*%/)||[])[1],p=m==null?100:+m;
- h.insertAdjacentHTML('afterbegin','<div class="kk-res">'+svg(p>=80?'star':p>=50?'leaf':'bulb','kk-res-svg')+'</div>');if(p>=80)confetti();}
+ }
 ['results-screen','mirror-results-screen','know-results-screen','browse-results-screen','smart-results-screen'].forEach(function(id){
  var s=document.getElementById(id);if(!s)return;
  new MutationObserver(function(){if(s.classList.contains('hidden')){delete s.dataset.kkShown;}else if(!s.dataset.kkShown){s.dataset.kkShown='1';setTimeout(function(){showRes(s);},80);}}).observe(s,{attributes:true,attributeFilter:['class']});});
+})();
+</script>
+
+<style id="kk-visuals-2">
+/* Weitere Karteikarten-Details: Heftlochung, Eselsohr, Lernstufen-Fächer, Marker-Welle, Fortschrittsband */
+.kk-holes{position:absolute;left:9px;top:0;bottom:0;width:14px;pointer-events:none;
+ background:radial-gradient(circle at 7px 50%,var(--bg) 0 4.2px,var(--border) 4.5px 5.4px,transparent 5.8px) 0 0/14px 33.34% repeat-y}
+.kk-fold{position:absolute;top:-2px;right:-2px;width:26px;height:26px;pointer-events:none;border-bottom-left-radius:4px;
+ background:linear-gradient(225deg,var(--bg) 0 50%,var(--border) 50% 100%);box-shadow:-1px 1px 2px rgba(36,26,16,.18)}
+.kk-leitner{position:absolute;top:13px;left:32px;display:flex;align-items:flex-end;gap:3px;pointer-events:none}
+.kk-leitner i{display:block;width:7px;height:12px;border:1.5px solid var(--border);border-radius:2px 2px 1px 1px;background:transparent}
+.kk-leitner i:nth-child(2){height:14px}.kk-leitner i:nth-child(3){height:16px}.kk-leitner i:nth-child(4){height:18px}.kk-leitner i:nth-child(5){height:20px}
+.kk-leitner i.on{background:var(--rust);border-color:var(--rust)}
+.kk-leitner[hidden]{display:none}
+.flashcard .card-word:not(:empty)::after{content:'';display:block;height:9px;width:min(55%,200px);margin:8px auto 0;background:var(--rust);opacity:.4;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6C20 1 40 9 60 5s40-2 58 1' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6C20 1 40 9 60 5s40-2 58 1' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+.flashcard.correct .card-word::after,.flashcard.almost .card-word::after,.flashcard.incorrect .card-word::after,.flashcard.half .card-word::after{background:currentColor;opacity:.3}
+/* Fortschrittsband (Lesezeichen-Look) */
+.kk-prog{height:10px;margin:-12px 0 20px;border:1.5px solid var(--border);border-radius:999px;background:var(--surface);overflow:hidden}
+.kk-prog b{display:block;height:100%;width:0;border-radius:999px;transition:width .35s ease;
+ background:repeating-linear-gradient(135deg,var(--rust) 0 6px,color-mix(in srgb,var(--rust) 78%,var(--surface)) 6px 12px)}
+.kk-prog.done b{background:var(--success)}
+/* Lernziel-Balken im Marker-Stil */
+.goal-progress-bar:not(.done){background:repeating-linear-gradient(135deg,var(--rust) 0 6px,color-mix(in srgb,var(--rust) 78%,var(--surface)) 6px 12px)}
+/* Symbole an Streak-Zeile und Hinweis-Knopf */
+.smart-streak:not(:empty)::before,.hint-btn::before{content:'';display:inline-block;width:1.1em;height:1.1em;margin-right:6px;vertical-align:-.2em;background:currentColor;
+ -webkit-mask:var(--kk-ico) center/contain no-repeat;mask:var(--kk-ico) center/contain no-repeat}
+.smart-streak{--kk-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M24 4c2 9 12 13 12 25a12 12 0 0 1-24 0c0-6 3-9 6-12 0 4 2 6 4 6-1-7 0-13 2-19z'/%3E%3C/svg%3E")}
+.hint-btn{--kk-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M24 6a12 12 0 0 0-6 22v6h12v-6a12 12 0 0 0-6-22zM19 40h10M21 44h6'/%3E%3C/svg%3E")}
+@media (max-width:420px){.kk-leitner{left:28px}.kk-holes{left:6px}}
+@media (prefers-reduced-motion:reduce){.kk-prog b{transition:none}}
+
+/* Ruhigere, professionellere Karte */
+.flashcard{rotate:0deg;box-shadow:2px 3px 0 -1px var(--surface),2px 3px 0 0 var(--border),4px 6px 0 -1px var(--surface),4px 6px 0 0 var(--border),0 10px 22px -14px rgba(36,26,16,.35)}
+.flashcard::before{width:64px;height:20px;margin-left:-32px;top:-10px;rotate:calc(var(--tilt,-2deg) * .4);opacity:.7}
+.kk-doodle,.kk-res{display:none!important}
+.flashcard.correct::after,.flashcard.almost::after,.flashcard.incorrect::after,.flashcard.half::after{font-size:12px;letter-spacing:.18em;border-width:1.5px;outline:none;padding:3px 9px;rotate:-4deg;border-radius:3px}
+#knowCard.correct::after{content:'KANN ICH'}
+#knowCard.incorrect::after{content:'KANN ICH NICHT'}
+.flashcard .card-word:not(:empty)::after{opacity:.28;height:7px}
+.kk-fold{width:20px;height:20px}
+.kk-leitner i{width:6px}
+</style>
+<script id="kk-visuals-2-js">
+(function(){
+function ensure(c){
+ if(!c.querySelector(':scope > .kk-holes')){
+  var h=document.createElement('div');h.className='kk-holes';h.setAttribute('aria-hidden','true');
+  var f=document.createElement('div');f.className='kk-fold';f.setAttribute('aria-hidden','true');
+  var l=document.createElement('div');l.className='kk-leitner';l.setAttribute('aria-hidden','true');l.hidden=true;
+  l.innerHTML='<i></i><i></i><i></i><i></i><i></i>';
+  c.insertBefore(l,c.firstChild);c.insertBefore(f,c.firstChild);c.insertBefore(h,c.firstChild);}
+ var b=c.querySelector('.box-badge'),L=c.querySelector(':scope > .kk-leitner'),n=b?parseInt(b.textContent,10):NaN;
+ if(isNaN(n)){L.hidden=true;return;}
+ L.hidden=false;L.title='Lernstufe '+Math.min(n,5)+' von 5';
+ L.querySelectorAll('i').forEach(function(i,k){i.classList.toggle('on',k<n);});}
+function prog(){
+ var lab=document.getElementById('smartProgressLabel'),s=document.getElementById('smart-screen');if(!lab||!s)return;
+ var bar=s.querySelector('.kk-prog');
+ if(!bar){var hd=s.querySelector('.quiz-header');if(!hd)return;bar=document.createElement('div');bar.className='kk-prog';bar.setAttribute('aria-hidden','true');bar.innerHTML='<b></b>';hd.insertAdjacentElement('afterend',bar);}
+ var m=lab.textContent.match(/(\d+)\s*\/\s*(\d+)/),p=m&&+m[2]?Math.min(100,Math.round(100*m[1]/m[2])):0;
+ bar.firstChild.style.width=p+'%';bar.classList.toggle('done',p>=100);}
+function run(){document.querySelectorAll('.flashcard').forEach(ensure);prog();}
+var t;new MutationObserver(function(){clearTimeout(t);t=setTimeout(run,40);}).observe(document.body,{subtree:true,childList:true,characterData:true});run();
 })();
 </script>
 
