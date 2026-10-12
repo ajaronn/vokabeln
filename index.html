@@ -13298,7 +13298,7 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
 #kkDock > #supportInboxBtn[style*="none"], #supportInboxBtn[hidden] { display: none !important; }
 
 
-  /* ===== Karteikarten-Optik v2: hohe Karten, Kartenstapel dahinter, Stern ===== */
+  /* ===== Karteikarten-Optik v3: hohe Karten, Kartenstapel dahinter ===== */
   body .flashcard, body .flip-card { position: relative; isolation: isolate; }
   body .flashcard { min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 36px 24px; border-width: 1.5px; border-style: solid; border-radius: 22px; margin-bottom: 44px; }
@@ -13306,34 +13306,48 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
   body .flip-card-face { border: 1.5px solid var(--ink); border-radius: 22px; background: var(--surface); gap: 14px; padding: 32px 24px; }
   body .flip-card-wrap { padding-bottom: 16px; }
 
-  /* Stapel: Rost links, Gold rechts */
+  /* Stapel: Rost links, Gold rechts; beim Drüberfahren fächert er auf */
   body .flashcard::before, body .flashcard::after, body .flip-card::before, body .flip-card::after {
-    content: ""; position: absolute; inset: 0; border-radius: 22px; pointer-events: none; transition: transform .35s ease, background-color .2s ease; }
+    content: ""; position: absolute; inset: 0; border-radius: 22px; pointer-events: none; transition: transform .35s ease, background-color .25s ease; }
   body .flashcard::before, body .flip-card::before { z-index: -1; background: var(--rust); transform: rotate(-2.4deg) translate(-9px, 6px); }
   body .flashcard::after,  body .flip-card::after  { z-index: -2; background: #D4A02E; transform: rotate(2.8deg) translate(10px, 9px); }
-  body .flashcard.correct::before, body .flashcard.correct::after { background: var(--success); }
+  body .flashcard:hover::before, body .flip-card:hover::before { transform: rotate(-4deg) translate(-16px, 8px); }
+  body .flashcard:hover::after,  body .flip-card:hover::after  { transform: rotate(4.6deg) translate(18px, 12px); }
+
+  /* Richtig: frisches Grün statt grauem Mint */
+  body .flashcard.correct { background-color: #E4F1DC; border-color: #1F6B45; }
+  body .flashcard.correct::before { background: #1F6B45; }
+  body .flashcard.correct::after  { background: #8FCB9B; }
+  body .flashcard.correct .card-word { color: #14502F; }
+  body .flashcard.correct .card-word::after { background: #1F6B45; }
+  body .flashcard.correct .card-tag { color: #1F6B45; border-color: #1F6B45; }
   body .flashcard.incorrect::before { background: var(--error); }
+  @media (prefers-color-scheme: dark) {
+    body .flashcard.correct { background-color: #1F3A2B; border-color: #5FD08E; }
+    body .flashcard.correct::before { background: #3E9E69; }
+    body .flashcard.correct::after  { background: #1F6B45; }
+    body .flashcard.correct .card-word { color: #A5EBC1; }
+    body .flashcard.correct .card-word::after { background: #5FD08E; }
+    body .flashcard.correct .card-tag { color: #5FD08E; border-color: #5FD08E; }
+  }
 
-  /* Stern oben rechts (rein dekorativ) */
-  body .flashcard, body .flip-card-face {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23241A10' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important; background-size: 22px 22px !important; background-position: calc(100% - 18px) 18px !important; }
-  @media (prefers-color-scheme: dark) { body .flashcard, body .flip-card-face { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EDE6D8' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z'/%3E%3C/svg%3E") !important; } }
+  /* Text stärker hervorgehoben */
+  body .card-tag { background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink); font-size: 12px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; margin: 0 0 20px; }
+  body .card-word { font-size: 46px; font-weight: 800; line-height: 1.12; letter-spacing: -.01em; color: var(--ink); }
+  body .card-word::after, body .flip-card-word::after { content: ""; display: block; width: 64px; height: 4px; margin: 18px auto 0; background: var(--rust); border-radius: 4px; }
+  body .flip-card-word { font-size: 38px; font-weight: 800; line-height: 1.12; letter-spacing: -.01em; }
+  body .flip-card-lang-label { font-size: 12px; font-weight: 700; letter-spacing: .14em; border: 1.5px solid var(--ink); border-radius: 999px; padding: 4px 12px; color: var(--ink); background: var(--surface); }
+  body .flip-card-back .flip-card-word { font-style: italic; font-weight: 700; color: #1F6B45; }
+  body .flip-card-back .flip-card-word::after { background: #1F6B45; }
+  body .flip-card-back .flip-card-lang-label { border-color: #1F6B45; color: #1F6B45; }
+  body .flip-card-extra { font-style: italic; font-size: 16px; color: var(--ink); opacity: .75; }
+  @media (prefers-color-scheme: dark) { body .flip-card-back .flip-card-word, body .flip-card-back .flip-card-lang-label { color: #5FD08E; } body .flip-card-back .flip-card-lang-label { border-color: #5FD08E; } }
 
-  /* Typografie wie auf dem Foto */
-  body .card-tag { background: none; color: var(--muted); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 0; margin: 0 0 14px; }
-  body .card-word { font-size: 40px; line-height: 1.15; }
-  body .card-word::after, body .flip-card-word::after { content: ""; display: block; width: 52px; height: 1px; margin: 16px auto 0; background: var(--border); }
-  body .flip-card-word { font-size: 34px; line-height: 1.15; }
-  body .flip-card-lang-label { font-size: 12px; letter-spacing: .14em; border: 0; padding: 0; background: none; }
-  body .flip-card-back .flip-card-word { font-style: italic; font-weight: 600; color: var(--success); }
-  body .flip-card-back .flip-card-word::after { display: none; }
-  body .flip-card-extra { font-style: italic; }
-
-  /* Tasten: „Umdrehen“ dunkel, „Zurück“ Rost-Kontur, „Weiter“ grün */
+  /* Tasten */
   body #flipCardBtn { background: var(--ink); color: var(--bg); border: 0; border-radius: 14px; font-weight: 700; min-height: 52px; text-decoration: none; }
   body #stackPrevBtn { border: 1.5px solid var(--rust); color: var(--rust); border-radius: 14px; font-weight: 700; background: var(--surface); }
-  body #stackNextBtn { background: var(--success); border: 0; color: #fff; border-radius: 14px; font-weight: 700; }
+  body #stackNextBtn { background: #1F6B45; border: 0; color: #fff; border-radius: 14px; font-weight: 700; }
   body .stack-nav-row { margin-top: 12px; }
   body .stack-progress { display: block; border: 0; background: none; padding: 0; margin-bottom: 14px; }
   @media (prefers-reduced-motion: reduce) { body .flashcard::before, body .flashcard::after, body .flip-card::before, body .flip-card::after { transition: none; } }
