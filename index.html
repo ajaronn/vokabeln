@@ -13297,60 +13297,6 @@ html.kk-popup #supportOverlay .support-actions { margin-top: var(--sp-2) !import
 body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !important; }
 #kkDock > #supportInboxBtn[style*="none"], #supportInboxBtn[hidden] { display: none !important; }
 
-
-  /* ===== Karteikarten-Optik v3: hohe Karten, Kartenstapel dahinter ===== */
-  body .flashcard, body .flip-card { position: relative; isolation: isolate; }
-  body .flashcard { min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 36px 24px; border-width: 1.5px; border-style: solid; border-radius: 22px; margin-bottom: 44px; }
-  body .flip-card, body .flip-card-inner, body .flip-card-face { min-height: 360px; }
-  body .flip-card-face { border: 1.5px solid var(--ink); border-radius: 22px; background: var(--surface); gap: 14px; padding: 32px 24px; }
-  body .flip-card-wrap { padding-bottom: 16px; }
-
-  /* Stapel: Rost links, Gold rechts; beim Drüberfahren fächert er auf */
-  body .flashcard::before, body .flashcard::after, body .flip-card::before, body .flip-card::after {
-    content: ""; position: absolute; inset: 0; border-radius: 22px; pointer-events: none; transition: transform .35s ease, background-color .25s ease; }
-  body .flashcard::before, body .flip-card::before { z-index: -1; background: var(--rust); transform: rotate(-2.4deg) translate(-9px, 6px); }
-  body .flashcard::after,  body .flip-card::after  { z-index: -2; background: #D4A02E; transform: rotate(2.8deg) translate(10px, 9px); }
-  body .flashcard:hover::before, body .flip-card:hover::before { transform: rotate(-4deg) translate(-16px, 8px); }
-  body .flashcard:hover::after,  body .flip-card:hover::after  { transform: rotate(4.6deg) translate(18px, 12px); }
-
-  /* Richtig: frisches Grün statt grauem Mint */
-  body .flashcard.correct { background-color: #E4F1DC; border-color: #1F6B45; }
-  body .flashcard.correct::before { background: #1F6B45; }
-  body .flashcard.correct::after  { background: #8FCB9B; }
-  body .flashcard.correct .card-word { color: #14502F; }
-  body .flashcard.correct .card-word::after { background: #1F6B45; }
-  body .flashcard.correct .card-tag { color: #1F6B45; border-color: #1F6B45; }
-  body .flashcard.incorrect::before { background: var(--error); }
-  @media (prefers-color-scheme: dark) {
-    body .flashcard.correct { background-color: #1F3A2B; border-color: #5FD08E; }
-    body .flashcard.correct::before { background: #3E9E69; }
-    body .flashcard.correct::after  { background: #1F6B45; }
-    body .flashcard.correct .card-word { color: #A5EBC1; }
-    body .flashcard.correct .card-word::after { background: #5FD08E; }
-    body .flashcard.correct .card-tag { color: #5FD08E; border-color: #5FD08E; }
-  }
-
-  /* Text stärker hervorgehoben */
-  body .card-tag { background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink); font-size: 12px; font-weight: 700;
-    letter-spacing: .14em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; margin: 0 0 20px; }
-  body .card-word { font-size: 46px; font-weight: 800; line-height: 1.12; letter-spacing: -.01em; color: var(--ink); }
-  body .card-word::after, body .flip-card-word::after { content: ""; display: block; width: 64px; height: 4px; margin: 18px auto 0; background: var(--rust); border-radius: 4px; }
-  body .flip-card-word { font-size: 38px; font-weight: 800; line-height: 1.12; letter-spacing: -.01em; }
-  body .flip-card-lang-label { font-size: 12px; font-weight: 700; letter-spacing: .14em; border: 1.5px solid var(--ink); border-radius: 999px; padding: 4px 12px; color: var(--ink); background: var(--surface); }
-  body .flip-card-back .flip-card-word { font-style: italic; font-weight: 700; color: #1F6B45; }
-  body .flip-card-back .flip-card-word::after { background: #1F6B45; }
-  body .flip-card-back .flip-card-lang-label { border-color: #1F6B45; color: #1F6B45; }
-  body .flip-card-extra { font-style: italic; font-size: 16px; color: var(--ink); opacity: .75; }
-  @media (prefers-color-scheme: dark) { body .flip-card-back .flip-card-word, body .flip-card-back .flip-card-lang-label { color: #5FD08E; } body .flip-card-back .flip-card-lang-label { border-color: #5FD08E; } }
-
-  /* Tasten */
-  body #flipCardBtn { background: var(--ink); color: var(--bg); border: 0; border-radius: 14px; font-weight: 700; min-height: 52px; text-decoration: none; }
-  body #stackPrevBtn { border: 1.5px solid var(--rust); color: var(--rust); border-radius: 14px; font-weight: 700; background: var(--surface); }
-  body #stackNextBtn { background: #1F6B45; border: 0; color: #fff; border-radius: 14px; font-weight: 700; }
-  body .stack-nav-row { margin-top: 12px; }
-  body .stack-progress { display: block; border: 0; background: none; padding: 0; margin-bottom: 14px; }
-  @media (prefers-reduced-motion: reduce) { body .flashcard::before, body .flashcard::after, body .flip-card::before, body .flip-card::after { transition: none; } }
 </style>
 <script>
 /* ===== Navigation: Fenster "Meine Listen & Vokabeln" und "Lernen & Übungen" ===== */
@@ -13759,5 +13705,70 @@ body:has(#login-screen:not(.hidden)) #kkDock > #kkLoginHome { display: flex !imp
   });
 })();
 </script>
+<style id="kk-visuals">
+/* Karteikarten-Look: Stapel, Washi-Tape, Karteilinien, Stempel, Kritzeleien */
+.flashcard{position:relative;rotate:var(--cardtilt,0deg);
+ box-shadow:3px 4px 0 -1px var(--surface),3px 4px 0 0 var(--border),6px 8px 0 -1px var(--surface),6px 8px 0 0 var(--border)}
+.flashcard,.flashcard.correct,.flashcard.almost,.flashcard.incorrect,.flashcard.half{
+ background-image:linear-gradient(to bottom,transparent 62px,rgba(168,68,46,.45) 62px,rgba(168,68,46,.45) 64px,transparent 64px),
+ repeating-linear-gradient(to bottom,transparent 0,transparent 33px,var(--rule-color) 33px,var(--rule-color) 34px)}
+.flashcard::before{content:'';position:absolute;top:-13px;left:50%;width:84px;height:26px;margin-left:-42px;rotate:var(--tilt,-2deg);
+ background-color:var(--tape,rgba(168,68,46,.5));
+ background-image:repeating-linear-gradient(115deg,transparent 0 6px,rgba(255,255,255,.22) 6px 12px);
+ clip-path:polygon(0 0,4% 25%,0 50%,4% 75%,0 100%,100% 100%,96% 75%,100% 50%,96% 25%,100% 0);pointer-events:none}
+.kk-doodle{position:absolute;right:14px;bottom:12px;width:34px;height:34px;color:var(--muted);opacity:.55;pointer-events:none}
+.flashcard.correct::after,.flashcard.almost::after,.flashcard.incorrect::after,.flashcard.half::after{
+ position:absolute;left:14px;bottom:12px;padding:3px 10px;border:2px solid currentColor;border-radius:4px;outline:1px solid currentColor;outline-offset:2px;
+ font-size:14px;font-weight:700;letter-spacing:.14em;rotate:-8deg;pointer-events:none;animation:kkStamp .28s cubic-bezier(.2,1.6,.4,1) both}
+.flashcard.correct::after{content:'RICHTIG';color:var(--success)}
+.flashcard.almost::after{content:'FAST';color:var(--warn)}
+.flashcard.half::after{content:'HALB';color:var(--warn)}
+.flashcard.incorrect::after{content:'FALSCH';color:var(--error)}
+@keyframes kkStamp{from{opacity:0;scale:1.8}to{opacity:.9;scale:1}}
+/* Ergebnis-Illustration + Konfetti */
+.kk-res{display:flex;justify-content:center;margin-bottom:8px}
+.kk-res-svg{width:84px;height:84px;color:var(--rust);padding:12px;border:2px dashed var(--border);border-radius:50%;background:var(--surface);animation:kkPop .5s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes kkPop{from{scale:.3;opacity:0}to{scale:1;opacity:1}}
+.kk-confetti{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:9000}
+.kk-confetti i{position:absolute;top:-14px;width:8px;height:12px;border-radius:2px;opacity:.9;animation:kkFall linear forwards}
+@keyframes kkFall{to{transform:translateY(105vh) rotate(540deg)}}
+/* Leere Zustände: Heft-Kritzelei */
+.kk-empty::before{content:'';display:block;width:56px;height:56px;margin:0 auto 8px;background:var(--muted);opacity:.7;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 8h24a4 4 0 0 1 4 4v28H14a4 4 0 0 1-4-4zM10 36a4 4 0 0 1 4-4h24M18 16h12M18 22h8'/%3E%3C/svg%3E") center/contain no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 8h24a4 4 0 0 1 4 4v28H14a4 4 0 0 1-4-4zM10 36a4 4 0 0 1 4-4h24M18 16h12M18 22h8'/%3E%3C/svg%3E") center/contain no-repeat}
+@media (prefers-reduced-motion:reduce){.flashcard::after,.kk-res-svg{animation:none!important}.kk-confetti{display:none}}
+</style>
+<script id="kk-visuals-js">
+(function(){
+var D={star:'M24 6l5.5 12 13 1.5-9.7 8.8 2.7 12.9L24 34.6 12.5 41.2l2.7-12.9L5.5 19.5l13-1.5z',
+heart:'M24 40C8 28 6 18 12 12c5-4 10-1 12 4 2-5 7-8 12-4 6 6 4 16-12 28z',
+leaf:'M10 38C10 18 22 8 40 8c0 18-10 30-30 30zM10 38L28 20',
+wave:'M6 28c5-12 8 12 13 0s8 12 13 0 8 8 10-4',
+arrow:'M8 36C14 18 28 12 40 14M32 6l8 8-9 7',
+spark:'M24 4c1 12 8 19 20 20-12 1-19 8-20 20-1-12-8-19-20-20 12-1 19-8 20-20z',
+bulb:'M24 6a12 12 0 0 0-6 22v6h12v-6a12 12 0 0 0-6-22zM19 40h10M21 44h6'};
+var K=Object.keys(D),TAPES=['rgba(168,68,46,.55)','rgba(156,122,37,.55)','rgba(47,110,92,.5)','rgba(138,127,104,.5)'];
+var rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function svg(k,c){return '<svg class="'+c+'" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+D[k]+'"/></svg>';}
+function hash(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h);}
+function decorate(c,t){var h=hash(t||'x'),o=c.querySelector(':scope > .kk-doodle');if(o)o.remove();
+ c.style.setProperty('--tape',TAPES[h%4]);c.style.setProperty('--tilt',((h%7)-3)+'deg');c.style.setProperty('--cardtilt',((((h>>3)%5)-2)*.3)+'deg');
+ c.insertAdjacentHTML('beforeend',svg(K[(h>>2)%K.length],'kk-doodle'));c.lastChild.style.transform='rotate('+((h%30)-15)+'deg)';
+ if(!rm&&c.animate)c.animate([{translate:'24px 0',opacity:.2},{translate:'0 0',opacity:1}],{duration:240,easing:'ease-out'});}
+var seen=new WeakMap();
+function scan(){document.querySelectorAll('.flashcard').forEach(function(c){var w=c.querySelector('.card-word'),t=w?w.textContent:'';if(seen.get(c)!==t){seen.set(c,t);decorate(c,t);}});}
+var tm;new MutationObserver(function(){clearTimeout(tm);tm=setTimeout(scan,30);}).observe(document.body,{subtree:true,childList:true,characterData:true});scan();
+function confetti(){if(rm)return;var w=document.createElement('div'),v=['--rust','--warn','--success','--muted'];w.className='kk-confetti';
+ for(var i=0;i<28;i++){var p=document.createElement('i');p.style.cssText='left:'+Math.random()*100+'%;background:var('+v[i%4]+');animation-delay:'+Math.random()*.6+'s;animation-duration:'+(1.8+Math.random()*1.4)+'s;rotate:'+Math.random()*180+'deg';w.appendChild(p);}
+ document.body.appendChild(w);setTimeout(function(){w.remove();},3800);}
+function showRes(s){var h=s.querySelector('.result-hero');if(!h)return;var o=h.querySelector('.kk-res');if(o)o.remove();
+ var m=(h.textContent.match(/(\d+)\s*%/)||[])[1],p=m==null?100:+m;
+ h.insertAdjacentHTML('afterbegin','<div class="kk-res">'+svg(p>=80?'star':p>=50?'leaf':'bulb','kk-res-svg')+'</div>');if(p>=80)confetti();}
+['results-screen','mirror-results-screen','know-results-screen','browse-results-screen','smart-results-screen'].forEach(function(id){
+ var s=document.getElementById(id);if(!s)return;
+ new MutationObserver(function(){if(s.classList.contains('hidden')){delete s.dataset.kkShown;}else if(!s.dataset.kkShown){s.dataset.kkShown='1';setTimeout(function(){showRes(s);},80);}}).observe(s,{attributes:true,attributeFilter:['class']});});
+})();
+</script>
+
 </body>
 </html>
