@@ -13762,7 +13762,8 @@ function confetti(){if(rm)return;var w=document.createElement('div'),v=['--rust'
  document.body.appendChild(w);setTimeout(function(){w.remove();},3800);}
 function showRes(s){var h=s.querySelector('.result-hero');if(!h)return;var o=h.querySelector('.kk-res');if(o)o.remove();
  var m=(h.textContent.match(/(\d+)\s*%/)||[])[1],p=m==null?100:+m;
- }
+ h.insertAdjacentHTML('afterbegin','<div class="kk-ring" style="--p:'+Math.min(100,p)+';--c:var('+(p>=80?'--success':p>=50?'--warn':'--error')+')" aria-hidden="true"></div>');
+ if(p>=80)confetti();}
 ['results-screen','mirror-results-screen','know-results-screen','browse-results-screen','smart-results-screen'].forEach(function(id){
  var s=document.getElementById(id);if(!s)return;
  new MutationObserver(function(){if(s.classList.contains('hidden')){delete s.dataset.kkShown;}else if(!s.dataset.kkShown){s.dataset.kkShown='1';setTimeout(function(){showRes(s);},80);}}).observe(s,{attributes:true,attributeFilter:['class']});});
@@ -13809,6 +13810,38 @@ function showRes(s){var h=s.querySelector('.result-hero');if(!h)return;var o=h.q
 .flashcard .card-word:not(:empty)::after{opacity:.28;height:7px}
 .kk-fold{width:20px;height:20px}
 .kk-leitner i{width:6px}
+
+/* Lochung deutlicher */
+.kk-holes{left:7px;width:22px;background:radial-gradient(circle at 11px 50%,var(--bg) 0 6px,color-mix(in srgb,var(--ink) 50%,var(--bg)) 6.4px 7.8px,color-mix(in srgb,var(--ink) 12%,transparent) 8px 9.6px,transparent 10px) 0 0/22px 33.34% repeat-y}
+.flashcard{padding-left:38px;padding-right:30px}
+.kk-leitner{left:40px}
+@media (max-width:420px){.kk-holes{left:4px}.kk-leitner{left:36px}.flashcard{padding-left:34px;padding-right:22px}}
+/* Ergebnis-Ring */
+.kk-ring{width:96px;height:96px;margin:0 auto 14px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--border) 0);
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 10px),#000 calc(100% - 9px));mask:radial-gradient(farthest-side,transparent calc(100% - 10px),#000 calc(100% - 9px))}
+/* Heft-Details im restlichen Layout */
+.section-label{display:flex;align-items:center;gap:12px}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.app-title{padding-bottom:10px;border-bottom:2px solid var(--ink);box-shadow:0 4px 0 -1px var(--bg),0 5px 0 -1px var(--border)}
+details.group-fold{border-left:5px solid var(--rust);background:var(--surface);box-shadow:0 8px 18px -14px rgba(36,26,16,.4)}
+.vocab-card{border-left:3px solid var(--border)}
+.quiz-header{padding-bottom:12px;border-bottom:1px dashed var(--border)}
+.mc-option{border-left:4px solid var(--border)}
+.btn-primary{box-shadow:3px 3px 0 var(--ink);transition:box-shadow .12s,translate .12s}
+.btn-primary:active{box-shadow:1px 1px 0 var(--ink);translate:2px 2px}
+.lang-modal-title{padding-bottom:8px;border-bottom:1px solid var(--border)}
+.result-hero{padding-bottom:20px;border-bottom:2px dashed var(--border)}
+@media (prefers-reduced-motion:reduce){.btn-primary{transition:none}}
+
+/* Eselsohr: sauber geknickte Ecke mit Falzlinie, Rückseite und Schatten */
+.kk-fold{top:-2px;right:-2px;width:30px;height:30px;box-sizing:border-box;border-radius:0 0 0 4px;
+ border-left:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);box-shadow:none;
+ background:
+  linear-gradient(225deg,var(--bg) 0 47%,var(--ink) 47% 53%,transparent 53%),
+  linear-gradient(225deg,transparent 53%,color-mix(in srgb,var(--ink) 16%,var(--border)) 53%,color-mix(in srgb,var(--border) 45%,var(--surface)) 78%,var(--surface) 100%);
+ transition:width .2s ease,height .2s ease}
+.flashcard:hover .kk-fold{width:36px;height:36px}
+@media (prefers-reduced-motion:reduce){.kk-fold{transition:none}}
 </style>
 <script id="kk-visuals-2-js">
 (function(){
