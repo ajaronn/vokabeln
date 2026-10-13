@@ -996,8 +996,8 @@
             <p class="hint" id="shareOwnerInfo"></p>
             <div id="shareMembers"></div>
             <div class="goal-setting-row" id="shareInviteRow">
-              <input enterkeyhint="send" type="text" id="shareInviteInput" placeholder="Nutzernamen, mit Komma getrennt" maxlength="200" style="flex:1 1 180px;">
-              <button type="button" id="shareInviteBtn" class="btn-small">Einladen</button>
+              <input enterkeyhint="send" type="email" id="shareInviteEmail" placeholder="E-Mail-Adresse der eingeladenen Person" maxlength="200" autocomplete="off" style="flex:1 1 180px;">
+              <button type="button" id="shareInviteBtn" class="btn-small">Einladungslink erstellen</button>
             </div>
             <p class="hint" id="shareMsg"></p>
           </div>
@@ -1109,8 +1109,6 @@
         <span></span>
         <span></span>
       </div>
-      <div class="ch-bar"><span>Kapitel üben/anzeigen:</span><select id="chapterSel" aria-label="Kapitel wählen"></select>
-        <button type="button" class="btn-small" id="chapterSetBtn" title="Ausgewählten Vokabeln ein Kapitel zuweisen">Auswahl → Kapitel</button></div>
       <div class="view-toggle-row">
         <button type="button" class="btn-outline view-toggle-btn active" id="viewModeListBtn" aria-pressed="true">☰ Liste</button>
         <button type="button" class="btn-outline view-toggle-btn" id="viewModeStackBtn" aria-pressed="false">🂠 Karten</button>
@@ -1231,7 +1229,12 @@ Wasser; water"></textarea>
       <p class="hint" id="lvlHint"></p>
       <p class="hint smart-info" id="smartInfo" aria-live="polite"></p>
       <button class="btn-primary btn-smart" id="startSmartBtn" type="button">Smart-Lernpfad starten</button>
-      <button class="btn-outline" id="kxMemBtn" type="button" style="width:100%;margin-top:8px">🃏 Memory (mind. 4 Vokabeln)</button>
+    </section>
+
+    <section class="memory-section">
+      <label class="section-label">Memory</label>
+      <p class="hint">Finde zusammengehörige Paare: Aufdecken und Karten zuordnen. Dafür brauchst du mindestens 4 Vokabeln.</p>
+      <button class="btn-primary" id="kxMemBtn" type="button" style="width:100%">🃏 Memory starten</button>
     </section>
 
     <section class="conf-section">
@@ -2644,7 +2647,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
   function chapterOk(v) { return !chapterFilter || (chapterFilter === '__none__' ? !v.chapter : v.chapter === chapterFilter); }
   function listChapters(l) { var m = {}, out = []; l.vocab.forEach(function (v) { if (v.chapter && !m[v.chapter]) { m[v.chapter] = 1; out.push(v.chapter); } }); return out; }
   function renderChapterSel() {
-    var l = getCurrentList(), sel = gid('chapterSel'); if (!l) return;
+    var l = getCurrentList(), sel = gid('chapterSel'); if (!l || !sel) return;
     var chs = listChapters(l);
     if (chapterFilter && chapterFilter !== '__none__' && chs.indexOf(chapterFilter) === -1) chapterFilter = '';
     sel.innerHTML = '<option value="">Alle Kapitel</option>' + chs.map(function (c) { return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; }).join('') + (chs.length ? '<option value="__none__">Ohne Kapitel</option>' : '');
@@ -2752,7 +2755,6 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       var pair = list.vocab[i];
       html += '<div class="vocab-card' + (isPausedV(pair) ? ' paused' : '') + '">';
       if (canDrag) html += '<span class="drag-handle" title="Zum Verschieben gedrückt halten und ziehen" aria-label="Verschieben" role="button">≡</span>';
-      html += '<input type="text" class="ch-input" data-idx="' + i + '" list="chapterDL" value="' + escapeHtml(pair.chapter || '') + '" placeholder="Kapitel (optional)" autocomplete="off">';
       html += '<label class="sel-row"><input type="checkbox" class="sel-box" data-id="' + pair.id + '"' + (selected[pair.id] ? ' checked' : '') + '><span class="sel-text">auswählen</span></label>';
       html += '<div class="vocab-row">' +
         '<input type="text" enterkeyhint="next" class="vocab-input" data-idx="' + i + '" data-field="a" value="' + escapeHtml(pair.a) + '" placeholder="' + escapeHtml(list.langA) + '">' +
@@ -2901,7 +2903,6 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     gid('stackPrevBtn').disabled = stackIdx <= 0;
     gid('stackNextBtn').disabled = stackIdx >= total - 1;
     var frontHtml = '<span class="flip-card-lang-label">' + escapeHtml(list.langA) + '</span><span class="flip-card-word">' + escapeHtml(pair.a) + '</span>';
-    if (pair.chapter) frontHtml += '<span class="flip-card-extra">' + escapeHtml(pair.chapter) + '</span>';
     var backHtml = '<span class="flip-card-lang-label">' + escapeHtml(list.langB) + '</span><span class="flip-card-word">' + escapeHtml(pair.b) + '</span>';
     if (pair.phon) backHtml += '<span class="flip-card-extra">[' + escapeHtml(pair.phon) + ']</span>';
     if (pair.ex) backHtml += '<span class="flip-card-extra">„' + escapeHtml(pair.ex) + '“</span>';
@@ -6830,19 +6831,6 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     }).join('') + (dupGroupCache.length > 50 ? '<div class="hint">…und weitere. Nach dem Zusammenführen erneut suchen.</div>' : '');
   }
   function setupChaptersDups() {
-    gid('chapterSel').addEventListener('change', function (e) { chapterFilter = e.target.value; renderVocabList(); });
-    gid('chapterSetBtn').addEventListener('click', async function () {
-      var vs = selVocab(); if (!vs.length) { showSetupMessage('Erst Vokabeln mit „auswählen“ markieren.'); return; }
-      var name = (await kkPrompt('Kapitel für ' + kkN(vs.length, 'Vokabel', 'Vokabeln') + ' (leer = Kapitel entfernen):', chapterFilter && chapterFilter !== '__none__' ? chapterFilter : ''));
-      if (name === null) return;
-      vs.forEach(function (v) { v.chapter = name.trim(); });
-      renderVocabList(); saveAll();
-    });
-    gid('vocabList').addEventListener('change', function (e) {
-      var inp = e.target.closest ? e.target.closest('.ch-input') : null; if (!inp) return;
-      var v = getCurrentList().vocab[parseInt(inp.dataset.idx, 10)]; if (!v) return;
-      v.chapter = inp.value.trim(); renderChapterSel(); saveAll();
-    });
     gid('dupScanBtn').addEventListener('click', renderDupScan);
     gid('dupScanPanel').addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('[data-dup-merge]') : null; if (!b) return;
@@ -7848,8 +7836,9 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     c.rpc('link_list_get', { p_code: code }).then(function (res) {
       if (res.error) throw res.error;
       if (!res.data) throw new Error('Link ungültig oder Liste nicht mehr vorhanden.');
+      if (String(res.data).charAt(0) === 'j') throw new Error('Das ist ein Einladungslink. Bitte den Link direkt öffnen, wie er verschickt wurde.');
       return qrDecodeList(res.data);
-    }).then(function (o) { d.body.innerHTML = ''; qrImportConfirm(d, o); })
+    }).then(function (o) { if (!o) return; d.body.innerHTML = ''; qrImportConfirm(d, o); })
       .catch(function (e) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Fehler: ' + (e && e.message || e))); d.body.appendChild(kkBtn('Schließen', '', d.close)); });
   }
 
@@ -7857,7 +7846,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     var a = gid('mixAllBtn'), b = gid('linkShareBtn');
     if (a) a.addEventListener('click', mixOpen);
     if (b) b.addEventListener('click', linkShareOpen);
-    setTimeout(linkOpenFromUrl, 800);
+    setTimeout(linkOpenFromUrl, 800); setTimeout(joinOpenFromUrl, 900);
   }
 
   /* ======== Vokabel-Erinnerungen: Push mit Vokabel-Frage ======== */
@@ -8694,37 +8683,112 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     return restGet('access_codes?select=id&limit=1&username=ilike.' + enc(k)).then(function (rows) { return rows.length > 0; });
   }
 
+  var JOIN_BASE = 'https://ajaronn.github.io/vokabeln/?p=beitritt/';
+  function sha256Hex(str) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(function (b) {
+      return Array.prototype.map.call(new Uint8Array(b), function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+    });
+  }
+  function joinOpenFromUrl() {
+    var m = null, q = null;
+    try { q = new URLSearchParams(location.search).get('p'); } catch (e) { }
+    if (q) m = /^beitritt\/([^\/]+)\/([A-Za-z0-9]{20,})\/?$/.exec(q);
+    if (!m) m = /\/beitritt\/([^\/]+)\/([A-Za-z0-9]{20,})\/?$/.exec(location.pathname);
+    if (!m) return;
+    try { history.replaceState(null, '', location.pathname.replace(/\/beitritt\/.*$/, '/')); } catch (e) { }
+    var code = m[2], d = kkDialog('Einladung zur Liste');
+    d.body.appendChild(kkEl('p', 'Einladung wird geprüft …'));
+    function fail(t) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', t)); d.body.appendChild(kkBtn('Schließen', '', d.close)); }
+    var tries = 0;
+    (function go() {
+      if (!getUser() && tries++ < 300) { if (tries === 3) { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Bitte melde dich mit der eingeladenen E-Mail-Adresse an. Die Einladung wird danach automatisch geprüft (bis zu 5 Minuten Wartezeit).')); d.body.appendChild(kkBtn('Abbrechen', '', function () { tries = 9999; d.close(); })); } setTimeout(go, 1000); return; }
+      if (!getUser()) { fail('Bitte melde dich mit der eingeladenen E-Mail-Adresse an und öffne den Link danach noch einmal.'); return; }
+      var c = getSb();
+      if (!c || !c.auth) { fail('Keine Verbindung zum Server.'); return; }
+      var email = '';
+      Promise.resolve(c.auth.getSession()).then(function (r) {
+        email = String(r && r.data && r.data.session && r.data.session.user && r.data.session.user.email || '').trim().toLowerCase();
+        if (!email) throw new Error('Keine angemeldete E-Mail-Adresse gefunden.');
+        return c.rpc('link_list_get', { p_code: code });
+      }).then(function (res) {
+        if (res.error) throw res.error;
+        if (!res.data || String(res.data).charAt(0) !== 'j') throw new Error('Link ungültig oder nicht mehr vorhanden.');
+        var info = JSON.parse(decodeURIComponent(escape(atob(String(res.data).slice(1)))));
+        if (!info || !info.j || !info.id || !info.h || !info.e) throw new Error('Link ungültig.');
+        if (Date.now() > info.e) throw new Error('Dieser Einladungslink ist abgelaufen (7 Tage gültig). Bitte lass dir einen neuen schicken.');
+        return sha256Hex(code + ':' + email + ':' + info.e).then(function (h) {
+          if (h !== info.h) throw new Error('Dieser Einladungslink gilt nicht für deine E-Mail-Adresse (' + email + ').');
+          sharedJoinFromLink(d, info);
+        });
+      }).catch(function (e) { fail(e && e.message || 'Einladung konnte nicht geprüft werden.'); });
+    })();
+  }
+
   function sharedInvite() {
     var l = getCurrentList(), user = getUser(), msg = gid('shareMsg'), btn = gid('shareInviteBtn');
-    if (!l || !l.shared) return;
-    var seen = {}, names = [];
-    gid('shareInviteInput').value.split(/[,;\n]+/).forEach(function (n) { var k = normUser(n); if (k && !seen[k]) { seen[k] = 1; names.push(k); } });
-    if (!names.length) { msg.textContent = 'Bitte gib einen Nutzernamen ein.'; return; }
-    btn.disabled = true; msg.textContent = 'Sende …';
-    var res = { sent: [], missing: [], already: [] }, chain = Promise.resolve();
-    names.forEach(function (k) {
-      chain = chain.then(function () {
-        if (k === user || (l.shared.members || []).indexOf(k) !== -1) { res.already.push(k); return; }
-        return userExists(k).then(function (ex) {
-          if (!ex) { res.missing.push(k); return; }
-          return restGet('list_invites?select=id&status=eq.open&list_id=eq.' + enc(l.id) + '&to_user=eq.' + enc(k)).then(function (rows) {
-            if (rows.length) { res.already.push(k); return; }
-            var h = cloudHeaders(); h['Prefer'] = 'return=minimal';
-            return fetch(SUPABASE_URL + '/rest/v1/list_invites', { method: 'POST', headers: h, body: JSON.stringify({ list_id: l.id, list_name: l.name || '', from_user: user, to_user: k, status: 'open' }) })
-              .then(function (r) { if (!r.ok) throw new Error('http'); res.sent.push(k); });
-          });
-        });
+    if (!l || !l.shared || !user) return;
+    var c = getSb();
+    if (!c) { msg.textContent = 'Keine Verbindung zum Server.'; return; }
+    var mail = String(gid('shareInviteEmail').value || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { msg.textContent = 'Bitte gib die E-Mail-Adresse der eingeladenen Person ein.'; return; }
+    btn.disabled = true; msg.textContent = 'Link wird erstellt …';
+    var code = shareCode(), slug = shareSlug(l.name), url = JOIN_BASE + slug + '/' + code;
+    var exp = Date.now() + 7 * 24 * 3600 * 1000;
+    sha256Hex(code + ':' + mail + ':' + exp).then(function (h) {
+      var data = 'j' + btoa(unescape(encodeURIComponent(JSON.stringify({ v: 3, j: 1, id: l.id, o: user, n: String(l.name || 'Liste').slice(0, 80), e: exp, h: h }))));
+      return c.rpc('link_list_create', { p_code: code, p_name: slug, p_data: data });
+    }).then(function (res) {
+      if (res && res.error) throw res.error;
+      msg.textContent = ''; gid('shareInviteEmail').value = '';
+      var d = kkDialog('Einladungslink');
+      d.body.appendChild(kkEl('p', 'Dieser Link gilt nur für ' + mail + '. Die Person muss mit dieser E-Mail-Adresse angemeldet sein, um der Liste „' + (l.name || 'Liste') + '“ beizutreten. Der Link ist 7 Tage gültig.'));
+      var inp = document.createElement('input'); inp.type = 'text'; inp.readOnly = true; inp.value = url;
+      inp.style.cssText = 'font:inherit;font-size:13px;padding:8px;border:2px solid var(--border,#999);border-radius:var(--radius);background:transparent;color:inherit;width:100%;box-sizing:border-box;';
+      inp.addEventListener('focus', function () { inp.select(); });
+      d.body.appendChild(inp);
+      var m2 = kkEl('p', '', 'kk-small'); d.body.appendChild(m2);
+      var row = kkEl('div', '', 'kk-row');
+      row.appendChild(kkBtn('Kopieren', 'primary', function () {
+        function fb() { inp.focus(); inp.select(); var okc = false; try { okc = document.execCommand('copy'); } catch (e) { } m2.textContent = okc ? 'Link kopiert.' : 'Bitte Link manuell kopieren.'; }
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { m2.textContent = 'Link kopiert.'; }, fb); else fb();
+      }));
+      var mailBtn = kkBtn('Per E-Mail senden', 'primary', function () {
+        mailBtn.disabled = true; m2.textContent = 'Wird gesendet …';
+        Promise.resolve(c.functions.invoke('send-invite', { body: { email: mail, url: url, listName: l.name || 'Liste', fromName: cap(user) } })).then(function (r) {
+          if (r && r.error) throw r.error;
+          m2.textContent = '✓ E-Mail an ' + mail + ' gesendet.';
+        }).catch(function () { m2.textContent = 'E-Mail konnte nicht gesendet werden. Du kannst den Link stattdessen kopieren.'; mailBtn.disabled = false; });
       });
-    });
-    chain.then(function () {
-      var parts = [];
-      if (res.sent.length) parts.push('Einladung gesendet an: ' + res.sent.map(cap).join(', ') + '.');
-      if (res.missing.length) parts.push('Nutzer nicht gefunden: ' + res.missing.map(cap).join(', ') + '.');
-      if (res.already.length) parts.push('Schon dabei oder eingeladen: ' + res.already.map(cap).join(', ') + '.');
-      msg.textContent = parts.join(' ');
-      if (res.sent.length) gid('shareInviteInput').value = '';
-    }).catch(function () { msg.textContent = 'Senden fehlgeschlagen. Bitte prüfe deine Verbindung.'; })
+      row.insertBefore(mailBtn, row.firstChild);
+      row.querySelectorAll('button').forEach(function (x) { if (x !== mailBtn && x.textContent === 'Kopieren') x.className = x.className.replace('primary', '').trim(); });
+      if (navigator.share) row.appendChild(kkBtn('Teilen', '', function () { navigator.share({ title: l.name, url: url }).catch(function () { }); }));
+      row.appendChild(kkBtn('Schließen', '', d.close));
+      d.body.appendChild(row);
+    }).catch(function () { msg.textContent = 'Link konnte nicht erstellt werden. Bitte prüfe deine Verbindung.'; })
       .then(function () { btn.disabled = false; });
+  }
+
+  // Beitritt über Einladungslink: legt die Einladung an und nimmt sie sofort an
+  function sharedJoinFromLink(d, info) {
+    var user = getUser();
+    d.body.innerHTML = '';
+    if (!user) { d.body.appendChild(kkEl('p', 'Bitte melde dich zuerst an und öffne den Link danach noch einmal.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); return; }
+    var name = info.n || 'Liste';
+    if (info.o === user || lists.some(function (x) { return x.id === info.id; })) { d.body.appendChild(kkEl('p', 'Diese Liste hast du schon.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); return; }
+    d.body.appendChild(kkEl('p', cap(info.o) + ' lädt dich zur gemeinsamen Liste „' + name + '“ ein. Beitreten?'));
+    var row = kkEl('div', '', 'kk-row');
+    row.appendChild(kkBtn('Beitreten', 'primary', function () {
+      var h = cloudHeaders(); h['Prefer'] = 'return=representation';
+      fetch(SUPABASE_URL + '/rest/v1/list_invites', { method: 'POST', headers: h, body: JSON.stringify({ list_id: info.id, list_name: name, from_user: info.o, to_user: user, status: 'open' }) })
+        .then(function (r) { if (!r.ok) throw new Error('http'); return r.json(); })
+        .then(function (rows) { return rpc('accept_invite', { p_id: rows[0].id, p_user: user }); })
+        .then(function (listId) {
+          if (!listId) throw new Error('invalid');
+          return sharedRefresh().then(function () { showSetupMessage('Liste „' + name + '“ wurde hinzugefügt.'); d.close(); });
+        })
+        .catch(function () { d.body.innerHTML = ''; d.body.appendChild(kkEl('p', 'Beitreten fehlgeschlagen. Der Link ist ungültig oder die Verbindung fehlt.')); d.body.appendChild(kkBtn('Schließen', '', d.close)); });
+    }));
+    row.appendChild(kkBtn('Abbrechen', '', d.close)); d.body.appendChild(row);
   }
 
   function sharedMakeShared() {
@@ -8758,7 +8822,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
   function sharedWire() {
     gid('shareCheck').addEventListener('change', function (e) { if (e.target.checked) sharedMakeShared(); else sharedStopSharing(); });
     gid('shareInviteBtn').addEventListener('click', sharedInvite);
-    gid('shareInviteInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') sharedInvite(); });
+    gid('shareInviteEmail').addEventListener('keydown', function (e) { if (e.key === 'Enter') sharedInvite(); });
   }
 
   /* ---- Einladungen (in der App, nicht per E-Mail) ---- */
@@ -12205,7 +12269,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   g.goals = group('goals', 'Ziele & Erinnerung', [document.getElementById('dailyGoalDetails'), document.getElementById('reminderDetails')], null, null, false);
   g.lists = group('lists', 'Meine Listen', [C('.lists-section'), C('.rename-section'), C('.lang-section')], null, null, true, 'open');
   g.vocab = group('vocab', 'Vokabeln', [C('.vocab-section')], null, null, true);
-  g.learn = group('learn', 'Lernen & Übungen', ['.direction-section','.time-section','.weak-section','.mc-section','.smart-section','.conf-section','.know-section','.browse-section','.mirror-section'].map(C), null, null, true, 'open');
+  g.learn = group('learn', 'Lernen & Übungen', ['.direction-section','.time-section','.weak-section','.mc-section','.smart-section','.memory-section','.conf-section','.know-section','.browse-section','.mirror-section'].map(C), null, null, true, 'open');
   g.acct = group('acct', 'Einstellungen & Konto', ['#mfaSection','#loginPrefsSection','#deviceLoginSection','#devicesSection','#emailChangeSection','#passwordChangeSection','#backupSection','#pzSection','.danger-section'].reduce(function (a, q) { scr.querySelectorAll(':scope > ' + q).forEach(function (n) { a.push(n); }); return a; }, []), null, null, false, 'closed');
   // Reihenfolge: Ziele-Gruppe bleibt im Kopfbereich, Konto-Gruppe ganz unten
   if (g.acct) { var last = g.acct; scr.appendChild(last); }
@@ -12692,7 +12756,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
     nodes.forEach(function (n) { if (n) d.appendChild(n); });
     body.appendChild(d);
   }
-  sec('Bereiche anzeigen & Design', [chips]);
+  sec('Design', [chips]);
   sec('Gerät & Schrift', [dev]);
   var tools = document.createElement('div'); tools.className = 'kk-bar';
   [bar && bar.children[0], bar && bar.children[1]].forEach(function (b) { if (b) tools.appendChild(b); });
@@ -14048,13 +14112,16 @@ var DESC={
 'Listenname':'Der Name, unter dem die Liste in der Auswahl erscheint, z. B. „Englisch Unit 3“. Du kannst ihn jederzeit ändern, die Vokabeln bleiben erhalten.',
 'Abfragerichtung':'Legt fest, was abgefragt wird: „Sprache 1 → Sprache 2“ zeigt dir Sprache 1, du gibst Sprache 2 ein. „Sprache 2 → Sprache 1“ ist umgekehrt. „Gemischt“ wechselt zufällig und trainiert beide Richtungen – das ist am anspruchsvollsten.',
 'Listenverwaltung':'Werkzeuge für die aktuelle Liste: Ordner, Duplizieren, Archivieren (aus der Auswahl nehmen, ohne sie zu verlieren) und Papierkorb. Dazu Farbe, Enddatum und eine Notiz, z. B. für die Klassenarbeit. „Dubletten suchen“ findet doppelte Vokabeln in allen Listen. Bei „Diese Liste löschen“ lieber vorher überlegen, ob Archivieren reicht.',
-'Zu mehreren benutzen':'Lade andere Nutzer per Nutzername zu dieser Liste ein, damit ihr sie gemeinsam nutzt, z. B. in Klasse oder Lerngruppe. Aktiviere die Option, gib die Namen mit Komma getrennt ein und tippe auf „Einladen“. Die Eingeladenen müssen die Einladung annehmen.',
+'Zu mehreren benutzen':'Nutze eine Liste gemeinsam, z. B. in Klasse oder Lerngruppe. Aktiviere die Option, gib die E-Mail-Adresse der Person ein und tippe auf „Einladungslink erstellen“. Der Link funktioniert nur für diese E-Mail-Adresse.',
 'Tägliche Erinnerung':'Die App erinnert dich zu festen Uhrzeiten ans Lernen. Du kannst mehrere Uhrzeiten und einen eigenen Text festlegen. Außerdem gibt es einen Hinweis für lange nicht gelernte Listen und eine Backup-Erinnerung. Dafür müssen Benachrichtigungen im Browser erlaubt sein.',
 'Uhrzeiten & Text':'Lege fest, zu welchen Uhrzeiten du erinnert wirst – mit „+ Uhrzeit hinzufügen“ auch mehrmals am Tag – und welcher Text in der Erinnerung steht.',
 'Hinweis bei nicht gelernten Listen':'Du wirst gewarnt, wenn du eine Liste so viele Tage nicht geübt hast, wie du einstellst (z. B. 3). So fallen Listen nicht unter den Tisch.',
 'Backup-Erinnerung':'Erinnert dich in festen Abständen (in Wochen) daran, ein Backup zu speichern, auf Wunsch auch per E-Mail. Ein Backup schützt deine Listen vor Datenverlust, z. B. beim Gerätewechsel.',
-'Bereiche anzeigen & Design':'Hier blendest du ganze Bereiche der Seite ein oder aus und passt das Aussehen an, damit nur sichtbar bleibt, was du gerade brauchst.',
+'Design':'Hier passt du das Aussehen der App an, z. B. hell, dunkel oder automatisch.',
+'Filter & Zurücksetzen':'Hier übst du nur schwache oder mit ★ markierte Vokabeln und setzt den Lernfortschritt der Liste bei Bedarf zurück.',
 'Gerät & Schrift':'Anpassungen an dein Gerät, damit alles gut lesbar und bedienbar ist, z. B. Darstellung und Schrift.',
+'Alles zurücksetzen':'Löscht alle deine Listen mit allen Vokabeln und setzt die App auf den Anfang zurück. Das kann nicht rückgängig gemacht werden. Speichere vorher ein Backup.',
+'Konto löschen':'Löscht dein Konto endgültig aus dem Anmeldesystem, inklusive aller Cloud-Daten. Danach kannst du dich mit derselben E-Mail-Adresse neu registrieren.',
 'Werkzeuge':'Praktische Zusatzfunktionen, z. B. Anleitungen ein- oder ausblenden und die App installieren.'
 };
 function foldTitle(d){var s=$(':scope > summary',d);if(!s)return'';var c=s.cloneNode(true);$$('.kk-info,.kk-vp-info',c).forEach(function(x){x.remove();});return c.textContent.replace(/[▾▴]/g,'').trim();}
@@ -14116,7 +14183,7 @@ var tm;new MutationObserver(function(){clearTimeout(tm);tm=setTimeout(run,300);}
 <style id="kk-calm-5">
 /* Übersichtlicher: Konto-Bereiche und Lern-Optionen eingeklappt, nichts entfernt */
 details.kk-acct>summary{font-size:15px!important;font-weight:600!important;min-height:44px!important}
-details.kk-acct:not([open])>summary{color:var(--muted)}
+details.kk-acct.kk-danger:not([open])>summary{color:var(--muted)}
 details.kk-acct.kk-danger>summary{color:var(--rust,#b42318)!important}
 details.kk-acct[open]{padding-bottom:12px!important}
 details.kk-acct>.section-label{display:none}
@@ -14215,6 +14282,79 @@ function run(){try{
 [600,1400,2800,5400].forEach(function(t){setTimeout(run,t);});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
 var tm;new MutationObserver(function(){clearTimeout(tm);tm=setTimeout(run,300);}).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<style id="kk-calm-7">
+/* Listen übersichtlicher: Verwaltungs-Werkzeuge in einem Bereich gebündelt */
+details#kkListTools7>details.fold{margin:8px 0 0!important}
+details#kkListTools7>summary{color:var(--ink)}
+</style>
+<script id="kk-calm-7-js">
+(function(){
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function run(){try{
+  var nodes=['listMgmtDetails','shareOuterDetails','listTools','historyTools'].map(function(i){return document.getElementById(i);}).filter(Boolean);
+  if(nodes.length&&!document.getElementById('kkListTools7')){
+    var d=el('details','fold sub-fold kk-more');d.id='kkListTools7';
+    d.appendChild(el('summary',null,'Mehr für Listen'));
+    nodes[0].parentNode.insertBefore(d,nodes[0]);
+    nodes.forEach(function(n){d.appendChild(n);});
+  }
+  var rn=document.querySelector('#grp_lists .rename-section details');
+  if(rn&&!rn.dataset.kk7){rn.dataset.kk7='1';rn.open=false;}
+}catch(e){}}
+[700,1500,2800,5600,9000].forEach(function(t){setTimeout(run,t);});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
+})();
+</script>
+<style id="kk-lp-cards">
+/* Ordner als eigene Karten statt eines großen gemeinsamen Kastens */
+.list-picker{border:none!important;background:transparent!important;overflow:visible!important;display:flex;flex-direction:column;gap:10px}
+.lp-folder{border:2px solid var(--border)!important;border-radius:var(--radius);background:var(--surface);overflow:hidden}
+.lp-folder:last-child{border-bottom:2px solid var(--border)!important}
+.lp-empty{padding:10px 12px;font-size:13px}
+</style>
+<style id="kk-no-rail-line">
+/* Keine durchgehende Linie am Rand der Seitenleiste mehr */
+html.kk-side #kkDock{border-right:0!important;box-shadow:none!important}
+html.kk-side #kkDock::before,html.kk-side #kkDock::after{content:none!important;display:none!important}
+</style>
+<style id="kk-calm-8">
+/* Überall ruhiger: kein Linienpapier, dünnere Rahmen, mehr Luft */
+details.fold,details.group-fold,details.sub-fold,#kkViewPanel,.lp-folder{border-width:1.5px!important}
+details.group-fold{margin:14px 0!important}
+details.fold{margin-top:10px!important}
+#kkMoreEx>summary{color:var(--ink)}
+#kkMoreEx>details.fold,#kkMoreEx>section{margin:8px 0 0!important}
+.kk-btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 4px}
+.kk-btnrow .btn-outline{width:100%}
+</style>
+<script id="kk-calm-8-js">
+(function(){
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
+function run(){try{
+  var gl=document.getElementById('grp_learn');
+  if(gl&&!document.getElementById('kkMoreEx')){
+    var secs=['.conf-section','.know-section','.browse-section','.mirror-section'].map(function(q){return gl.querySelector(':scope > '+q);}).filter(Boolean);
+    if(secs.length){
+      var d=el('details','fold sub-fold kk-more');d.id='kkMoreEx';d.appendChild(el('summary',null,'Weitere Übungen'));
+      secs[0].parentNode.insertBefore(d,secs[0]);
+      secs.forEach(function(n){d.appendChild(n);var f=n.querySelector(':scope > details');if(f)f.open=false;});
+    }
+  }
+  var t=document.getElementById('kkListTools7');
+  if(t&&!t.dataset.kk8){
+    var a=document.getElementById('mixAllBtn'),b=document.getElementById('linkShareBtn');
+    if(a&&b){t.dataset.kk8='1';var r=el('div','kk-btnrow');r.appendChild(a);r.appendChild(b);t.insertBefore(r,t.children[1]||null);}
+  }
+  var ov=document.getElementById('kxSetOv');
+  if(ov&&!ov.dataset.kk8&&ov.querySelector('details')){
+    ov.dataset.kk8='1';
+    ov.querySelectorAll('details details').forEach(function(x){x.open=false;});
+  }
+}catch(e){}}
+[800,1600,3000,6000,9500].forEach(function(t){setTimeout(run,t);});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run);else run();
 })();
 </script>
 </body>
