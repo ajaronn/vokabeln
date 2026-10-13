@@ -895,6 +895,10 @@
     </div>
 
     <div id="reqBox" style="display:none;flex-direction:column;gap:8px;">
+      <input type="text" id="reqFirstNameInput" autocomplete="given-name" placeholder="Vorname" maxlength="50">
+      <input type="text" id="reqLastNameInput" autocomplete="family-name" placeholder="Nachname" maxlength="50">
+      <label class="hint" for="reqBirthdateInput" style="margin:4px 0 -2px;">Geburtsdatum</label>
+      <input type="date" id="reqBirthdateInput" autocomplete="bday" min="1900-01-01">
       <input type="email" id="reqEmailInput" inputmode="email" autocomplete="email" placeholder="Deine E-Mail-Adresse" maxlength="120">
       <div class="pw-field-wrap">
         <input type="password" id="reqPasswordInput" autocomplete="new-password" placeholder="Passwort (mind. 6 Zeichen, Buchstaben + Zahlen)" maxlength="72">
@@ -1371,6 +1375,17 @@ Wasser; water"></textarea>
       <p class="hint" id="resetEverythingMsg" aria-live="polite"></p>
     </section>
 
+    <section class="backup-section" id="profileSection">
+      <label class="section-label">Name &amp; Geburtsdatum</label>
+      <p class="hint">Dein Vorname wird als Anrede in E-Mails von Karteikasten verwendet. Du kannst diese Angaben jederzeit ändern.</p>
+      <input type="text" id="profileFirstNameInput" autocomplete="given-name" placeholder="Vorname" maxlength="50">
+      <input type="text" id="profileLastNameInput" autocomplete="family-name" placeholder="Nachname" maxlength="50" style="margin-top:8px;">
+      <label class="hint" for="profileBirthdateInput" style="display:block;margin:10px 0 4px;">Geburtsdatum</label>
+      <input type="date" id="profileBirthdateInput" autocomplete="bday" min="1900-01-01">
+      <button class="btn-outline" id="profileSaveBtn" type="button" style="margin-top:10px;">Speichern</button>
+      <p class="hint" id="profileMsg" aria-live="polite"></p>
+    </section>
+
     <section class="backup-section" id="emailChangeSection">
       <label class="section-label">E-Mail-Adresse ändern</label>
       <p class="hint">Aktuell angemeldet mit <strong id="emailChangeCurrentEmail"></strong>. Aus Sicherheitsgründen wird zuerst dein aktuelles Passwort geprüft. Danach bekommst du Bestätigungslinks für die Änderung. Die Änderung ist erst wirksam, wenn <strong>alle</strong> verschickten Links bestätigt sind.</p>
@@ -1390,6 +1405,22 @@ Wasser; water"></textarea>
       <p class="hint">Angemeldet als <strong id="deleteAccountEmailInline"></strong>. Löscht dein Konto <strong>endgültig</strong> aus dem Anmeldesystem (nicht nur die Listen), inklusive aller Cloud-Daten. Danach kannst du dich mit dieser E-Mail-Adresse neu registrieren.</p>
       <button class="btn-outline btn-rust" id="openDeleteAccountBtn" type="button">Konto endgültig löschen</button>
     </section>
+  </div>
+
+  <div class="lang-modal-overlay hidden" id="profileModalOverlay">
+    <div class="lang-modal">
+      <h2 class="lang-modal-title">Kurz vorstellen</h2>
+      <p class="hint" style="margin-top:0">Bitte trage deinen Namen und dein Geburtsdatum ein. Der Vorname wird künftig als Anrede in E-Mails verwendet. Das wird nur dieses eine Mal abgefragt und lässt sich jederzeit unter „Einstellungen &amp; Konto“ ändern.</p>
+      <input type="text" id="profileModalFirstNameInput" autocomplete="given-name" placeholder="Vorname" maxlength="50">
+      <input type="text" id="profileModalLastNameInput" autocomplete="family-name" placeholder="Nachname" maxlength="50" style="margin-top:8px;">
+      <label class="hint" for="profileModalBirthdateInput" style="display:block;margin:10px 0 4px;">Geburtsdatum</label>
+      <input type="date" id="profileModalBirthdateInput" autocomplete="bday" min="1900-01-01">
+      <div class="list-buttons" style="margin-top:16px;">
+        <button class="btn-outline" id="profileModalLogoutBtn" type="button">Abmelden</button>
+        <button class="btn-outline" id="profileModalSaveBtn" type="button">Speichern</button>
+      </div>
+      <p class="hint" id="profileModalMsg" aria-live="polite"></p>
+    </div>
   </div>
 
   <div class="lang-modal-overlay hidden" id="resetModalOverlay">
@@ -9243,6 +9274,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     window._kkTourUid = session.user && session.user.id;
     startApp(account);
     try { kkTourMaybe(session); } catch (e) { }
+    try { loadProfileIntoSettings(); profileMaybePrompt(session); } catch (e) { }
   }
 
   function afterAuthSuccess(session, isActiveLogin) {
@@ -10336,11 +10368,109 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     }).catch(function (err) { gid('forgotPwSendBtn').disabled = false; try { if (window.turnstile) window.turnstile.reset(gid('forgotPwTurnstile')); } catch (e) {} msgEl.textContent = 'Senden fehlgeschlagen: ' + (err && err.message ? err.message : ''); msgEl.style.color = 'var(--error)'; });
   }
 
+  /* ---- Profil: Vorname, Nachname, Geburtsdatum (user_metadata: first_name, last_name, birthdate) ---- */
+  function cleanName(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
+  function validNamePart(v) { return v.length >= 1 && v.length <= 50 && /^[^\d<>@#$%^*=+_|\\\/{}\[\]~`]+$/.test(v) && /[A-Za-z\u00C0-\u024F]/.test(v); }
+  function validBirthdate(v) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+    var d = new Date(v + 'T00:00:00Z');
+    if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v) return false;
+    var y = parseInt(v.slice(0, 4), 10);
+    return y >= 1900 && d.getTime() <= Date.now();
+  }
+  // prefix: 'req' (Registrierung), 'profile' (Einstellungen) oder 'profileModal' (Erstabfrage)
+  function readProfileInputs(prefix) {
+    var first = cleanName(gid(prefix + 'FirstNameInput').value);
+    var last = cleanName(gid(prefix + 'LastNameInput').value);
+    var birth = String(gid(prefix + 'BirthdateInput').value || '').trim();
+    if (!first) return { error: 'Bitte gib deinen Vorname ein.' };
+    if (!validNamePart(first)) return { error: 'Bitte gib einen gültigen Vornamen ein.' };
+    if (!last) return { error: 'Bitte gib deinen Nachnamen ein.' };
+    if (!validNamePart(last)) return { error: 'Bitte gib einen gültigen Nachnamen ein.' };
+    if (!birth) return { error: 'Bitte gib dein Geburtsdatum ein.' };
+    if (!validBirthdate(birth)) return { error: 'Bitte gib ein gültiges Geburtsdatum ein (nicht in der Zukunft).' };
+    return { first_name: first, last_name: last, birthdate: birth };
+  }
+  function profileOf(session) {
+    var m = (session && session.user && session.user.user_metadata) || {};
+    return { first_name: m.first_name || '', last_name: m.last_name || '', birthdate: m.birthdate || '' };
+  }
+  function profileComplete(session) {
+    var p = profileOf(session);
+    return !!(p.first_name && p.last_name && p.birthdate);
+  }
+  function fillProfileInputs(prefix, p) {
+    gid(prefix + 'FirstNameInput').value = p.first_name || '';
+    gid(prefix + 'LastNameInput').value = p.last_name || '';
+    gid(prefix + 'BirthdateInput').value = p.birthdate || '';
+  }
+  function saveProfile(prof) {
+    var client = getSb();
+    if (!client) return Promise.reject(new Error('Keine Verbindung.'));
+    return client.auth.updateUser({ data: { first_name: prof.first_name, last_name: prof.last_name, birthdate: prof.birthdate } }).then(function (res) {
+      if (res.error) throw res.error;
+      return res;
+    });
+  }
+  function setProfileMsg(id, t, err) { var el = gid(id); if (!el) return; el.textContent = t || ''; el.style.color = err ? 'var(--error)' : ''; }
+  function loadProfileIntoSettings() {
+    var client = getSb(); if (!client) return;
+    client.auth.getUser().then(function (r) {
+      var u = r && r.data && r.data.user;
+      if (u) fillProfileInputs('profile', profileOf({ user: u }));
+    }).catch(function () { });
+  }
+  function showProfileModal() {
+    var ov = gid('profileModalOverlay'); if (!ov || !ov.classList.contains('hidden')) return;
+    fillProfileInputs('profileModal', { first_name: '', last_name: '', birthdate: '' });
+    setProfileMsg('profileModalMsg', '');
+    ov.classList.remove('hidden');
+  }
+  function profileMaybePrompt(session) {
+    if (!session || !session.user || profileComplete(session)) return;
+    // Sicherheitshalber den aktuellen Stand vom Server holen (lokale Sitzung kann veraltet sein)
+    var client = getSb();
+    if (!client) { showProfileModal(); return; }
+    client.auth.getUser().then(function (r) {
+      var u = r && r.data && r.data.user;
+      if (u && !profileComplete({ user: u })) showProfileModal();
+    }).catch(function () { });
+  }
+  function setupProfile() {
+    var saveBtn = gid('profileSaveBtn');
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var prof = readProfileInputs('profile');
+      if (prof.error) { setProfileMsg('profileMsg', prof.error, true); return; }
+      saveBtn.disabled = true; setProfileMsg('profileMsg', 'Wird gespeichert …');
+      saveProfile(prof).then(function () { saveBtn.disabled = false; setProfileMsg('profileMsg', 'Gespeichert.'); })
+        .catch(function (e) { saveBtn.disabled = false; setProfileMsg('profileMsg', 'Speichern fehlgeschlagen: ' + (e && e.message ? e.message : 'unbekannter Fehler'), true); });
+    });
+    var mSave = gid('profileModalSaveBtn');
+    if (mSave) mSave.addEventListener('click', function () {
+      var prof = readProfileInputs('profileModal');
+      if (prof.error) { setProfileMsg('profileModalMsg', prof.error, true); return; }
+      mSave.disabled = true; setProfileMsg('profileModalMsg', 'Wird gespeichert …');
+      saveProfile(prof).then(function () {
+        mSave.disabled = false;
+        gid('profileModalOverlay').classList.add('hidden');
+        fillProfileInputs('profile', prof);
+      }).catch(function (e) { mSave.disabled = false; setProfileMsg('profileModalMsg', 'Speichern fehlgeschlagen: ' + (e && e.message ? e.message : 'unbekannter Fehler'), true); });
+    });
+    var mOut = gid('profileModalLogoutBtn');
+    if (mOut) mOut.addEventListener('click', function () { gid('profileModalOverlay').classList.add('hidden'); var lb = gid('logoutBtn'); if (lb) lb.click(); });
+    ['profileModalFirstNameInput', 'profileModalLastNameInput', 'profileModalBirthdateInput'].forEach(function (id) {
+      var el = gid(id); if (el) el.addEventListener('keydown', function (e) { if (e.key === 'Enter' && mSave) mSave.click(); });
+    });
+    loadProfileIntoSettings();
+  }
+
   /* ---- Registrierung (E-Mail + Passwort) ---- */
   function sendCodeRequest() {
     var email = gid('reqEmailInput').value.trim();
     var pw = gid('reqPasswordInput').value;
     var pw2 = gid('reqPasswordInput2').value;
+    var prof = readProfileInputs('req');
+    if (prof.error) { setReqMsg(prof.error, true); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setReqMsg('Bitte eine gültige E-Mail-Adresse eingeben.', true); return; }
     if (!pw || pw.length < 6) { setReqMsg('Das Passwort braucht mindestens 6 Zeichen.', true); return; }
     if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) { setReqMsg('Das Passwort muss mindestens einen Buchstaben und eine Zahl enthalten.', true); return; }
@@ -10353,12 +10483,12 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     gid('reqSendBtn').disabled = true;
     var username = email.split('@')[0];
     var account = accountKindForEmail(email);
-    client.auth.signUp({ email: email, password: pw, options: { data: { username: username, account: account }, emailRedirectTo: appReturnUrl('signup'), captchaToken: captchaToken } }).then(function (res) {
+    client.auth.signUp({ email: email, password: pw, options: { data: { username: username, account: account, first_name: prof.first_name, last_name: prof.last_name, birthdate: prof.birthdate }, emailRedirectTo: appReturnUrl('signup'), captchaToken: captchaToken } }).then(function (res) {
       gid('reqSendBtn').disabled = false;
       try { if (window.turnstile) window.turnstile.reset(gid('reqTurnstile')); } catch (e) {}
       if (res.error) { setReqMsg('Registrierung fehlgeschlagen: ' + res.error.message, true); return; }
       client.from(ACCESS_CODES_TABLE).insert({ username: username, label: email }).then(function () {}).catch(function () {});
-      gid('reqEmailInput').value = ''; gid('reqPasswordInput').value = ''; gid('reqPasswordInput2').value = '';
+      gid('reqEmailInput').value = ''; gid('reqPasswordInput').value = ''; gid('reqPasswordInput2').value = ''; gid('reqFirstNameInput').value = ''; gid('reqLastNameInput').value = ''; gid('reqBirthdateInput').value = '';
       setReqMsg('Konto erstellt! Wir haben dir eine Bestätigungsmail geschickt. Öffne den Link darin, um dein Konto zu bestätigen – erst danach kannst du dich anmelden.');
     }).catch(function (err) { gid('reqSendBtn').disabled = false; try { if (window.turnstile) window.turnstile.reset(gid('reqTurnstile')); } catch (e) {} setReqMsg('Registrierung fehlgeschlagen: ' + (err && err.message ? err.message : ''), true); });
   }
@@ -10742,16 +10872,22 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
     var y = new Date(u.banned_until).getFullYear();
     return y > 2100 ? 'dauerhaft gesperrt' : 'gesperrt bis ' + inboxDate(u.banned_until);
   }
+  function userFullName(u) { return [u.first_name, u.last_name].filter(Boolean).join(' '); }
+  function userBirthText(u) {
+    if (!u.birthdate) return '';
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(u.birthdate));
+    return m ? (m[3] + '.' + m[2] + '.' + m[1]) : String(u.birthdate);
+  }
   function usersVisible() {
     var q = usersState.query.trim().toLowerCase();
-    return usersState.items.filter(function (u) { return !q || String(u.email).toLowerCase().indexOf(q) !== -1; });
+    return usersState.items.filter(function (u) { return !q || String(u.email).toLowerCase().indexOf(q) !== -1 || userFullName(u).toLowerCase().indexOf(q) !== -1; });
   }
   function usersRender() {
     var body = gid('inboxBody');
     body.textContent = '';
     var top = inboxEl('div', '');
     top.style.cssText = 'display:flex;flex-direction:column;gap:8px';
-    var search = inboxEl('input'); search.type = 'search'; search.placeholder = 'Nutzer suchen (E-Mail) \u2026'; search.value = usersState.query;
+    var search = inboxEl('input'); search.type = 'search'; search.placeholder = 'Nutzer suchen (Name oder E-Mail) \u2026'; search.value = usersState.query;
     search.addEventListener('input', function () { usersState.query = search.value; usersRenderList(); });
     top.appendChild(search);
     var bar = inboxEl('div', 'inbox-thread-actions');
@@ -10788,6 +10924,11 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
       row.appendChild(cb);
       row.appendChild(inboxEl('div', 'from', u.email));
       card.appendChild(row);
+      var fullName = userFullName(u), birthTxt = userBirthText(u);
+      var prof = inboxEl('div', 'meta');
+      prof.appendChild(inboxEl('span', '', fullName ? ('Name: ' + fullName) : 'Name: \u2013 (noch nicht angegeben)'));
+      prof.appendChild(inboxEl('span', '', birthTxt ? ('Geburtsdatum: ' + birthTxt) : 'Geburtsdatum: \u2013'));
+      card.appendChild(prof);
       var meta = inboxEl('div', 'meta');
       meta.appendChild(inboxEl('span', '', 'seit ' + inboxDate(u.created_at) + (u.last_sign_in_at ? ' \u00b7 zuletzt ' + inboxDate(u.last_sign_in_at) : '')));
       var badges = inboxEl('span', '');
@@ -11743,6 +11884,7 @@ body:has(#login-screen:not(.hidden)) #supportInboxBtn{display:none!important}
   document.addEventListener('DOMContentLoaded', function () {
     setupLogin();
     setupEmailChange();
+    setupProfile();
     setupPasswordChange();
     setupHistoryUI();
     setupStackView();
@@ -12270,7 +12412,7 @@ gid('kxMemClose').addEventListener('click',function(){kxOv('kxMemOv',false);});
   g.lists = group('lists', 'Meine Listen', [C('.lists-section'), C('.rename-section'), C('.lang-section')], null, null, true, 'open');
   g.vocab = group('vocab', 'Vokabeln', [C('.vocab-section')], null, null, true);
   g.learn = group('learn', 'Lernen & Übungen', ['.direction-section','.time-section','.weak-section','.mc-section','.smart-section','.memory-section','.conf-section','.know-section','.browse-section','.mirror-section'].map(C), null, null, true, 'open');
-  g.acct = group('acct', 'Einstellungen & Konto', ['#mfaSection','#loginPrefsSection','#deviceLoginSection','#devicesSection','#emailChangeSection','#passwordChangeSection','#backupSection','#pzSection','.danger-section'].reduce(function (a, q) { scr.querySelectorAll(':scope > ' + q).forEach(function (n) { a.push(n); }); return a; }, []), null, null, false, 'closed');
+  g.acct = group('acct', 'Einstellungen & Konto', ['#mfaSection','#loginPrefsSection','#deviceLoginSection','#devicesSection','#profileSection','#emailChangeSection','#passwordChangeSection','#backupSection','#pzSection','.danger-section'].reduce(function (a, q) { scr.querySelectorAll(':scope > ' + q).forEach(function (n) { a.push(n); }); return a; }, []), null, null, false, 'closed');
   // Reihenfolge: Ziele-Gruppe bleibt im Kopfbereich, Konto-Gruppe ganz unten
   if (g.acct) { var last = g.acct; scr.appendChild(last); }
   // Auswahl oben: was angezeigt wird
