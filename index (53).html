@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#A8442E">
+<title>Zugriff erlauben – Karteikasten</title>
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../kk-oauth.css">
+<!-- Clickjacking-Schutz: Seite nur anzeigen, wenn sie nicht in einem fremden Frame läuft -->
+<style id="kkFrameGuard">html{display:none!important}</style>
+<script>
+  if (window.top === window.self) { document.getElementById('kkFrameGuard').remove(); }
+  else { try { window.top.location = window.self.location; } catch (e) { } }
+</script>
+</head>
+<body>
+<main class="wrap">
+  <div class="langbar" id="langbar"></div>
+  <a class="brand" href="../../"><img src="../../icon-192.png" alt=""><b>Karteikasten</b></a>
+  <section class="card" id="card" aria-live="polite"><div class="spinner" role="status" aria-label="Lädt"></div></section>
+  <p class="foot"><a href="../../datenschutz.html">Datenschutz</a> · <a href="../../nutzungsbedingungen.html">Nutzungsbedingungen</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.91.1/dist/umd/supabase.js"></script>
+<script src="../kk-i18n.js"></script>
+<script src="../kk-scopes.js"></script>
+<script>
+(function () {
+  'use strict';
+  var SUPABASE_URL = 'https://qujcvvxdvpqnsfgvleid.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1amN2dnhkdnBxbnNmZ3ZsZWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODQ3OTcsImV4cCI6MjEwNTY2MDc5N30.aNsVqELIJTSDIuJOEj6CL_ii2NL6JUBjZRDb3ZtcTWY';
+  var card = document.getElementById('card');
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // gleiche Sitzung wie die Karteikasten-App
+  document.getElementById('langbar').appendChild(kkLangSelect());
+  var T = kkT;
+  var authId = new URLSearchParams(location.search).get('authorization_id');
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function clear() { while (card.firstChild) card.removeChild(card.firstChild); }
+  function showError(msg, title) {
+    clear(); card.appendChild(el('h1', null, T(title || 'Das hat nicht geklappt')));
+    card.appendChild(el('div', 'notice err', T(msg)));
+    var b = el('div', 'btns'); var a = el('a', 'btn', T('Zu Karteikasten')); a.href = '../../'; b.appendChild(a); card.appendChild(b);
+  }
+  function safeHttps(u) { try { var x = new URL(u); return x.protocol === 'https:' ? x : null; } catch (e) { return null; } }
+  function host(u) { try { return new URL(u).host; } catch (e) { return ''; } }
+
+  // Konto wechseln: auch die Anmelde-Merker der Karteikasten-App löschen, sonst springt die App sofort zurück
+  // (sie hält sich noch für angemeldet) und es entsteht eine Weiterleitungsschleife.
+  function switchAccount() {
+    var back = location.pathname + location.search;
+    var done = function () {
+      try { ['karteikasten_logged_in', 'karteikasten_account', 'karteikasten_user'].forEach(function (k) { localStorage.removeItem(k); }); sessionStorage.removeItem('kk_oauth_tries'); } catch (e) { }
+      location.replace('../../?kk_return=' + encodeURIComponent(back));
+    };
+    sb.auth.signOut({ scope: 'local' }).then(done, done);
+  }
+
+  function toLogin() {
+    var tries = 0; try { tries = +sessionStorage.getItem('kk_oauth_tries') || 0; sessionStorage.setItem('kk_oauth_tries', String(tries + 1)); } catch (e) { }
+    if (tries >= 2) { try { sessionStorage.removeItem('kk_oauth_tries'); } catch (e) { } return showError('Die Anmeldung konnte nicht abgeschlossen werden. Melde dich in Karteikasten an und öffne die Anfrage der App erneut.', 'Anmeldung nötig'); }
+    location.replace('../../?kk_return=' + encodeURIComponent(location.pathname + location.search));
+  }
+
+  function render(details, app, user) {
+    clear();
+    var client = details.client || {};
+    var name = (app && app.name) || client.name || T('Unbekannte App');
+    var redirectHost = host(details.redirect_uri || '');
+
+    // Logo-Paar: App -> Karteikasten
+    var pair = el('div', 'pair');
+    var logoUrl = app && safeHttps(app.logo_url);
+    if (logoUrl) { var im = el('img', 'logo'); im.alt = ''; im.src = logoUrl.href; im.referrerPolicy = 'no-referrer'; pair.appendChild(im); }
+    else pair.appendChild(el('div', 'logo', (name[0] || '?').toUpperCase()));
+    pair.appendChild(el('span', 'arrow', '→'));
+    var kk = el('img', 'logo'); kk.src = '../../icon-192.png'; kk.alt = 'Karteikasten'; pair.appendChild(kk);
+    card.appendChild(pair);
+
+    var h = el('h1', 'center'); h.textContent = T('{name} möchte auf dein Karteikasten-Konto zugreifen', { name: name });
+    card.appendChild(h);
+    if (app && app.description) card.appendChild(el('p', 'center muted', app.description));
+
+    var who = el('p', 'who');
+    var sw = el('a', null, T('Konto wechseln')); sw.href = '#';
+    sw.addEventListener('click', function (e) { e.preventDefault(); switchAccount(); });
+    kkTpl(who, 'Angemeldet als {who} · {link}', { who: user.email || (user.user_metadata && user.user_metadata.username) || T('dein Konto'), link: sw });
+    card.appendChild(who);
+    card.appendChild(el('div', 'header-rule'));
+
+    if (!app) {
+      card.appendChild(el('div', 'notice err', T('Diese App ist nicht im Karteikasten-Developer-Verzeichnis registriert. Aus Sicherheitsgründen kann ihr kein Zugriff erlaubt werden.')));
+      var bb = el('div', 'btns'); var dn = el('button', 'btn primary', T('Zurück')); dn.addEventListener('click', function () { decide(false, []); }); bb.appendChild(dn); card.appendChild(bb);
+      return;
+    }
+    if (app.status !== 'active') {
+      card.appendChild(el('div', 'notice err', T('Diese App wurde gesperrt.')));
+      var b2 = el('div', 'btns'); var d2 = el('button', 'btn primary', T('Zurück')); d2.addEventListener('click', function () { decide(false, []); }); b2.appendChild(d2); card.appendChild(b2); return;
+    }
+
+    card.appendChild(el('p', null, T('Diese App möchte:')));
+    var ul = el('ul', 'scopes'); var boxes = [];
+    (app.scopes || []).forEach(function (s) {
+      var info = window.KK_SCOPES[s]; if (!info) return;
+      var li = el('li', info.danger ? 'danger' : ''); var cb = el('input'); cb.type = 'checkbox'; cb.checked = !(app.already_granted && app.already_granted.indexOf(s) < 0); cb.id = 'sc_' + s; cb.value = s; boxes.push(cb);
+      var lb = el('label'); lb.htmlFor = cb.id; var b = el('b', null, T(info.t)); lb.appendChild(b); lb.appendChild(el('span', 'd', T(info.d)));
+      li.appendChild(cb); li.appendChild(lb); ul.appendChild(li);
+    });
+    card.appendChild(ul);
+    card.appendChild(el('p', 'hint', T('Du kannst einzelne Berechtigungen abwählen.')));
+
+    if (!app.first_party) {
+      card.appendChild(el('div', 'notice warn', T('Diese App wurde nicht von Karteikasten geprüft. Erlaube nur Apps und Webseiten, denen du vertraust.')));
+    }
+    var meta = el('p', 'small muted');
+    kkTpl(meta, 'Du wirst danach zu {host} weitergeleitet.', { host: redirectHost || T('der App') });
+    meta.appendChild(el('br'));
+    if (app.developer_name) meta.appendChild(document.createTextNode(T('Entwickler: {name}', { name: app.developer_name }) + ' · '));
+    var ws = app.website_url && safeHttps(app.website_url);
+    [['Webseite', ws], ['Datenschutz', app.privacy_url && safeHttps(app.privacy_url)], ['Bedingungen', app.terms_url && safeHttps(app.terms_url)]].forEach(function (x) {
+      if (!x[1]) return; var a = el('a', null, T(x[0])); a.href = x[1].href; a.target = '_blank'; a.rel = 'noopener noreferrer'; meta.appendChild(a); meta.appendChild(document.createTextNode(' '));
+    });
+    card.appendChild(meta);
+
+    var btns = el('div', 'btns');
+    var deny = el('button', 'btn', T('Ablehnen')); var ok = el('button', 'btn primary', T('Erlauben')); ok.disabled = true;
+    setTimeout(function () { ok.disabled = false; }, 700); // gegen versehentliche/getäuschte Klicks
+    deny.addEventListener('click', function () { decide(false, []); });
+    ok.addEventListener('click', function () {
+      var chosen = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
+      if (!chosen.length) { alert(T('Wähle mindestens eine Berechtigung oder lehne die Anfrage ab.')); return; }
+      decide(true, chosen, client.id || client.client_id);
+    });
+    btns.appendChild(deny); btns.appendChild(ok); card.appendChild(btns);
+    var fl = el('p', 'foot'); var ap = el('a', null, T('Verbundene Apps')); ap.href = '../apps/';
+    kkTpl(fl, 'Du kannst den Zugriff jederzeit unter {link} widerrufen.', { link: ap });
+    card.appendChild(fl);
+    window.__kkClientId = client.id || client.client_id;
+  }
+
+  function decide(approve, scopes, clientId) {
+    var btns = card.querySelectorAll('button'); btns.forEach(function (b) { b.disabled = true; });
+    var p = Promise.resolve();
+    if (approve) p = sb.rpc('save_oauth_grant', { p_client_id: clientId || window.__kkClientId, p_scopes: scopes }).then(function (r) { if (r.error) throw r.error; });
+    p.then(function () {
+      return approve ? sb.auth.oauth.approveAuthorization(authId, { skipBrowserRedirect: true }) : sb.auth.oauth.denyAuthorization(authId, { skipBrowserRedirect: true });
+    }).then(function (res) {
+      if (res.error || !res.data || !res.data.redirect_url) throw (res.error || new Error('no redirect'));
+      clear(); card.appendChild(el('div', 'spinner'));
+      location.replace(res.data.redirect_url);
+    }).catch(function (e) { showError(T('Die Entscheidung konnte nicht übermittelt werden ({m}). Bitte starte die Anmeldung in der App erneut.', { m: (e && e.message) || T('Fehler') })); });
+  }
+
+  if (!authId) return showError('Es fehlt die Autorisierungs-ID. Starte die Anmeldung über die App erneut.', 'Ungültige Anfrage');
+  sb.auth.getSession().then(function (r) {
+    if (!r.data || !r.data.session) return toLogin();
+    try { sessionStorage.removeItem('kk_oauth_tries'); } catch (e) { }
+    var user = r.data.session.user;
+    return sb.auth.oauth.getAuthorizationDetails(authId).then(function (res) {
+      if (res.error || !res.data) return showError(res.error && res.error.message || 'Die Anfrage ist abgelaufen oder ungültig.', 'Anfrage ungültig');
+      var d = res.data;
+      if (!('authorization_id' in d)) { if (d.redirect_url) location.replace(d.redirect_url); return; } // bereits erlaubt
+      var cid = d.client && (d.client.id || d.client.client_id);
+      return sb.rpc('get_oauth_app_public', { p_client_id: cid }).then(function (a) { render(d, a.data || null, user); });
+    });
+  }).catch(function (e) { showError((e && e.message) || 'Unbekannter Fehler.'); });
+})();
+</script>
+</body>
+</html>
