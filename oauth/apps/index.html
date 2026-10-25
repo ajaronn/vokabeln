@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#A8442E">
+<title>Verbundene Apps – Karteikasten</title>
+<link rel="icon" type="image/png" sizes="192x192" href="../../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../kk-oauth.css">
+<style id="kkFrameGuard">html{display:none!important}</style>
+<script>if (window.top === window.self) { document.getElementById('kkFrameGuard').remove(); } else { try { window.top.location = window.self.location; } catch (e) { } }</script>
+<style>.app{margin-bottom:16px}.app .top{display:flex;gap:14px;align-items:center;margin-bottom:10px}.app .top .logo{width:48px;height:48px;border-radius:12px;font-size:22px}.app h2{margin:0;font-size:20px}</style>
+</head>
+<body>
+<main class="wrap">
+  <a class="brand" href="../../"><img src="../../icon-192.png" alt=""><b>Karteikasten</b></a>
+  <h1 class="center">Verbundene Apps</h1>
+  <p class="center muted">Apps und Webseiten, die auf dein Karteikasten-Konto zugreifen dürfen.</p>
+  <div id="msg" aria-live="polite"></div>
+  <div id="list"><div class="spinner" role="status" aria-label="Lädt"></div></div>
+  <p class="foot"><a href="../../">Zurück zu Karteikasten</a> · <a href="https://ajaronn.github.io/vokdev/">Karteikasten Developer</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.91.1/dist/umd/supabase.js"></script>
+<script src="../kk-scopes.js"></script>
+<script>
+(function () {
+  'use strict';
+  var sb = window.supabase.createClient('https://qujcvvxdvpqnsfgvleid.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1amN2dnhkdnBxbnNmZ3ZsZWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODQ3OTcsImV4cCI6MjEwNTY2MDc5N30.aNsVqELIJTSDIuJOEj6CL_ii2NL6JUBjZRDb3ZtcTWY');
+  var list = document.getElementById('list'), msg = document.getElementById('msg');
+  function el(t, c, x) { var e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; }
+  function note(kind, text) { msg.textContent = ''; if (text) msg.appendChild(el('div', 'notice ' + kind, text)); }
+  function httpsUrl(u) { try { var x = new URL(u); return x.protocol === 'https:' ? x.href : null; } catch (e) { return null; } }
+
+  function draw(apps) {
+    list.textContent = '';
+    if (!apps.length) { var c = el('div', 'card center'); c.appendChild(el('p', 'muted', 'Noch keine Apps verbunden.')); list.appendChild(c); return; }
+    apps.forEach(function (a) {
+      var card = el('section', 'card app');
+      var top = el('div', 'top'); var lu = httpsUrl(a.logo_url);
+      if (lu) { var im = el('img', 'logo'); im.src = lu; im.alt = ''; im.referrerPolicy = 'no-referrer'; top.appendChild(im); } else top.appendChild(el('div', 'logo', (a.name || '?')[0].toUpperCase()));
+      var t = el('div'); t.appendChild(el('h2', null, a.name));
+      var site = httpsUrl(a.website_url); if (site) { var l = el('a', 'small', new URL(site).host); l.href = site; l.target = '_blank'; l.rel = 'noopener noreferrer'; t.appendChild(l); }
+      t.appendChild(el('div', 'small muted', 'Verbunden seit ' + new Date(a.granted_at).toLocaleDateString('de-DE')));
+      top.appendChild(t); card.appendChild(top);
+      var ul = el('ul', 'scopes'), boxes = [];
+      (a.available_scopes || []).forEach(function (s) {
+        var info = window.KK_SCOPES[s]; if (!info) return;
+        var li = el('li', info.danger ? 'danger' : ''), cb = el('input'); cb.type = 'checkbox'; cb.value = s; cb.id = a.client_id + s; cb.checked = (a.granted_scopes || []).indexOf(s) >= 0; boxes.push(cb);
+        var lb = el('label'); lb.htmlFor = cb.id; lb.appendChild(el('b', null, info.t)); lb.appendChild(el('span', 'd', info.d)); li.appendChild(cb); li.appendChild(lb); ul.appendChild(li);
+      });
+      card.appendChild(ul);
+      var row = el('div', 'btns'), save = el('button', 'btn small', 'Berechtigungen speichern'), rev = el('button', 'btn small danger', 'Zugriff widerrufen');
+      save.addEventListener('click', function () {
+        save.disabled = true;
+        sb.rpc('update_my_grant_scopes', { p_client_id: a.client_id, p_scopes: boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; }) })
+          .then(function (r) { save.disabled = false; if (r.error) throw r.error; note('ok', 'Gespeichert. Änderungen gelten sofort.'); })
+          .catch(function (e) { save.disabled = false; note('err', 'Speichern fehlgeschlagen: ' + (e.message || e)); });
+      });
+      rev.addEventListener('click', function () {
+        if (!confirm('Zugriff für „' + a.name + '“ wirklich widerrufen? Die App wird abgemeldet.')) return;
+        rev.disabled = true;
+        sb.auth.oauth.revokeGrant({ clientId: a.client_id })
+          .then(function (r) { if (r.error) throw r.error; return sb.rpc('mark_my_grant_revoked', { p_client_id: a.client_id }); })
+          .then(function () { note('ok', 'Zugriff für „' + a.name + '“ wurde widerrufen.'); load(true); })
+          .catch(function (e) { rev.disabled = false; note('err', 'Widerruf fehlgeschlagen: ' + (e.message || e)); });
+      });
+      row.appendChild(save); row.appendChild(rev); card.appendChild(row); list.appendChild(card);
+    });
+  }
+  function load(keepMsg) {
+    if (!keepMsg) note('', '');
+    sb.rpc('list_my_grants').then(function (r) { if (r.error) throw r.error; draw(r.data || []); })
+      .catch(function (e) { list.textContent = ''; note('err', 'Die Liste konnte nicht geladen werden: ' + (e.message || e)); });
+  }
+  sb.auth.getSession().then(function (r) {
+    if (!r.data || !r.data.session) { location.replace('../../?kk_return=' + encodeURIComponent(location.pathname)); return; }
+    load();
+  });
+})();
+</script>
+</body>
+</html>
