@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head><script src="desktop-auth.js"></script>
+<script src="https://cdn.botpress.cloud/webchat/v5.0/inject.js"></script>
+<script src="https://files.bpcontent.cloud/2026/10/27/15/20261027153204-XI6AS317.js" defer></script>
 <script>
 // OAuth-Rückkehr: Zustimmungsseite / "Verbundene Apps" schicken nicht angemeldete Nutzer hierher (?kk_return=/pfad) und werden nach dem Login wieder aufgerufen.
 (function(){try{var r=new URLSearchParams(location.search).get('kk_return');if(r&&/^\/(?!\/)[^\s]*\/oauth\/(consent\/\?authorization_id=|apps\/?$)/.test(r))sessionStorage.setItem('kk_return',r);}catch(e){}})();
