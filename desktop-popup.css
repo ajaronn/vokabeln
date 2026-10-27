@@ -15,3 +15,9 @@
  .kkdp-box{background:#2a211a;color:#f3e9d2;border-color:#4a3b2c}
  .kkdp-close{border-color:#6b5842}.kkdp-close:hover{background:#3a2e24}.kkdp-oth a{color:#e0836b}
 }
+.kkdp-box{max-height:92vh;overflow-y:auto}
+.kkdp-steps{text-align:left;margin:8px 0 12px;padding-left:22px;font-size:.92rem;line-height:1.45}
+.kkdp-steps li{margin-bottom:6px}
+.kkdp-code{display:block;text-align:left;background:#efe3c4;border-radius:8px;padding:8px 10px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;margin:0 0 12px;word-break:break-all;user-select:all}
+.kkdp-fin{width:100%;border:0;font:inherit;font-weight:700;cursor:pointer;margin-top:6px}
+@media (prefers-color-scheme:dark){.kkdp-code{background:#3a2e24}}
