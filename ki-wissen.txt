@@ -1,0 +1,96 @@
+KARTEIKASTEN – WISSEN FÜR DEN SUPPORT-ASSISTENTEN
+(Diese Datei kannst du jederzeit bearbeiten. Je genauer, desto besser antwortet die KI.)
+
+=== WAS IST KARTEIKASTEN ===
+Karteikasten ist eine kostenlose, nicht kommerzielle Lernplattform (Web-App) zum Erstellen und Wiederholen digitaler Karteikarten, vor allem Vokabeln. Man kann Vokabellisten in verschiedenen Sprachen anlegen, mit Karteikarten, Multiple Choice und weiteren Lernmodi üben und den Lernfortschritt verfolgen.
+Für persönliche Listen und Lernstände braucht man ein Konto. Über „Ansehen“ auf der Startseite kann man die Oberfläche unverbindlich mit Beispieldaten erkunden; Aktionen, die Daten ändern oder einen Lernlauf starten, sind in dieser Vorschau gesperrt.
+Die App gibt es auf Deutsch, Englisch und Portugiesisch (Brasilien). Sprache ändern: Einstellungen (oben „Sprache / Language / Idioma“) oder auf der Startseite.
+Als App installieren: Auf der Startseite gibt es „Als App installieren“. Am iPhone: Teilen-Symbol → „Zum Home-Bildschirm“, danach die App vom Home-Bildschirm öffnen (Erinnerungen funktionieren am iPhone nur in der installierten Web-App).
+
+=== ANMELDEN UND KONTO ===
+- Anmelden mit E-Mail und Passwort, oder „Mit Google“, „Mit GitHub“, „Mit Discord“, „Mit GitLab“ fortfahren.
+- Neues Konto registrieren: Auf der Anmeldeseite „Neues Konto registrieren“. Es werden Name und Geburtsdatum abgefragt; der Vorname wird als Anrede in E-Mails verwendet. Änderbar unter „Einstellungen & Konto“ → „Name & Geburtsdatum“.
+- Passwort vergessen: Auf der Anmeldeseite „Passwort vergessen?“ tippen, E-Mail eingeben, „Link senden“. Man bekommt einen Link zum Zurücksetzen per E-Mail.
+- Ohne Passwort anmelden: Auf der Anmeldeseite „Ohne Passwort anmelden (Link per E-Mail)“. Das kann in den Anmeldeoptionen für das Konto an- oder ausgeschaltet werden.
+- Mit anderem Gerät anmelden: Man gibt die E-Mail-Adresse ein, auf einem anderen, schon angemeldeten Gerät erscheint ein 6-stelliger Code, den man auf dem neuen Gerät eingibt. Das lässt sich in den Einstellungen für das Konto ausschalten.
+- Passwort ändern: Konto & Sicherheit → „Passwort ändern“. Zuerst wird das aktuelle Passwort geprüft. Neues Passwort: mindestens 6 Zeichen, mindestens ein Buchstabe und eine Zahl.
+- E-Mail-Adresse ändern: Konto & Sicherheit → „E-Mail-Adresse ändern“. Zuerst aktuelles Passwort bestätigen. Danach kommen Bestätigungslinks (an die neue und ggf. an die alte Adresse). Erst wenn ALLE Links bestätigt sind, wird die neue Adresse aktiv; bis dahin gilt die alte. Wer die Änderung nicht selbst angefordert hat, ignoriert die Mails und ändert das Passwort.
+- Wer mit Google angemeldet ist, verwaltet E-Mail und Passwort über das Google-Konto; das geht nicht in Karteikasten.
+- Konto löschen: Konto & Sicherheit → „Konto löschen“. Das Konto wird endgültig aus dem Anmeldesystem entfernt, samt allen Cloud-Daten, und kann NICHT rückgängig gemacht werden. Zur Bestätigung muss man LÖSCHEN eintippen. Vorher ein Backup zu erstellen wird empfohlen. Danach kann man sich mit derselben E-Mail neu registrieren.
+- Gesperrtes Konto: Wenn ein Konto vom Administrator gesperrt wurde, ist keine Anmeldung möglich. Die Sperre kann befristet oder dauerhaft sein, Details stehen in der E-Mail. Bei Verdacht auf einen Fehler den Support kontaktieren.
+- Zu viele falsche Anmeldeversuche: Es wird ein Bestätigungslink per E-Mail geschickt; auf diesem Gerät öffnen und antippen, dann kann man es erneut versuchen. Wird nach der E-Mail-Verifizierung nochmal ein falsches Passwort eingegeben, ist das Konto vorübergehend gesperrt.
+
+=== SICHERHEIT ===
+- Zwei-Faktor-Anmeldung (2FA): Optional. Zusätzlich zum Passwort wird ein 6-stelliger Code aus einer Authenticator-App (z. B. Google Authenticator, Authy, 1Password) verlangt. Einrichten: Konto & Sicherheit → „2FA einrichten“, QR-Code scannen oder Schlüssel manuell eingeben. Am iPhone geht es auch über die App „Passwörter“ (Bestätigungscode einrichten → Konfigurationsschlüssel verwenden). Ist die Authenticator-App auf demselben Gerät, hilft „In Authenticator-App öffnen“.
+- Backup-Codes: Einmal-Codes für den Notfall, falls die Authenticator-App verloren geht. Sicher aufbewahren. Jeder Code gilt nur einmal; ein verwendeter Backup-Code deaktiviert 2FA und macht die übrigen Codes ungültig (2FA kann danach neu eingerichtet werden).
+- Zugriff auf die Authenticator-App verloren: Auf der Anmeldeseite „Zugriff verloren?“ → Bestätigungslink per E-Mail. Nach Bestätigung wird 2FA nach einer Sicherheitsfrist von 48 Stunden deaktiviert; bis dahin geht die Anmeldung nur mit Authenticator-Code.
+- Angemeldete Geräte: Unter Konto & Sicherheit → „Geräte & Anmeldeprotokoll“ sieht man, auf welchen Geräten man angemeldet ist und wann sie zuletzt aktiv waren. Erkennt man ein Gerät nicht: „Alle anderen Geräte abmelden“ bzw. „Überall abmelden“ und das Passwort ändern.
+- Anmeldeprotokoll: Filterbar (Alle Einträge, Selbst abgemeldet, Remote abgemeldet, Abgelaufen, Fehlgeschlagen), als CSV exportierbar. „Frühere Geräte“ zeigt abgemeldete Geräte. Aufbewahrung einstellbar: für immer, nach X Tagen automatisch löschen, oder deaktiviert.
+- Verbundene Apps: Unter Konto & Sicherheit sieht man, welche Apps/Webseiten über „Mit Karteikasten fortfahren“ auf das Konto zugreifen dürfen. Berechtigungen kann man ändern oder den Zugriff widerrufen. Für Entwickler gibt es „Karteikasten Developer“.
+- Automatische Abmeldung: Einstellungen → „Automatische Abmeldung“. Abmelden nach Inaktivität (nie, 15 Min, 30 Min, 1 Std, 4 Std, 12 Std, 1 Tag, 3 Tage, 7 Tage). Gilt nur auf dem jeweiligen Gerät.
+
+=== LISTEN UND ORDNER ===
+- Neue Liste: „+ Neue Liste“ tippen, Namen vergeben (z. B. „Englisch Unit 3“), Sprachen wählen, „Liste speichern“.
+- Sprachen und Muttersprache: Pro Liste legt man Sprache 1 und Sprache 2 fest und markiert die eigene Muttersprache. Der Smart-Lernpfad fragt dann die Fremdsprache ab.
+- Ordner: „+ Neuer Ordner“. „Ordner dieser Liste“ in der Listenverwaltung.
+- Listenverwaltung: Liste duplizieren, archivieren (Archiv), Papierkorb, löschen, Farbe setzen/entfernen, Enddatum setzen, Dubletten über alle Listen suchen, „Alle Listen mischen“. Niveau (A1–C2) kann pro Liste angegeben werden.
+- Vokabel in allen Listen suchen: Suchfeld im Bereich „Meine Listen“.
+- Liste teilen / kopieren: „Liste teilen / speichern“ → Text kopieren, oder „Liste per Link teilen“.
+- Community-Bibliothek: Listen können öffentlich gemacht werden („Diese Liste öffentlich machen“). In der „Community-Bibliothek öffnen“ findet man Listen anderer. Unangemessene oder fremde Inhalte können dem Support gemeldet werden.
+- Zu mehreren benutzen: „Einladungslink erstellen“, damit andere einer Liste beitreten.
+- Zusammenführen / Aufteilen: Eine gewählte Liste in die aktuelle Liste einfügen (doppelte Vokabeln werden zusammengeführt, die gewählte Liste bleibt bestehen; bei anderen Sprachen wird Sprache 1 zu Sprache 1 und Sprache 2 zu Sprache 2 übernommen). Aufteilen in neue Liste nach Filter: nur Lernstufe 1–2, nur Lernstufe 3, nur Lernstufe 4–5, ohne Beispielsatz, nur Sternchen ★. Die Vokabeln bleiben auch in der alten Liste.
+- Verlauf: Frühere Versionen einer Liste werden bei Änderungen automatisch gespeichert; unter „Verlauf / Änderungen rückgängig machen“ → „Verlauf öffnen“ kann man zurückgehen.
+
+=== VOKABELN ===
+- Einzeln hinzufügen: „+ Zeile hinzufügen“ in der Vokabelliste.
+- Viele auf einmal: Bereich „Mehrere Vokabeln auf einmal einfügen“. Eine Vokabel pro Zeile, getrennt mit Semikolon, Komma oder Tab, z. B. „Haus; house“. Bei Dubletten kann man „Zusammenführen“, „Überspringen“ oder „Trotzdem hinzufügen“ wählen.
+- Alternativen: Unter jeder Vokabel „+ Alternative hinzufügen“ für weitere akzeptierte Antworten. Mit dem ½-Knopf wird eine Alternative als halber Fehler markiert (es gibt dann nur einen halben Fehler und den Hinweis „besser wäre …“). Jede Alternative kann einen eigenen Beispielsatz haben.
+- Eselsbrücke: Ein eigener Merksatz pro Vokabel; erscheint nach einem Fehler und beim Kennenlernen.
+- Lautschrift (IPA): Spalte optional anzeigbar („Lautschrift-Spalte anzeigen“), mit eigener Lautschrift-Tastatur.
+- Lernstufen: Zwei Zahlen pro Vokabel zeigen die Lernstufe (1–5) je Richtung (→ Sprache 1 zu Sprache 2, ← Sprache 2 zu Sprache 1). Je niedriger, desto öfter wird abgefragt.
+- Sternchen ★: Vokabeln markieren, um nur diese zu üben.
+- Sortieren und Filtern: Älteste/Neueste zuerst, eigene Reihenfolge (verschiebbar), Sprache 1/2 A–Z, Lernstufe niedrig/hoch zuerst, zuletzt falsch. Filter: mit/ohne Beispielsatz, Lautschrift, Alternativen, Eselsbrücke, nur Sternchen, nur pausierte.
+- Ansichten: „☰ Liste“ oder „🂠 Karten“ (Karten umdrehen).
+- Auswahl-Aktionen: Alle sichtbaren auswählen, Auswahl leeren, ★ setzen/entfernen, Lernstufen zurücksetzen, Löschen, Verschieben.
+
+=== LERNEN (MODI) ===
+- Karteikasten starten: Der Hauptmodus. Richtig beantwortete Vokabeln rücken eine Lernstufe weiter und kommen seltener dran, falsche kommen früher wieder. Einstellbar: Abfragerichtung (Sprache 1 → 2, Sprache 2 → 1, Gemischt), Lernzeit in Minuten (Kommazahlen möglich, 0,5 = 30 Sekunden; jede Vokabel kommt aber mindestens einmal pro gewählter Richtung dran, auch wenn die Zeit kurz überschritten wird), „Nur schwache Vokabeln üben (Lernstufe 1–2)“, „Nur Sternchen-Vokabeln ★ üben“, „Multiple-Choice-Modus“. Beim Antworten: „Hinweis anzeigen“ kostet einen halben Punkt, „Als Alternative speichern“, „Als komplett richtig markieren“. Nach der Runde: Fehler-Muster, Fehler teilen/kopieren/als neue Liste speichern, „Nur Fehler wiederholen“, „Alle nochmal“.
+- Multiple-Choice-Modus: Richtige Übersetzung aus mehreren Möglichkeiten wählen statt tippen. Praktisch für den Einstieg oder schwierige Schriften. Braucht mindestens zwei verschiedene Vokabeln.
+- Smart-Lernpfad: Wertet Lernstufen, Treffer, Fehler, Wortlänge und Zeit seit der letzten Übung aus und baut daraus einen festen Pfad. Es wird nur die Fremdsprache gelernt (Muttersprache oben markieren). Stufen: Kennenlernen → Abtippen → Auswahl → Richtig oder falsch → Blitz-Diktat → Rückrichtung → Silben → Buchstaben legen → Lückenwort → Satz-Lücke → Tippen mit Hilfe → Tippen → Rückrichtung tippen → Diktat aus dem Kopf → Abschlusstest → Spät-Test. Fehlerwörter werden am Ende der Runde nochmal geübt. Schwierigkeit: Schnell, Normal, Gründlich.
+- Memory: Paare aufdecken und zuordnen. Braucht mindestens 4 Vokabeln.
+- Verwechsler: Vokabeln, die man oft durcheinanderbringt; werden beim Smart-Lernpfad und Zuordnen automatisch gemerkt. „Diese Paare üben“.
+- Was kann ich schon? (Selbstcheck): Man sieht eine Vokabel und sagt nur „Kann ich“ oder „Kann ich nicht“, dann wird die Übersetzung gezeigt. Ändert keine Lernstufen, zählt nicht als Fehler.
+- Durchgehen: Alle Vokabeln der Reihe nach ansehen, Antwort wird sofort angezeigt. Gut zum schnellen Wiederholen. Ändert keine Lernstufen.
+- Spiegelübung: Eine Übersetzung wird gezeigt, manchmal mit geänderten Buchstaben. Man entscheidet „Stimmt“ oder „Falsch“ und tippt bei „Falsch“ die richtige Schreibweise. Ändert keine Lernstufen.
+- Statistik: Monatsansicht der Lernzeit, Übungen im Mix, Lernstufen-Verteilung, Fehler-Muster.
+
+=== ANTWORT-TOLERANZ (WIE STRENG BEWERTET WIRD) ===
+Einstellungen → „Antwort-Toleranz“. Für jede Fehlerart (Groß-/Kleinschreibung, Akzente/Sonderzeichen, Buchstabendreher, Tippfehler) wählt man: „zählt als richtig“, „halber Fehler“ oder „falsch“ (bei Tippfehlern nur richtig oder halber Fehler). Zusätzlich legt man fest, wie viele Tippfehler je nach Wortlänge erlaubt sind (ein Fehler = ein Buchstabe falsch, fehlt oder ist zu viel; Wörter mit 1–2 Buchstaben müssen genau stimmen). „Standard wiederherstellen“ setzt alles zurück.
+
+=== ZIELE UND ERINNERUNGEN ===
+- Tagesziel: Einstellungen → „Tagesziel aktivieren“, Lernzeit in Minuten pro Tag. Zeigt oben einen Fortschrittsbalken und zählt, wie viele Tage in Folge das Ziel erreicht wurde (Serie in Tagen).
+- Tägliche Erinnerung: Einstellungen → „Tägliche Erinnerung“, Uhrzeiten hinzufügen. Außerdem: Hinweis bei nicht gelernten Listen nach X Tagen, Backup-Erinnerung alle X Wochen, auch per E-Mail möglich.
+- Benachrichtigungen (Push): Müssen im Browser/Gerät erlaubt sein. Wenn blockiert, in den Browser-/Geräteeinstellungen für die Seite erlauben. Am iPhone nur in der installierten Web-App.
+
+=== BACKUP UND DRUCKEN ===
+- Gesamt-Backup: „Backup & Prüfungsbogen“ → „Backup erstellen“ sichert alle Listen samt Lernstufen, Verlauf, Verwechslungen, Eselsbrücken, Einstellungen und Lernzeit-Statistik in EINER Datei. „Backup einlesen“ stellt alles wieder her und führt es mit dem bestehenden Stand zusammen.
+- Die Daten werden mit dem Konto synchronisiert (Speicherstatus ist in der App sichtbar). Ein zusätzliches Backup-File ist trotzdem empfehlenswert.
+- Prüfungsbogen (PDF): Listen wählen, PDF erzeugen; Notenschlüssel einstellbar.
+- Karteikarten drucken (zum Ausschneiden) und Druckansicht: Faltvorlage (2 Spalten).
+- Alles zurücksetzen: Löscht ALLE Listen mit allen Vokabeln, Lernstufen und Einstellungen unwiderruflich. Die App bietet vorher an, ein Backup zu erstellen.
+
+=== OBERFLÄCHE ===
+- Die Reihenfolge der Bereiche und Funktionen lässt sich ändern: „Reihenfolge“ → „Reihenfolge ändern“, dann mit ▲▼ verschieben (bei Bereichen mit mehreren Funktionen mit ▸ aufklappen), „Fertig“ drückt man zum Zurückkehren. Gilt auf allen Geräten.
+- „Anleitungen ausblenden“ blendet Hilfetexte aus.
+- Die Rundfahrt (kurze Einführung) kann man unter Einstellungen mit „Rundfahrt noch einmal ansehen“ wiederholen.
+- Unten bzw. seitlich gibt es Schaltflächen für Einstellungen, Feedback, Hilfe und Support.
+- Feedback: Über „Feedback“ kann man nach der Anmeldung Sterne und optional einen Text abgeben.
+
+=== EIGENE KI-API UND KI-LISTENASSISTENT ===
+- Es gibt einen KI-Listenassistenten („✨ KI-Chat“, „✨ Neue Liste mit KI“, „✨ Mit KI erstellen / formatieren“). Er erstellt und formatiert Vokabellisten, liest Vokabeln aus Fotos aus und ergänzt IPA, Beispielsätze oder Eselsbrücken. Ergebnisse kann man vor dem Speichern bearbeiten und in eine offene Liste einfügen oder als neue Liste speichern.
+- Wenn das kostenlose KI-Modell ausgelastet oder das Tageslimit erreicht ist, kommt eine entsprechende Meldung; dann später nochmal versuchen.
+- Einstellungen → „Eigene KI-API“: Optional kann man einen eigenen OpenAI-kompatiblen Anbieter (OpenAI, OpenRouter, eigene API) mit Endpunkt, Modell-ID und API-Schlüssel eintragen. Dann wird das Karteikasten-KI-Limit nicht verwendet; Kosten und Quoten trägt der Anbieter. Der Schlüssel wird verschlüsselt im Konto gespeichert. „Verbindung testen“ prüft die Eingaben. Bild-Upload nur aktivieren, wenn das Modell Bilder versteht.
+
+=== SUPPORT UND FEHLER ===
+- Bei Fehlern oder Fragen, die du nicht sicher beantworten kannst: auf „Support kontaktieren“ verweisen (Schaltfläche „Support“ in der Leiste bzw. im Hilfe-Fenster). Dort E-Mail-Adresse und Nachricht eingeben. Bitte kurz beschreiben, was man gemacht hat und was passiert ist.
+- Man kann dort auch „Meine Unterhaltungen“ mit dem Support einsehen.
