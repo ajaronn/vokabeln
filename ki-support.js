@@ -14,7 +14,7 @@
 
   var T = {
     de: {
-      btn: '💬 Frag die KI',
+      btn: 'Frag den KI Support',
       btnHint: 'Sofort-Antworten zur App – oder durchsuche unten die Hilfe.',
       btnHint2: 'Sofort-Antworten zur App – oder schreib uns unten eine Nachricht.',
       title: 'KI-Support',
@@ -33,7 +33,7 @@
       legalLinks: [['Datenschutzerklärung', 'datenschutz.html'], ['Nutzungsbedingungen', 'nutzungsbedingungen.html']]
     },
     en: {
-      btn: '💬 Ask the AI',
+      btn: 'Ask the AI support',
       btnHint: 'Instant answers about the app – or search the help below.',
       btnHint2: 'Instant answers about the app – or write us a message below.',
       title: 'AI support',
@@ -52,7 +52,7 @@
       legalLinks: [['Privacy policy', 'datenschutz.html'], ['Terms of use', 'nutzungsbedingungen.html']]
     },
     'pt-BR': {
-      btn: '💬 Pergunte à IA',
+      btn: 'Pergunte ao suporte de IA',
       btnHint: 'Respostas imediatas sobre o app – ou pesquise na ajuda abaixo.',
       btnHint2: 'Respostas imediatas sobre o app – ou escreva-nos uma mensagem abaixo.',
       title: 'Suporte com IA',
