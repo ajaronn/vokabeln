@@ -7,6 +7,8 @@
   var FUNCTION_URL = 'https://qujcvvxdvpqnsfgvleid.supabase.co/functions/v1/ki-support';
   var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1amN2dnhkdnBxbnNmZ3ZsZWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODQ3OTcsImV4cCI6MjEwNTY2MDc5N30.aNsVqELIJTSDIuJOEj6CL_ii2NL6JUBjZRDb3ZtcTWY';
   var SITE = 'https://ajaronn.github.io/vokabeln/';
+  var LOGO = SITE + 'icon-192.png';
+  try { if (document.currentScript && document.currentScript.src) LOGO = new URL('icon-192.png', document.currentScript.src).href; } catch (e) { }
   var MAX_CHARS = 400;
   var COOLDOWN_MS = 2500;
 
@@ -14,6 +16,7 @@
     de: {
       btn: '💬 Frag die KI',
       btnHint: 'Sofort-Antworten zur App – oder durchsuche unten die Hilfe.',
+      btnHint2: 'Sofort-Antworten zur App – oder schreib uns unten eine Nachricht.',
       title: 'KI-Support',
       close: 'Schließen',
       welcome: 'Hallo! Ich beantworte Fragen zur Bedienung von Karteikasten. Was möchtest du wissen?',
@@ -32,6 +35,7 @@
     en: {
       btn: '💬 Ask the AI',
       btnHint: 'Instant answers about the app – or search the help below.',
+      btnHint2: 'Instant answers about the app – or write us a message below.',
       title: 'AI support',
       close: 'Close',
       welcome: 'Hi! I answer questions about using Karteikasten. What would you like to know?',
@@ -50,6 +54,7 @@
     'pt-BR': {
       btn: '💬 Pergunte à IA',
       btnHint: 'Respostas imediatas sobre o app – ou pesquise na ajuda abaixo.',
+      btnHint2: 'Respostas imediatas sobre o app – ou escreva-nos uma mensagem abaixo.',
       title: 'Suporte com IA',
       close: 'Fechar',
       welcome: 'Olá! Respondo dúvidas sobre o uso do Karteikasten. O que você quer saber?',
@@ -123,6 +128,9 @@
       '.kkai-msg{max-width:88%;padding:10px 12px;border-radius:12px;font-size:16px;line-height:1.45;word-break:break-word}',
       '.kkai-bot{align-self:flex-start;background:var(--surface,#FBF6EA);border:1px solid var(--border,#C9BB94)}',
       '.kkai-me{align-self:flex-end;background:var(--rust,#A8442E);color:var(--rust-contrast,#FBF6EA)}',
+      '.kkai-brow{display:flex;align-items:flex-end;gap:8px;align-self:flex-start;max-width:94%}',
+      '.kkai-brow .kkai-msg{max-width:none;min-width:0}',
+      '.kkai-ava{flex:none;width:34px;height:34px;border-radius:9px;object-fit:cover;background:var(--surface,#FBF6EA)}',
       '.kkai-err{align-self:flex-start;background:transparent;border:1px dashed var(--error,#A8442E);color:var(--error,#A8442E)}',
       '.kkai-line{margin:0}.kkai-gap{height:6px}.kkai-li{display:flex;gap:6px;margin:2px 0}.kkai-bul{flex:none;min-width:1.2em}',
       '.kkai-sugg{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 8px}',
@@ -138,7 +146,7 @@
       '.kkai-contact{display:inline-block;margin-top:6px;background:none;border:none;padding:0;color:inherit;text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}',
       '#kkaiFab{position:fixed;right:14px;bottom:calc(var(--kk-dock-h,68px) + 14px);z-index:70;width:56px;height:56px;border-radius:50%;border:none;padding:0;display:flex;align-items:center;justify-content:center;background:var(--rust,#A8442E);color:var(--rust-contrast,#FBF6EA);box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;-webkit-tap-highlight-color:transparent}',
       '#kkaiFab:active{transform:scale(.95)}',
-      '#kkaiFab svg{width:28px;height:28px}',
+      '#kkaiFab svg{width:34px;height:34px}',
       'body:has(#kkaiOv:not(.kkai-hidden)) #kkaiFab{display:none}',
       '@media print{#kkaiFab{display:none}}',
       '#kkaiOpen{width:100%;margin:0 0 6px}',
@@ -164,9 +172,18 @@
       });
       m.appendChild(links);
     }
-    logEl.appendChild(m);
+    var out = m;
+    if (kind === 'bot') out = withAvatar(m);
+    logEl.appendChild(out);
     scrollDown();
-    return m;
+    return out;
+  }
+
+  function withAvatar(m) {
+    var row = el('div', 'kkai-brow');
+    var img = el('img', 'kkai-ava'); img.src = LOGO; img.alt = ''; img.setAttribute('aria-hidden', 'true');
+    row.appendChild(img); row.appendChild(m);
+    return row;
   }
 
   function setBusy(b) {
@@ -181,9 +198,10 @@
     var d = el('span', 'kkai-dots');
     d.appendChild(el('span')); d.appendChild(el('span')); d.appendChild(el('span'));
     m.appendChild(d);
-    logEl.appendChild(m);
+    var row = withAvatar(m);
+    logEl.appendChild(row);
     scrollDown();
-    return m;
+    return row;
   }
 
   function ask(text) {
@@ -310,26 +328,47 @@
     document.documentElement.style.overflow = '';
   }
 
-  // Button im Hilfe-Fenster einfügen
+  // Button im Hilfe-Fenster und im Support-Fenster einfügen
+  function makeOpenBtn(id, hintId, beforeNode, parent, closeFirst) {
+    var btn = el('button', 'btn-primary'); btn.type = 'button'; btn.id = id;
+    btn.addEventListener('click', function () {
+      if (closeFirst) { var cb = document.getElementById(closeFirst); if (cb) cb.click(); }
+      open();
+    });
+    var hint = el('p', 'kkai-openhint'); hint.id = hintId;
+    parent.insertBefore(btn, beforeNode || null);
+    parent.insertBefore(hint, beforeNode || null);
+  }
+
   function inject() {
-    var help = document.getElementById('kxHelpOv');
-    if (!help || document.getElementById('kkaiOpen')) return !!document.getElementById('kkaiOpen');
-    var search = document.getElementById('kxHelpSearch');
-    var btn = el('button', 'btn-primary'); btn.type = 'button'; btn.id = 'kkaiOpen';
-    btn.addEventListener('click', open);
-    var hint = el('p', 'kkai-openhint'); hint.id = 'kkaiOpenHint';
     css();
-    var parent = search ? search.parentNode : help.firstElementChild;
-    parent.insertBefore(btn, search || null);
-    parent.insertBefore(hint, search || null);
+    var okHelp = !!document.getElementById('kkaiOpen');
+    var okSup = !!document.getElementById('kkaiOpen2');
+    var help = document.getElementById('kxHelpOv');
+    if (help && !okHelp) {
+      var search = document.getElementById('kxHelpSearch');
+      var parent = search ? search.parentNode : help.firstElementChild;
+      makeOpenBtn('kkaiOpen', 'kkaiOpenHint', search, parent, null);
+      okHelp = true;
+    }
+    var sup = document.getElementById('supportOverlay');
+    if (sup && !okSup) {
+      var title = document.getElementById('supportTitle');
+      if (title && title.parentNode) {
+        makeOpenBtn('kkaiOpen2', 'kkaiOpenHint2', title.nextSibling, title.parentNode, 'supportCancelBtn');
+        okSup = true;
+      }
+    }
     refreshBtn();
-    return true;
+    return okHelp && okSup;
   }
 
   function refreshBtn() {
-    var b = document.getElementById('kkaiOpen'), h = document.getElementById('kkaiOpenHint');
-    if (b) b.textContent = t().btn;
-    if (h) h.textContent = t().btnHint;
+    [['kkaiOpen', 'kkaiOpenHint'], ['kkaiOpen2', 'kkaiOpenHint2']].forEach(function (ids) {
+      var b = document.getElementById(ids[0]), h = document.getElementById(ids[1]);
+      if (b) b.textContent = t().btn;
+      if (h) h.textContent = ids[0] === 'kkaiOpen2' ? t().btnHint2 : t().btnHint;
+    });
     var f = document.getElementById('kkaiFab');
     if (f) f.setAttribute('aria-label', t().btn.replace(/^\S+\s/, ''));
   }
@@ -346,7 +385,7 @@
     css();
     var b = el('button'); b.type = 'button'; b.id = 'kkaiFab';
     b.setAttribute('aria-label', t().btn.replace(/^\S+\s/, ''));
-    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>';
+    b.innerHTML = '<svg viewBox="0 0 100 84" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M32 8H68Q92 8 92 32V36Q92 60 68 60H57L41 77L45 60H32Q8 60 8 36V32Q8 8 32 8Z"/></svg>';
     b.addEventListener('click', open);
     document.body.appendChild(b);
   }
