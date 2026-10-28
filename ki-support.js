@@ -136,6 +136,11 @@
       '.kkai-send:disabled{opacity:.55;cursor:default}',
       '.kkai-note{margin:8px 0 0;font-size:12px;opacity:.75;line-height:1.35}',
       '.kkai-contact{display:inline-block;margin-top:6px;background:none;border:none;padding:0;color:inherit;text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}',
+      '#kkaiFab{position:fixed;right:14px;bottom:calc(var(--kk-dock-h,68px) + 14px);z-index:70;width:56px;height:56px;border-radius:50%;border:none;padding:0;display:flex;align-items:center;justify-content:center;background:var(--rust,#A8442E);color:var(--rust-contrast,#FBF6EA);box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;-webkit-tap-highlight-color:transparent}',
+      '#kkaiFab:active{transform:scale(.95)}',
+      '#kkaiFab svg{width:28px;height:28px}',
+      'body:has(#kkaiOv:not(.kkai-hidden)) #kkaiFab{display:none}',
+      '@media print{#kkaiFab{display:none}}',
       '#kkaiOpen{width:100%;margin:0 0 6px}',
       '.kkai-openhint{margin:0 0 12px;font-size:13px;opacity:.8}',
       '.kkai-dots span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:currentColor;opacity:.4;animation:kkaiB 1s infinite}',
@@ -325,6 +330,8 @@
     var b = document.getElementById('kkaiOpen'), h = document.getElementById('kkaiOpenHint');
     if (b) b.textContent = t().btn;
     if (h) h.textContent = t().btnHint;
+    var f = document.getElementById('kkaiFab');
+    if (f) f.setAttribute('aria-label', t().btn.replace(/^\S+\s/, ''));
   }
 
   // Sprache der App kann sich ändern: Beschriftungen aktualisieren
@@ -333,8 +340,21 @@
     if (built && overlay && !overlay.classList.contains('kkai-hidden')) fillTexts();
   }, 1500);
 
+  // Schwebender Knopf, überall sichtbar (wie der alte Botpress-Knopf)
+  function injectFab() {
+    if (document.getElementById('kkaiFab') || !document.body) return;
+    css();
+    var b = el('button'); b.type = 'button'; b.id = 'kkaiFab';
+    b.setAttribute('aria-label', t().btn.replace(/^\S+\s/, ''));
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>';
+    b.addEventListener('click', open);
+    document.body.appendChild(b);
+  }
+
+  var tries = 0;
   function start() {
-    if (!inject()) { setTimeout(start, 500); return; }
+    injectFab();
+    if (!inject() && tries++ < 40) setTimeout(start, 500);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
