@@ -103,10 +103,11 @@
     var ls = (lines || []).filter(function (l) { return l.words && l.words.length; })
       .map(function (l) { return { y: l.y || 0, h: l.h || 20, words: l.words.slice() }; })
       .sort(function (p, q) { return p.y - q.y; });
+    var hasY = ls.some(function (l) { return l.y > 0; });
     var rowsY = [];
     ls.forEach(function (l) {
       var last = rowsY[rowsY.length - 1];
-      if (last && Math.abs((l.y + l.h / 2) - (last.y + last.h / 2)) < Math.max(l.h, last.h) * 0.6) {
+      if (hasY && last && Math.abs((l.y + l.h / 2) - (last.y + last.h / 2)) < Math.max(l.h, last.h) * 0.6) {
         last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
       } else rowsY.push(l);
     });
