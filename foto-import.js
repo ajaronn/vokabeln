@@ -100,78 +100,76 @@
   /* ---------- Zeilen -> Vokabelpaare ---------- */
   // lines: [{ y, h, words: [[text, left, width], ...] }]
   // -> { rows: [[Zelle je Spalte]], ncols, guess: [Spalte A, Spalte B] }
-  // Lautschrift ([ˈwɒndə]) wird Wort für Wort erkannt und entfernt – auch wenn OCR sie verfälscht
-  // (Klammern als ( | l, Betonungszeichen als ', Längenzeichen als :). Sie wirkt dabei wie ein
-  // Spaltentrenner. Umbrochene Übersetzungen/Beispielsätze werden an die Zeile davor gehängt,
-  // die Beispielsatz-Spalte wird automatisch nicht als Vokabelspalte vorgeschlagen.
-  var IPA = /[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋːɜɐɚɡ]/;
-  var STRESS = /['’`´ˈˌ]|[aeiouyæɑɒɔəɜɪʊ]:/i;
-  var OPEN = /^[\[\(\{\|\/]/, CLOSE = /[\]\)\}\|\/]$/;
-  function hasLetters(s) {
-    var l = (s.match(/[A-Za-zÀ-ÖØ-öø-ÿ]/g) || []).length;
-    return l > 0 && l >= s.replace(/\s/g, '').length * 0.5;
-  }
+  // Neu gegenüber früher:
+  //  - Schräglage des Fotos wird geschätzt und herausgerechnet (sonst zerfallen Spalten/Zeilen)
+  //  - Lautschrift [..] wird auch entfernt, wenn sie über zwei Zeilen läuft oder Klammern fehlen
+  //  - Spaltenpaar wird nach Inhalt gewählt (nicht "die ersten zwei Spalten"):
+  //    Beispielsatz-Spalten (lange Sätze) und Nachbarseiten fallen heraus
   function cleanCell(c) {
-    return String(c)
-      .replace(/\[[^\]]*\]/g, ' ')
-      .replace(/[\(\{\|\/][^\)\}\|\/]*[\)\}\|\/]/g, function (m) { return IPA.test(m) || STRESS.test(m) ? ' ' : m; })
-      .replace(/\[[^\]]*$/, ' ')
-      .replace(/^[^\[\]]*\]/, ' ')
-      .split(' ').filter(function (x) { return x && !IPA.test(x); }).join(' ')
-      .replace(/^\s*\d+\s*[.)]\s*/, '').replace(/\s+/g, ' ').trim();
+    c = String(c || '')
+      .replace(/\[[^\]]*\]/g, ' ')        // [fɛʁpœʁ]
+      .replace(/\[[^\]]*$/, ' ')          // "[øʁø/"  (Rest steht in der nächsten Zeile)
+      .replace(/^[^\[\]]*\]/, ' ')        // "øʁøz]"  (Anfang stand in der Zeile davor)
+      .replace(/\/[^\/\s]*[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋːøœɑ̃ɔ̃ʁ][^\/]*\//g, ' ')
+      .replace(/^\s*Atelier\b/i, ' ')     // Randnotiz "Atelier B 2"
+      .replace(/^\s*[A-D]\s?\d\b(?=\s+\S)/, ' ')
+      .replace(/^\s*\d+\s*[.)]\s*/, '')
+      .replace(/\s+/g, ' ').trim();
+    // übrig gebliebene Lautschrift ohne Klammern, z. B. "kyRjoZ" oder "DROZ"
+    if (/^\S+$/.test(c) && (/[a-zà-ÿ][A-Z]/.test(c) || /^[A-ZØŒ]{3,}$/.test(c))) return '';
+    return c;
   }
-  // markiert Wörter einer Zeile, die zur Lautschrift gehören
-  function markPhon(w) {
-    var bad = w.map(function () { return false; });
-    for (var i = 0; i < w.length; i++) {
-      var t = String(w[i][0]);
-      if (IPA.test(t)) bad[i] = true;
-      if (!OPEN.test(t)) continue;
-      var square = t.charAt(0) === '[', end = -1, txt = '';
-      for (var j = i; j < w.length && j < i + 6; j++) {
-        txt += (j > i ? ' ' : '') + w[j][0];
-        if ((j > i || t.length > 1) && CLOSE.test(String(w[j][0]))) { end = j; break; }
-      }
-      if (end >= 0 && (square || IPA.test(txt) || STRESS.test(txt))) {
-        for (var k = i; k <= end; k++) bad[k] = true;
-        i = end;
-      } else if (end < 0 && square) bad[i] = true;
+  function median(a) { a = a.slice().sort(function (p, q) { return p - q; }); return a[Math.floor(a.length / 2)] || 0; }
+  function estimateTilt(ls, mh) {
+    var firsts = ls.map(function (l) {
+      var m = l.words[0]; l.words.forEach(function (w) { if (w[1] < m[1]) m = w; });
+      return { x: m[1], y: l.y };
+    });
+    if (firsts.length < 8) return 0;
+    var bw = Math.max(10, mh * 1.5), best = -1e9, theta = 0;
+    for (var th = -0.2; th <= 0.2001; th += 0.0025) {
+      var bins = {}, sc = 0, k;
+      firsts.forEach(function (f) { k = Math.floor((f.x + th * f.y) / bw); bins[k] = (bins[k] || 0) + 1; });
+      for (k in bins) sc += bins[k] * bins[k];
+      sc -= Math.abs(th) * 0.5;           // bei Gleichstand: lieber gerade
+      if (sc > best) { best = sc; theta = th; }
     }
-    return bad;
+    return theta;
   }
   function parseLines(lines) {
     var ls = (lines || []).filter(function (l) { return l.words && l.words.length; })
-      .map(function (l) { return { y: l.y || 0, h: l.h || 20, words: l.words.slice() }; })
-      .sort(function (p, q) { return p.y - q.y; });
+      .map(function (l) { return { y: l.y || 0, h: l.h || 20, words: l.words.slice() }; });
+    if (!ls.length) return { rows: [], ncols: 0, guess: [0, 1] };
     var hasY = ls.some(function (l) { return l.y > 0; });
+    var mh = median(ls.map(function (l) { return l.h; })) || 20;
+    var theta = hasY ? estimateTilt(ls, mh) : 0;
+    // entzerren: x' = x + θ·y, y' = y − θ·x(Zeilenanfang)
+    ls.forEach(function (l, idx) {
+      var xmin = Math.min.apply(null, l.words.map(function (w) { return w[1]; }));
+      l.yc = hasY ? l.y - theta * xmin : idx * 1000;
+      l.words = l.words.map(function (w) { return [w[0], w[1] + theta * l.y, w[2]]; });
+    });
+    ls.sort(function (p, q) { return p.yc - q.yc; });
     var rowsY = [];
     ls.forEach(function (l) {
       var last = rowsY[rowsY.length - 1];
-      if (hasY && last && Math.abs((l.y + l.h / 2) - (last.y + last.h / 2)) < Math.max(l.h, last.h) * 0.6) {
+      if (hasY && last && Math.abs((l.yc + l.h / 2) - (last.yc + last.h / 2)) < Math.max(l.h, last.h) * 0.6) {
         last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
-      } else rowsY.push(l);
+      } else rowsY.push({ yc: l.yc, h: l.h, words: l.words.slice() });
     });
-    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen oder Lautschrift dazwischen = neue Spalte)
+    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen = neue Spalte)
     var starts = [], rc = [], hs = [];
     rowsY.forEach(function (ln) {
       var w = ln.words.slice().sort(function (p, q) { return p[1] - q[1]; });
-      var h = ln.h || 20, bad = markPhon(w), cells = [], cur = null, prevEnd = 0;
-      for (var i = 0; i < w.length; i++) {
-        if (bad[i]) { cur = null; continue; }
-        var x = w[i][1];
-        if (cur && x - prevEnd <= h * 1.1) cur.t.push(w[i][0]);
-        else { cur = { x: x, t: [w[i][0]] }; cells.push(cur); }
-        prevEnd = x + w[i][2];
+      var h = ln.h || 20, cells = [{ x: w[0][1], t: [w[0][0]] }];
+      for (var i = 1; i < w.length; i++) {
+        var gap = w[i][1] - (w[i - 1][1] + w[i - 1][2]);
+        if (gap > h * 1.1) cells.push({ x: w[i][1], t: [w[i][0]] }); else cells[cells.length - 1].t.push(w[i][0]);
       }
-      cells.forEach(function (c) { c.t = cleanCell(c.t.join(' ')); });
-      cells = cells.filter(function (c) { return c.t && hasLetters(c.t); });
-      if (!cells.length) return;
-      cells.forEach(function (c) { starts.push(c.x); });
+      cells.forEach(function (c) { c.t = c.t.join(' ').trim(); starts.push(c.x); });
       rc.push(cells); hs.push(h);
     });
-    if (!rc.length) return { rows: [], ncols: 0, guess: [0, 1] };
-    hs.sort(function (p, q) { return p - q; });
-    var tol = hs[Math.floor(hs.length / 2)] * 3;
+    var tol = median(hs) * 3;
     // Spalten = Gruppen ähnlicher Startpositionen
     starts.sort(function (p, q) { return p - q; });
     var cols = [];
@@ -186,6 +184,7 @@
       cells.forEach(function (c) {
         var k = 0, best = 1e9;
         cx.forEach(function (x, i) { var d = Math.abs(x - c.x); if (d < best) { best = d; k = i; } });
+        if (best > tol * 1.5) return;      // Randnotiz / Nachbarseite: ignorieren
         r[k] = (r[k] + ' ' + c.t).trim();
       });
       return r;
@@ -196,41 +195,40 @@
       for (var k = 0; k < flat.length; k += 2) pr.push([flat[k], flat[k + 1] || '']);
       return { rows: pr, ncols: 2, guess: [0, 1] };
     }
-    // Folgezeilen (umbrochene Übersetzung / Beispielsatz ohne Stichwort) an die Zeile davor hängen
-    var merged = [];
-    rows.forEach(function (r) {
-      var prev = merged[merged.length - 1];
-      if (prev && !r[0] && r.some(Boolean)) {
-        r.forEach(function (c, i) { if (c) prev[i] = (prev[i] + ' ' + c).trim(); });
-      } else merged.push(r);
-    });
-    rows = merged;
-    // Spalten bewerten: Beispielsatz-Spalte = deutlich mehr Wörter pro Eintrag als die anderen
+    // Spalten bewerten (Inhalt NACH dem Entfernen der Lautschrift)
     var n = cx.length, stat = [];
     for (var i = 0; i < n; i++) {
       var filled = 0, words = 0;
-      rows.forEach(function (r) { if (r[i]) { filled++; words += r[i].split(' ').length; } });
+      rows.forEach(function (r) { var c = cleanCell(r[i]); if (c) { filled++; words += c.split(' ').length; } });
       stat.push({ i: i, filled: filled, avg: filled ? words / filled : 0 });
     }
-    var cand = stat.filter(function (s) { return s.filled >= Math.max(2, rows.length * 0.25); });
-    if (cand.length < 2) cand = stat.slice();
-    if (cand.length > 2) {
-      var byAvg = cand.slice().sort(function (p, q) { return q.avg - p.avg; });
-      if (byAvg[0].avg >= 3 && byAvg[0].avg >= byAvg[1].avg * 1.5) cand = cand.filter(function (s) { return s !== byAvg[0]; });
+    var cand = stat.filter(function (s) { return s.filled >= 2 && s.avg < 5; });   // lange Sätze = Beispielspalte
+    if (cand.length < 2) cand = stat.filter(function (s) { return s.filled > 0; });
+    var g = [0, Math.min(1, n - 1)], bestSc = -1;
+    // Anker: gibt es eine Beispielsatz-Spalte, sind die zwei Spalten direkt links davon die Vokabeln
+    // (so wird die Nachbarseite im Foto nicht mit der Vokabelspalte verwechselt)
+    var exs = stat.filter(function (s) { return s.filled >= 2 && s.avg >= 5; });
+    if (exs.length) {
+      var ex = exs.reduce(function (m, s) { return s.avg > m.avg ? s : m; }, exs[0]);
+      var left = cand.filter(function (s) { return s.i < ex.i; });
+      if (left.length >= 2) return { rows: rows, ncols: n, guess: [left[left.length - 2].i, left[left.length - 1].i] };
     }
-    if (cand.length > 2) {
-      cand = cand.slice().sort(function (p, q) { return q.filled - p.filled || p.i - q.i; }).slice(0, 2)
-        .sort(function (p, q) { return p.i - q.i; });
+    for (var a = 0; a < cand.length; a++) for (var b = a + 1; b < cand.length; b++) {
+      var both = 0;
+      rows.forEach(function (r) { if (cleanCell(r[cand[a].i]) && cleanCell(r[cand[b].i])) both++; });
+      var sc = both - 0.01 * (cand[b].i - cand[a].i);
+      if (sc > bestSc) { bestSc = sc; g = [cand[a].i, cand[b].i]; }
     }
-    var g = cand.slice(0, 2).map(function (s) { return s.i; });
-    while (g.length < 2) g.push(g.length ? Math.min(g[0] + 1, n - 1) : 0);
     return { rows: rows, ncols: n, guess: g };
   }
   function pairsFrom(parsed, ia, ib) {
     var out = [];
     parsed.rows.forEach(function (r) {
       var a = cleanCell(r[ia] || ''), b = cleanCell(r[ib] || '');
-      if (a || b) out.push({ a: a, b: b });
+      if (!a && !b) return;
+      var prev = out[out.length - 1];
+      if (!a && b && prev) { prev.b = (prev.b + ' ' + b).trim(); return; }   // umgebrochene Übersetzung
+      out.push({ a: a, b: b });
     });
     return out;
   }
