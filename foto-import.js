@@ -169,6 +169,9 @@
     if (!ls.length) return { rows: [], ncols: 0, guess: [0, 1] };
     var hasY = ls.some(function (l) { return l.y > 0; });
     var mh = median(ls.map(function (l) { return l.h; })) || 20;
+    // Ausreißer: Schatten/Rand liefern manchmal "Zeilen" mit riesiger Höhe – die würden sonst
+    // mehrere Vokabelzeilen zu einer verschmelzen
+    ls.forEach(function (l) { l.h = Math.min(l.h, mh * 1.6); });
     var theta = hasY ? estimateTilt(ls, mh) : 0;          // für x (Spalten)
     var thetaY = hasY && ls.length >= 8 ? estimateSlopeY(ls) : 0;   // für y (Zeilen)
     // entzerren: x' = x + θ·y, y' = y − θ·x(Zeilenanfang)
