@@ -115,9 +115,11 @@
       .replace(/^\s*[A-D]\s?\d\b(?=\s+\S)/, ' ')
       .replace(/^\s*\d+\s*[.)]\s*/, '')
       .replace(/\s+/g, ' ').trim();
-    // Kopfzeile / Unit- und Seitenzahl ("Vocabulaire 2", "2", "S. 14") ist kein Vokabeleintrag
+    // Kopfzeile / Unit- und Seitenzahl ("2 Vocabulaire", "2", "S. 14") ist kein Vokabeleintrag
     if (/^\d{1,3}$/.test(c) || /^(S\.?|p\.?|Seite|page)\s*\d{1,3}$/i.test(c) ||
-        /^(Vocabulaire|Vocabulary|Wortschatz|Vokabeln|Unit|Unité|Lektion|Leçon)\s*\d{0,3}$/i.test(c)) return '';
+        /^\d{0,3}\s*(Vocabulaire|Vocabulary|Wortschatz|Vokabeln|Unit|Unité|Lektion|Leçon)[\s\d\W]*$/i.test(c)) return '';
+    // Lautschrift ohne Klammern an einzelnen Wörtern ("jER", "dERnje"): Kleinbuchstabe direkt vor Großbuchstabe
+    c = c.split(' ').filter(function (tk) { return !/[a-zà-ÿøœ][A-Z]/.test(tk); }).join(' ').trim();
     // übrig gebliebene Lautschrift ohne Klammern, z. B. "kyRjoZ" oder "DROZ"
     if (/^\S+$/.test(c) && (/[a-zà-ÿ][A-Z]/.test(c) || /^[A-ZØŒ]{3,}$/.test(c))) return '';
     return c;
@@ -130,7 +132,7 @@
     });
     if (firsts.length < 8) return 0;
     var bw = Math.max(10, mh * 1.5), best = -1e9, theta = 0;
-    for (var th = -0.2; th <= 0.2001; th += 0.0025) {
+    for (var th = -0.1; th <= 0.1001; th += 0.0025) {
       var bins = {}, sc = 0, k;
       firsts.forEach(function (f) { k = Math.floor((f.x + th * f.y) / bw); bins[k] = (bins[k] || 0) + 1; });
       for (k in bins) sc += bins[k] * bins[k];
@@ -155,8 +157,8 @@
   }
   function estimateSlopeY(ls) {
     var best = 1e9, th = 0;
-    for (var t = -0.2; t <= 0.2001; t += 0.005) {
-      var c = groupCount(ls, t, 0.5) + Math.abs(t) * 0.5;
+    for (var t = -0.1; t <= 0.1001; t += 0.005) {   // Fotos sind selten stärker als ~6° gedreht
+      var c = groupCount(ls, t, 0.5) + Math.abs(t) * 40;
       if (c < best) { best = c; th = t; }
     }
     return th;
@@ -267,6 +269,11 @@
       var a = cleanCell(r[ia] || ''), b = cleanCell(r[ib] || '');
       if (!a && !b) return;
       var prev = out[out.length - 1];
+      // zweite Zeile einer Vokabel: "(f.)" / "(Schulfach)" oder nur eine umgebrochene Übersetzung
+      var aCont = !a || /^\(/.test(a), bCont = !b || /^\(/.test(b);
+      if (prev && aCont && bCont) {
+        prev.a = (prev.a + ' ' + a).trim(); prev.b = (prev.b + ' ' + b).trim(); return;
+      }
       if (!a && b && prev) { prev.b = (prev.b + ' ' + b).trim(); return; }   // umgebrochene Übersetzung
       out.push({ a: a, b: b });
     });
