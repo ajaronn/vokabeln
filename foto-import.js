@@ -33,6 +33,7 @@
     added: { de: ' Vokabeln hinzugefügt.', en: ' words added.', 'pt-BR': ' palavras adicionadas.' },
     dupes: { de: 'Alle Einträge sind schon in der Liste.', en: 'All entries are already in the list.', 'pt-BR': 'Todas as entradas já estão na lista.' },
     noList: { de: 'Öffne zuerst eine Liste.', en: 'Open a list first.', 'pt-BR': 'Abra uma lista primeiro.' },
+    col: { de: 'Spalte', en: 'Column', 'pt-BR': 'Coluna' },
     selAll: { de: 'Alle', en: 'All', 'pt-BR': 'Todas' },
     privacy: { de: 'Hinweis: Das Foto wird zur Texterkennung an OCR.space gesendet und nicht von uns gespeichert.', en: 'Note: the photo is sent to OCR.space for text recognition and is not stored by us.', 'pt-BR': 'Aviso: a foto é enviada ao OCR.space para reconhecimento de texto e não é armazenada por nós.' }
   };
@@ -97,9 +98,15 @@
   }
 
   /* ---------- Zeilen -> Vokabelpaare ---------- */
-  // lines: [{ h: Zeilenhöhe, words: [[text, left, width], ...] }]
-  function pairsFromLines(lines) {
-    // 1) Zeilen mit gleicher Höhe im Bild zu einer Reihe zusammenfassen (OCR liefert Spalten oft einzeln)
+  // lines: [{ y, h, words: [[text, left, width], ...] }]
+  // -> { rows: [[Zelle je Spalte]], ncols, guess: [Spalte A, Spalte B] }
+  var IPA = /[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋː]/;
+  function isPhon(c) { return /^[\[\/].*[\]\/]?$/.test(c) && /[\]\[]/.test(c) || IPA.test(c) || /^\[.*$/.test(c) || /^.*\]$/.test(c); }
+  function cleanCell(c) {
+    return c.replace(/\[[^\]]*\]/g, ' ').replace(/\/[^\/]*[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋː][^\/]*\//g, ' ')
+      .replace(/^\s*\d+\s*[.)]\s*/, '').replace(/\s+/g, ' ').trim();
+  }
+  function parseLines(lines) {
     var ls = (lines || []).filter(function (l) { return l.words && l.words.length; })
       .map(function (l) { return { y: l.y || 0, h: l.h || 20, words: l.words.slice() }; })
       .sort(function (p, q) { return p.y - q.y; });
@@ -111,35 +118,67 @@
         last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
       } else rowsY.push(l);
     });
-    // 2) Jede Reihe an großen Lücken in Zellen teilen
-    var out = [], singles = [];
+    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen = neue Spalte)
+    var starts = [], rc = [], hs = [];
     rowsY.forEach(function (ln) {
-      var w = ln.words.slice().sort(function (a, b) { return a[1] - b[1]; });
-      var h = ln.h || 20, cells = [[w[0][0]]];
+      var w = ln.words.slice().sort(function (p, q) { return p[1] - q[1]; });
+      var h = ln.h || 20, cells = [{ x: w[0][1], t: [w[0][0]] }];
       for (var i = 1; i < w.length; i++) {
         var gap = w[i][1] - (w[i - 1][1] + w[i - 1][2]);
-        if (gap > h * 1.1) cells.push([w[i][0]]); else cells[cells.length - 1].push(w[i][0]);
+        if (gap > h * 1.1) cells.push({ x: w[i][1], t: [w[i][0]] }); else cells[cells.length - 1].t.push(w[i][0]);
       }
-      cells = cells.map(function (c) { return c.join(' ').trim(); }).filter(Boolean);
-      var a = '', b = '';
-      if (cells.length >= 2) {
-        var core = cells.filter(function (c) { return !/^[\[\/].*[\]\/]$/.test(c); });
-        if (core.length < 2) core = cells;
-        a = core[0]; b = core.slice(1).join(' ');
-      } else {
-        var m = cells[0].split(/\s+[-–—:=]\s+|\t/);
-        a = m[0]; b = m.slice(1).join(' ');
-        if (!b) singles.push(a);
-      }
-      a = a.replace(/^\s*\d+\s*[.)]\s*/, '').trim(); b = b.trim();
+      cells.forEach(function (c) { c.t = c.t.join(' ').trim(); starts.push(c.x); });
+      rc.push(cells); hs.push(h);
+    });
+    if (!rc.length) return { rows: [], ncols: 0, guess: [0, 1] };
+    hs.sort(function (p, q) { return p - q; });
+    var tol = hs[Math.floor(hs.length / 2)] * 3;
+    // Spalten = Gruppen ähnlicher Startpositionen
+    starts.sort(function (p, q) { return p - q; });
+    var cols = [];
+    starts.forEach(function (x) {
+      var c = cols[cols.length - 1];
+      if (c && x - c.sum / c.n < tol) { c.sum += x; c.n++; } else cols.push({ sum: x, n: 1 });
+    });
+    var cx = cols.filter(function (c) { return c.n >= Math.max(2, rc.length * 0.15); }).map(function (c) { return c.sum / c.n; });
+    if (!cx.length) cx = cols.map(function (c) { return c.sum / c.n; });
+    var rows = rc.map(function (cells) {
+      var r = cx.map(function () { return ''; });
+      cells.forEach(function (c) {
+        var k = 0, best = 1e9;
+        cx.forEach(function (x, i) { var d = Math.abs(x - c.x); if (d < best) { best = d; k = i; } });
+        r[k] = (r[k] + ' ' + c.t).trim();
+      });
+      return r;
+    });
+    // Notlösung: nur eine Spalte -> abwechselnd Wort / Übersetzung
+    if (cx.length === 1 && rows.length > 1) {
+      var flat = rows.map(function (r) { return r[0]; }), pr = [];
+      for (var k = 0; k < flat.length; k += 2) pr.push([flat[k], flat[k + 1] || '']);
+      return { rows: pr, ncols: 2, guess: [0, 1] };
+    }
+    // Spalten bewerten: Lautschrift und Beispielsätze erkennen
+    var n = cx.length, stat = [];
+    for (var i = 0; i < n; i++) {
+      var filled = 0, ph = 0, words = 0;
+      rows.forEach(function (r) { if (r[i]) { filled++; if (isPhon(r[i])) ph++; words += r[i].split(' ').length; } });
+      stat.push({ i: i, filled: filled, phon: filled ? ph / filled : 0, avg: filled ? words / filled : 0 });
+    }
+    var cand = stat.filter(function (s) { return s.phon < 0.5; });
+    if (cand.length > 2) {
+      var ex = cand.reduce(function (m, s) { return s.avg > m.avg ? s : m; }, cand[0]);
+      if (ex.avg >= 3) cand = cand.filter(function (s) { return s !== ex; });
+    }
+    var g = cand.slice(0, 2).map(function (s) { return s.i; });
+    while (g.length < 2) g.push(g.length ? Math.min(g[0] + 1, n - 1) : 0);
+    return { rows: rows, ncols: n, guess: g };
+  }
+  function pairsFrom(parsed, ia, ib) {
+    var out = [];
+    parsed.rows.forEach(function (r) {
+      var a = cleanCell(r[ia] || ''), b = cleanCell(r[ib] || '');
       if (a || b) out.push({ a: a, b: b });
     });
-    // 3) Notlösung: fast alles einzeln -> abwechselnd Wort / Übersetzung paaren
-    if (out.length > 1 && singles.length >= out.length * 0.8) {
-      var flat = out.map(function (p) { return p.a || p.b; }), paired = [];
-      for (var k = 0; k < flat.length; k += 2) paired.push({ a: flat[k], b: flat[k + 1] || '' });
-      return paired;
-    }
     return out;
   }
 
@@ -204,15 +243,16 @@
       if (r.error) throw new Error(r.error.message || 'error');
       var d = r.data || {};
       if (d.error) throw new Error(d.error);
-      var pairs = pairsFromLines(d.lines || []);
+      var parsed = parseLines(d.lines || []);
+      var pairs = pairsFrom(parsed, parsed.guess[0], parsed.guess[1]);
       if (!pairs.length) { say(t('nothing'), true); return; }
-      say(''); showPairs(pairs, result, say, info);
+      say(''); showPairs(pairs, result, say, info, parsed);
     }).catch(function (e) {
       say(e && e.message === 'toobig' ? t('tooBig') : t('fail') + (e && e.message ? e.message : ''), true);
     }).then(function () { busy = false; });
   }
 
-  function showPairs(pairs, result, say, info) {
+  function showPairs(pairs, result, say, info, parsed) {
     result.textContent = '';
     var rows = pairs.map(function (p) { return { a: p.a, b: p.b, on: true }; });
     var tbl = el('table', { class: 'kkfi-tbl' });
@@ -243,6 +283,20 @@
       if (n) { say(n + t('added')); result.textContent = ''; } else say(t('dupes'), true);
     };
     result.appendChild(el('p', { text: t('found') }));
+    if (parsed && parsed.ncols > 2) {
+      function sel(def, label) {
+        var s = el('select', { 'aria-label': label });
+        for (var c = 0; c < parsed.ncols; c++) {
+          var ex = ''; for (var r = 0; r < parsed.rows.length && !ex; r++) ex = parsed.rows[r][c] || '';
+          s.appendChild(el('option', { value: String(c), text: t('col') + ' ' + (c + 1) + ': ' + ex.slice(0, 22) }));
+        }
+        s.value = String(def); return s;
+      }
+      var sa = sel(parsed.guess[0], info.langA), sb = sel(parsed.guess[1], info.langB);
+      function regroup() { rows = pairsFrom(parsed, +sa.value, +sb.value).map(function (p) { return { a: p.a, b: p.b, on: true }; }); all.checked = true; build(); }
+      sa.onchange = regroup; sb.onchange = regroup;
+      result.appendChild(el('div', { class: 'kkfi-row' }, [el('label', { text: info.langA + ': ' }, [sa]), el('label', { text: info.langB + ': ' }, [sb])]));
+    }
     result.appendChild(tbl);
     result.appendChild(el('div', { class: 'kkfi-row' }, [bAdd, bSwap]));
   }
