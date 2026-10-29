@@ -100,11 +100,44 @@
   /* ---------- Zeilen -> Vokabelpaare ---------- */
   // lines: [{ y, h, words: [[text, left, width], ...] }]
   // -> { rows: [[Zelle je Spalte]], ncols, guess: [Spalte A, Spalte B] }
-  var IPA = /[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋː]/;
-  function isPhon(c) { return /^[\[\/].*[\]\/]?$/.test(c) && /[\]\[]/.test(c) || IPA.test(c) || /^\[.*$/.test(c) || /^.*\]$/.test(c); }
+  // Lautschrift ([ˈwɒndə]) wird Wort für Wort erkannt und entfernt – auch wenn OCR sie verfälscht
+  // (Klammern als ( | l, Betonungszeichen als ', Längenzeichen als :). Sie wirkt dabei wie ein
+  // Spaltentrenner. Umbrochene Übersetzungen/Beispielsätze werden an die Zeile davor gehängt,
+  // die Beispielsatz-Spalte wird automatisch nicht als Vokabelspalte vorgeschlagen.
+  var IPA = /[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋːɜɐɚɡ]/;
+  var STRESS = /['’`´ˈˌ]|[aeiouyæɑɒɔəɜɪʊ]:/i;
+  var OPEN = /^[\[\(\{\|\/]/, CLOSE = /[\]\)\}\|\/]$/;
+  function hasLetters(s) {
+    var l = (s.match(/[A-Za-zÀ-ÖØ-öø-ÿ]/g) || []).length;
+    return l > 0 && l >= s.replace(/\s/g, '').length * 0.5;
+  }
   function cleanCell(c) {
-    return c.replace(/\[[^\]]*\]/g, ' ').replace(/\/[^\/]*[ˈˌəɪʊɛæɑɒɔʌʃʒθðŋː][^\/]*\//g, ' ')
+    return String(c)
+      .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/[\(\{\|\/][^\)\}\|\/]*[\)\}\|\/]/g, function (m) { return IPA.test(m) || STRESS.test(m) ? ' ' : m; })
+      .replace(/\[[^\]]*$/, ' ')
+      .replace(/^[^\[\]]*\]/, ' ')
+      .split(' ').filter(function (x) { return x && !IPA.test(x); }).join(' ')
       .replace(/^\s*\d+\s*[.)]\s*/, '').replace(/\s+/g, ' ').trim();
+  }
+  // markiert Wörter einer Zeile, die zur Lautschrift gehören
+  function markPhon(w) {
+    var bad = w.map(function () { return false; });
+    for (var i = 0; i < w.length; i++) {
+      var t = String(w[i][0]);
+      if (IPA.test(t)) bad[i] = true;
+      if (!OPEN.test(t)) continue;
+      var square = t.charAt(0) === '[', end = -1, txt = '';
+      for (var j = i; j < w.length && j < i + 6; j++) {
+        txt += (j > i ? ' ' : '') + w[j][0];
+        if ((j > i || t.length > 1) && CLOSE.test(String(w[j][0]))) { end = j; break; }
+      }
+      if (end >= 0 && (square || IPA.test(txt) || STRESS.test(txt))) {
+        for (var k = i; k <= end; k++) bad[k] = true;
+        i = end;
+      } else if (end < 0 && square) bad[i] = true;
+    }
+    return bad;
   }
   function parseLines(lines) {
     var ls = (lines || []).filter(function (l) { return l.words && l.words.length; })
@@ -118,16 +151,22 @@
         last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
       } else rowsY.push(l);
     });
-    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen = neue Spalte)
+    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen oder Lautschrift dazwischen = neue Spalte)
     var starts = [], rc = [], hs = [];
     rowsY.forEach(function (ln) {
       var w = ln.words.slice().sort(function (p, q) { return p[1] - q[1]; });
-      var h = ln.h || 20, cells = [{ x: w[0][1], t: [w[0][0]] }];
-      for (var i = 1; i < w.length; i++) {
-        var gap = w[i][1] - (w[i - 1][1] + w[i - 1][2]);
-        if (gap > h * 1.1) cells.push({ x: w[i][1], t: [w[i][0]] }); else cells[cells.length - 1].t.push(w[i][0]);
+      var h = ln.h || 20, bad = markPhon(w), cells = [], cur = null, prevEnd = 0;
+      for (var i = 0; i < w.length; i++) {
+        if (bad[i]) { cur = null; continue; }
+        var x = w[i][1];
+        if (cur && x - prevEnd <= h * 1.1) cur.t.push(w[i][0]);
+        else { cur = { x: x, t: [w[i][0]] }; cells.push(cur); }
+        prevEnd = x + w[i][2];
       }
-      cells.forEach(function (c) { c.t = c.t.join(' ').trim(); starts.push(c.x); });
+      cells.forEach(function (c) { c.t = cleanCell(c.t.join(' ')); });
+      cells = cells.filter(function (c) { return c.t && hasLetters(c.t); });
+      if (!cells.length) return;
+      cells.forEach(function (c) { starts.push(c.x); });
       rc.push(cells); hs.push(h);
     });
     if (!rc.length) return { rows: [], ncols: 0, guess: [0, 1] };
@@ -157,17 +196,31 @@
       for (var k = 0; k < flat.length; k += 2) pr.push([flat[k], flat[k + 1] || '']);
       return { rows: pr, ncols: 2, guess: [0, 1] };
     }
-    // Spalten bewerten: Lautschrift und Beispielsätze erkennen
+    // Folgezeilen (umbrochene Übersetzung / Beispielsatz ohne Stichwort) an die Zeile davor hängen
+    var merged = [];
+    rows.forEach(function (r) {
+      var prev = merged[merged.length - 1];
+      if (prev && !r[0] && r.some(Boolean)) {
+        r.forEach(function (c, i) { if (c) prev[i] = (prev[i] + ' ' + c).trim(); });
+      } else merged.push(r);
+    });
+    rows = merged;
+    // Spalten bewerten: Beispielsatz-Spalte = deutlich mehr Wörter pro Eintrag als die anderen
     var n = cx.length, stat = [];
     for (var i = 0; i < n; i++) {
-      var filled = 0, ph = 0, words = 0;
-      rows.forEach(function (r) { if (r[i]) { filled++; if (isPhon(r[i])) ph++; words += r[i].split(' ').length; } });
-      stat.push({ i: i, filled: filled, phon: filled ? ph / filled : 0, avg: filled ? words / filled : 0 });
+      var filled = 0, words = 0;
+      rows.forEach(function (r) { if (r[i]) { filled++; words += r[i].split(' ').length; } });
+      stat.push({ i: i, filled: filled, avg: filled ? words / filled : 0 });
     }
-    var cand = stat.filter(function (s) { return s.phon < 0.5; });
+    var cand = stat.filter(function (s) { return s.filled >= Math.max(2, rows.length * 0.25); });
+    if (cand.length < 2) cand = stat.slice();
     if (cand.length > 2) {
-      var ex = cand.reduce(function (m, s) { return s.avg > m.avg ? s : m; }, cand[0]);
-      if (ex.avg >= 3) cand = cand.filter(function (s) { return s !== ex; });
+      var byAvg = cand.slice().sort(function (p, q) { return q.avg - p.avg; });
+      if (byAvg[0].avg >= 3 && byAvg[0].avg >= byAvg[1].avg * 1.5) cand = cand.filter(function (s) { return s !== byAvg[0]; });
+    }
+    if (cand.length > 2) {
+      cand = cand.slice().sort(function (p, q) { return q.filled - p.filled || p.i - q.i; }).slice(0, 2)
+        .sort(function (p, q) { return p.i - q.i; });
     }
     var g = cand.slice(0, 2).map(function (s) { return s.i; });
     while (g.length < 2) g.push(g.length ? Math.min(g[0] + 1, n - 1) : 0);
