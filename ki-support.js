@@ -36,6 +36,7 @@
       eLimit: 'Die KI ist für heute ausgelastet. Bitte versuche es später noch einmal oder schreib dem Support.',
       eSlow: 'Das ging etwas zu schnell. Bitte warte kurz und versuche es dann erneut.',
       eFail: 'Die KI ist gerade nicht erreichbar. Bitte versuche es später noch einmal oder schreib dem Support.',
+      eAuth: 'Bitte melde dich an, um den KI-Support zu nutzen. Ohne Anmeldung kann die KI nicht antworten.',
       eNet: 'Keine Verbindung. Prüfe dein Internet und versuche es erneut.',
       eImg: 'Dieses Bild kann ich nicht verwenden. Bitte wähle ein Foto oder einen Screenshot (JPG, PNG, WebP).',
       imgOnly: '(Bild ohne Text)',
@@ -66,6 +67,7 @@
       eLimit: 'The AI has reached its limit for today. Please try again later or write to support.',
       eSlow: 'That was a bit fast. Please wait a moment and try again.',
       eFail: 'The AI is not available right now. Please try again later or write to support.',
+      eAuth: 'Please sign in to use the AI support. The AI cannot answer without being signed in.',
       eNet: 'No connection. Check your internet and try again.',
       eImg: "I can't use this image. Please choose a photo or screenshot (JPG, PNG, WebP).",
       imgOnly: '(image without text)',
@@ -96,6 +98,7 @@
       eLimit: 'A IA atingiu o limite de hoje. Tente novamente mais tarde ou escreva ao suporte.',
       eSlow: 'Foi rápido demais. Aguarde um instante e tente novamente.',
       eFail: 'A IA não está disponível agora. Tente novamente mais tarde ou escreva ao suporte.',
+      eAuth: 'Faça login para usar o suporte com IA. Sem login, a IA não pode responder.',
       eNet: 'Sem conexão. Verifique sua internet e tente novamente.',
       eImg: 'Não consigo usar esta imagem. Escolha uma foto ou captura de tela (JPG, PNG, WebP).',
       imgOnly: '(imagem sem texto)',
@@ -385,6 +388,8 @@
     text = String(text || '').trim().slice(0, MAX_CHARS);
     var img = pendingImg;
     if ((!text && !img) || busy) return;
+    var sess = session();
+    if (!sess || !sess.token) { addMsg('err', t().eAuth); return; }
     if (!text) text = t().imgOnly;
     var now = Date.now();
     if (now - lastSend < COOLDOWN_MS) { addMsg('err', t().eSlow); return; }
@@ -401,7 +406,7 @@
 
     fetch(FUNCTION_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY },
+      headers: { 'Content-Type': 'application/json', 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + sess.token },
       body: JSON.stringify({ lang: lang(), messages: history.slice(-6), image: img ? { mime: 'image/jpeg', data: img.b64 } : undefined })
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j }; });
@@ -414,7 +419,7 @@
       } else {
         history.pop(); // fehlgeschlagene Frage nicht in den Verlauf übernehmen
         var e = res.j && res.j.error;
-        addMsg('err', e === 'limit' ? t().eLimit : e === 'slow' ? t().eSlow : t().eFail);
+        addMsg('err', (e === 'auth' || res.status === 401) ? t().eAuth : e === 'limit' ? t().eLimit : e === 'slow' ? t().eSlow : t().eFail);
       }
     }).catch(function () {
       typing.remove();
