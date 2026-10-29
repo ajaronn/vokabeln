@@ -115,6 +115,9 @@
       .replace(/^\s*[A-D]\s?\d\b(?=\s+\S)/, ' ')
       .replace(/^\s*\d+\s*[.)]\s*/, '')
       .replace(/\s+/g, ' ').trim();
+    // Kopfzeile / Unit- und Seitenzahl ("Vocabulaire 2", "2", "S. 14") ist kein Vokabeleintrag
+    if (/^\d{1,3}$/.test(c) || /^(S\.?|p\.?|Seite|page)\s*\d{1,3}$/i.test(c) ||
+        /^(Vocabulaire|Vocabulary|Wortschatz|Vokabeln|Unit|Unité|Lektion|Leçon)\s*\d{0,3}$/i.test(c)) return '';
     // übrig gebliebene Lautschrift ohne Klammern, z. B. "kyRjoZ" oder "DROZ"
     if (/^\S+$/.test(c) && (/[a-zà-ÿ][A-Z]/.test(c) || /^[A-ZØŒ]{3,}$/.test(c))) return '';
     return c;
@@ -136,24 +139,47 @@
     }
     return theta;
   }
+  // vertikale Neigung: der Wert, bei dem die wenigsten Zeilengruppen entstehen
+  // (dann liegen Französisch und Deutsch derselben Vokabel auf einer Höhe)
+  function groupCount(ls, th, tolF) {
+    var ys = ls.map(function (l) {
+      var xmin = Math.min.apply(null, l.words.map(function (w) { return w[1]; }));
+      return { y: l.y - th * xmin + l.h / 2, h: l.h };
+    }).sort(function (p, q) { return p.y - q.y; });
+    var n = 0, last = null;
+    ys.forEach(function (o) {
+      if (last && Math.abs(o.y - last.y) < Math.max(o.h, last.h) * tolF) return;
+      n++; last = o;
+    });
+    return n;
+  }
+  function estimateSlopeY(ls) {
+    var best = 1e9, th = 0;
+    for (var t = -0.2; t <= 0.2001; t += 0.005) {
+      var c = groupCount(ls, t, 0.5) + Math.abs(t) * 0.5;
+      if (c < best) { best = c; th = t; }
+    }
+    return th;
+  }
   function parseLines(lines) {
     var ls = (lines || []).filter(function (l) { return l.words && l.words.length; })
       .map(function (l) { return { y: l.y || 0, h: l.h || 20, words: l.words.slice() }; });
     if (!ls.length) return { rows: [], ncols: 0, guess: [0, 1] };
     var hasY = ls.some(function (l) { return l.y > 0; });
     var mh = median(ls.map(function (l) { return l.h; })) || 20;
-    var theta = hasY ? estimateTilt(ls, mh) : 0;
+    var theta = hasY ? estimateTilt(ls, mh) : 0;          // für x (Spalten)
+    var thetaY = hasY && ls.length >= 8 ? estimateSlopeY(ls) : 0;   // für y (Zeilen)
     // entzerren: x' = x + θ·y, y' = y − θ·x(Zeilenanfang)
     ls.forEach(function (l, idx) {
       var xmin = Math.min.apply(null, l.words.map(function (w) { return w[1]; }));
-      l.yc = hasY ? l.y - theta * xmin : idx * 1000;
+      l.yc = hasY ? l.y - thetaY * xmin : idx * 1000;
       l.words = l.words.map(function (w) { return [w[0], w[1] + theta * l.y, w[2]]; });
     });
     ls.sort(function (p, q) { return p.yc - q.yc; });
     var rowsY = [];
     ls.forEach(function (l) {
       var last = rowsY[rowsY.length - 1];
-      if (hasY && last && Math.abs((l.yc + l.h / 2) - (last.yc + last.h / 2)) < Math.max(l.h, last.h) * 0.6) {
+      if (hasY && last && Math.abs((l.yc + l.h / 2) - (last.yc + last.h / 2)) < Math.max(l.h, last.h) * 0.9) {
         last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
       } else rowsY.push({ yc: l.yc, h: l.h, words: l.words.slice() });
     });
