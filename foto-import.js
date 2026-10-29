@@ -157,28 +157,42 @@
         last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
       } else rowsY.push({ yc: l.yc, h: l.h, words: l.words.slice() });
     });
-    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen = neue Spalte)
-    var starts = [], rc = [], hs = [];
-    rowsY.forEach(function (ln) {
-      var w = ln.words.slice().sort(function (p, q) { return p[1] - q[1]; });
-      var h = ln.h || 20, cells = [{ x: w[0][1], t: [w[0][0]] }];
-      for (var i = 1; i < w.length; i++) {
-        var gap = w[i][1] - (w[i - 1][1] + w[i - 1][2]);
-        if (gap > h * 1.1) cells.push({ x: w[i][1], t: [w[i][0]] }); else cells[cells.length - 1].t.push(w[i][0]);
-      }
-      cells.forEach(function (c) { c.t = c.t.join(' ').trim(); starts.push(c.x); });
-      rc.push(cells); hs.push(h);
-    });
-    var tol = median(hs) * 3;
-    // Spalten = Gruppen ähnlicher Startpositionen
-    starts.sort(function (p, q) { return p - q; });
-    var cols = [];
-    starts.forEach(function (x) {
-      var c = cols[cols.length - 1];
-      if (c && x - c.sum / c.n < tol) { c.sum += x; c.n++; } else cols.push({ sum: x, n: 1 });
-    });
-    var cx = cols.filter(function (c) { return c.n >= Math.max(2, rc.length * 0.15); }).map(function (c) { return c.sum / c.n; });
-    if (!cx.length) cx = cols.map(function (c) { return c.sum / c.n; });
+    // Zellen je Reihe (Lücke > 1,1 Zeilenhöhen = neue Spalte; mit bekannten Spaltenpositionen
+    // reicht schon eine kleine Lücke, wenn das Wort genau an einem Spaltenanfang steht)
+    function buildCells(centers) {
+      var starts = [], rc = [], hs = [];
+      rowsY.forEach(function (ln) {
+        var w = ln.words.slice().sort(function (p, q) { return p[1] - q[1]; });
+        var h = ln.h || 20, cells = [{ x: w[0][1], t: [w[0][0]] }];
+        for (var i = 1; i < w.length; i++) {
+          var gap = w[i][1] - (w[i - 1][1] + w[i - 1][2]);
+          var atCol = false;
+          if (centers && gap > h * 0.35) {
+            var cur = cells[cells.length - 1].x;
+            centers.forEach(function (c) { if (c > cur + h && Math.abs(w[i][1] - c) < h * 0.9) atCol = true; });
+          }
+          if (gap > h * 1.1 || atCol) cells.push({ x: w[i][1], t: [w[i][0]] }); else cells[cells.length - 1].t.push(w[i][0]);
+        }
+        cells.forEach(function (c) { c.t = c.t.join(' ').trim(); starts.push(c.x); });
+        rc.push(cells); hs.push(h);
+      });
+      return { starts: starts, rc: rc, hs: hs };
+    }
+    function findCols(st, tol, nrows) {
+      var sorted = st.slice().sort(function (p, q) { return p - q; }), cols = [];
+      sorted.forEach(function (x) {
+        var c = cols[cols.length - 1];
+        if (c && x - c.sum / c.n < tol) { c.sum += x; c.n++; } else cols.push({ sum: x, n: 1 });
+      });
+      var out = cols.filter(function (c) { return c.n >= Math.max(2, nrows * 0.15); }).map(function (c) { return c.sum / c.n; });
+      return out.length ? out : cols.map(function (c) { return c.sum / c.n; });
+    }
+    var pass1 = buildCells(null);
+    var tol = median(pass1.hs) * 3;
+    var cx = findCols(pass1.starts, tol, pass1.rc.length);
+    var pass2 = buildCells(cx);
+    var rc = pass2.rc;
+    cx = findCols(pass2.starts, tol, rc.length);
     var rows = rc.map(function (cells) {
       var r = cx.map(function () { return ''; });
       cells.forEach(function (c) {
@@ -334,20 +348,6 @@
       if (n) { say(n + t('added')); result.textContent = ''; } else say(t('dupes'), true);
     };
     result.appendChild(el('p', { text: t('found') }));
-    if (parsed && parsed.ncols > 2) {
-      function sel(def, label) {
-        var s = el('select', { 'aria-label': label });
-        for (var c = 0; c < parsed.ncols; c++) {
-          var ex = ''; for (var r = 0; r < parsed.rows.length && !ex; r++) ex = parsed.rows[r][c] || '';
-          s.appendChild(el('option', { value: String(c), text: t('col') + ' ' + (c + 1) + ': ' + ex.slice(0, 22) }));
-        }
-        s.value = String(def); return s;
-      }
-      var sa = sel(parsed.guess[0], info.langA), sb = sel(parsed.guess[1], info.langB);
-      function regroup() { rows = pairsFrom(parsed, +sa.value, +sb.value).map(function (p) { return { a: p.a, b: p.b, on: true }; }); all.checked = true; build(); }
-      sa.onchange = regroup; sb.onchange = regroup;
-      result.appendChild(el('div', { class: 'kkfi-row' }, [el('label', { text: info.langA + ': ' }, [sa]), el('label', { text: info.langB + ': ' }, [sb])]));
-    }
     result.appendChild(tbl);
     result.appendChild(el('div', { class: 'kkfi-row' }, [bAdd, bSwap]));
   }
