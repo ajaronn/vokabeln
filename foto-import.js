@@ -99,10 +99,21 @@
   /* ---------- Zeilen -> Vokabelpaare ---------- */
   // lines: [{ h: Zeilenhöhe, words: [[text, left, width], ...] }]
   function pairsFromLines(lines) {
-    var out = [];
-    lines.forEach(function (ln) {
-      var w = (ln.words || []).slice().sort(function (a, b) { return a[1] - b[1]; });
-      if (!w.length) return;
+    // 1) Zeilen mit gleicher Höhe im Bild zu einer Reihe zusammenfassen (OCR liefert Spalten oft einzeln)
+    var ls = (lines || []).filter(function (l) { return l.words && l.words.length; })
+      .map(function (l) { return { y: l.y || 0, h: l.h || 20, words: l.words.slice() }; })
+      .sort(function (p, q) { return p.y - q.y; });
+    var rowsY = [];
+    ls.forEach(function (l) {
+      var last = rowsY[rowsY.length - 1];
+      if (last && Math.abs((l.y + l.h / 2) - (last.y + last.h / 2)) < Math.max(l.h, last.h) * 0.6) {
+        last.words = last.words.concat(l.words); last.h = Math.max(last.h, l.h);
+      } else rowsY.push(l);
+    });
+    // 2) Jede Reihe an großen Lücken in Zellen teilen
+    var out = [], singles = [];
+    rowsY.forEach(function (ln) {
+      var w = ln.words.slice().sort(function (a, b) { return a[1] - b[1]; });
       var h = ln.h || 20, cells = [[w[0][0]]];
       for (var i = 1; i < w.length; i++) {
         var gap = w[i][1] - (w[i - 1][1] + w[i - 1][2]);
@@ -111,17 +122,23 @@
       cells = cells.map(function (c) { return c.join(' ').trim(); }).filter(Boolean);
       var a = '', b = '';
       if (cells.length >= 2) {
-        // Lautschrift [ˈæpl] zwischen den Spalten ignorieren
         var core = cells.filter(function (c) { return !/^[\[\/].*[\]\/]$/.test(c); });
         if (core.length < 2) core = cells;
         a = core[0]; b = core.slice(1).join(' ');
       } else {
         var m = cells[0].split(/\s+[-–—:=]\s+|\t/);
         a = m[0]; b = m.slice(1).join(' ');
+        if (!b) singles.push(a);
       }
       a = a.replace(/^\s*\d+\s*[.)]\s*/, '').trim(); b = b.trim();
       if (a || b) out.push({ a: a, b: b });
     });
+    // 3) Notlösung: fast alles einzeln -> abwechselnd Wort / Übersetzung paaren
+    if (out.length > 1 && singles.length >= out.length * 0.8) {
+      var flat = out.map(function (p) { return p.a || p.b; }), paired = [];
+      for (var k = 0; k < flat.length; k += 2) paired.push({ a: flat[k], b: flat[k + 1] || '' });
+      return paired;
+    }
     return out;
   }
 
