@@ -1451,6 +1451,7 @@ Wasser; water"></textarea>
         <button class="btn-outline" id="passkeyRegisterBtn" type="button">Passkey auf diesem Gerät einrichten</button>
         <button class="btn-outline" id="passkeyListBtn" type="button">Meine Passkeys anzeigen</button>
       </div>
+      <div id="passkeyTurnstile" style="margin:8px 0;"></div>
       <ul id="passkeyList" class="hint keep" style="list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:6px;"></ul>
       <p class="hint keep" id="passkeySettingsMsg" aria-live="polite"></p>
     </section>
@@ -9894,7 +9895,7 @@ Object.assign(D, {"Verbundene Apps": ["Connected apps", "Apps conectados"], "Hie
     }).catch(function (err) {
       if (isBannedError(err)) { showBannedScreen(); return; }
       if (passkeyCancelled(err)) { say('Die Passkey-Anmeldung wurde abgebrochen.'); return; }
-      if (/captcha/i.test(String(err && (err.message || err.code) || ''))) { say('Bitte bestätige zuerst das CAPTCHA (kurz warten, bis es geladen ist) und versuche es dann erneut.'); return; }
+      if (/captcha/i.test(String(err && (err.message || err.code) || ''))) { say(tok ? passkeyErrorText(err) : 'Bitte bestätige zuerst das CAPTCHA (kurz warten, bis es geladen ist) und versuche es dann erneut.'); return; }
       say(passkeyErrorText(err));
     }).then(function () { busy(false); resetLoginCaptcha(); });
   }
@@ -9933,7 +9934,7 @@ Object.assign(D, {"Verbundene Apps": ["Connected apps", "Apps conectados"], "Hie
       if (explicit && msg) msg.textContent = '';
     }).catch(function (err) { if (explicit && msg) { msg.style.color = 'var(--error)'; msg.textContent = passkeyErrorText(err); } });
   }
-  window.kkLoadPasskeys = function () { try { loadPasskeys(false); } catch (e) { } };
+  window.kkLoadPasskeys = function () { try { renderAppTurnstile('passkeyTurnstile'); } catch (e) { } try { loadPasskeys(false); } catch (e) { } };
 
   if (gid('passkeyLoginBtn')) {
     if (passkeysSupported()) { gid('passkeyLoginBtn').style.display = ''; gid('passkeyLoginBtn').addEventListener('click', signInWithPasskey); }
@@ -9948,7 +9949,10 @@ Object.assign(D, {"Verbundene Apps": ["Connected apps", "Apps conectados"], "Hie
     client.auth.getUser().then(function (u) {
       var user = u && u.data && u.data.user;
       if (user && user.is_anonymous) { say('Passkeys sind nur mit einem richtigen Konto (E-Mail, Google, GitHub …) möglich, nicht als Gast.', true); return; }
-      return client.auth.registerPasskey({ friendlyName: passkeyDeviceName() }).then(function (res) {
+      var ctok = null; try { ctok = getAppTurnstileToken('passkeyTurnstile'); } catch (e) { }
+      var ropts = { friendlyName: passkeyDeviceName() }; if (ctok) ropts.captchaToken = ctok;
+      return client.auth.registerPasskey(ropts).then(function (res) {
+        try { resetAppTurnstile('passkeyTurnstile'); } catch (e) { }
         if (res && res.error) throw res.error;
         say('Passkey erfolgreich eingerichtet.'); loadPasskeys(false);
       });
