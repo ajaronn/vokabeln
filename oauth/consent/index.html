@@ -67,6 +67,27 @@
     location.replace('../../?kk_return=' + encodeURIComponent(location.pathname + location.search));
   }
 
+  kkAdd({
+    'Diese App ist noch im Test': ['This app is still in testing', 'Este app ainda está em teste'],
+    'Diese App ist noch im Test. Nur eingetragene Testnutzer können sie verbinden. Bitte den Entwickler, dich als Testnutzer einzutragen.': ['This app is still in testing. Only registered test users can connect it. Ask the developer to add you as a test user.', 'Este app ainda está em teste. Somente usuários de teste cadastrados podem conectá-lo. Peça ao desenvolvedor para adicionar você como usuário de teste.']
+  });
+
+  // Test-Modus: darf dieser Nutzer die App verbinden? Bei Fehlern wird aus Sicherheitsgründen blockiert.
+  function testModeAllowed(clientId, token) {
+    return fetch(SUPABASE_URL + '/functions/v1/dev-apps/consent-check?client_id=' + encodeURIComponent(clientId), {
+      headers: { authorization: 'Bearer ' + token, apikey: SUPABASE_ANON_KEY }
+    }).then(function (r) { return r.json().then(function (j) { return r.ok && j.allowed !== false; }); })
+      .catch(function () { return false; });
+  }
+  function renderTestBlocked(app) {
+    clear();
+    card.appendChild(el('h1', 'center', T('Diese App ist noch im Test')));
+    card.appendChild(el('p', 'center muted', (app && app.name) || ''));
+    card.appendChild(el('div', 'notice warn', T('Diese App ist noch im Test. Nur eingetragene Testnutzer können sie verbinden. Bitte den Entwickler, dich als Testnutzer einzutragen.')));
+    var b = el('div', 'btns'); var dn = el('button', 'btn primary', T('Zurück'));
+    dn.addEventListener('click', function () { decide(false, []); }); b.appendChild(dn); card.appendChild(b);
+  }
+
   function render(details, app, user) {
     clear();
     var client = details.client || {};
@@ -166,7 +187,11 @@
       var d = res.data;
       if (!('authorization_id' in d)) { if (d.redirect_url) location.replace(d.redirect_url); return; } // bereits erlaubt
       var cid = d.client && (d.client.id || d.client.client_id);
-      return sb.rpc('get_oauth_app_public', { p_client_id: cid }).then(function (a) { render(d, a.data || null, user); });
+      return sb.rpc('get_oauth_app_public', { p_client_id: cid }).then(function (a) {
+        var app = a.data || null;
+        if (!app || app.first_party || app.status !== 'active') return render(d, app, user);
+        return testModeAllowed(cid, r.data.session.access_token).then(function (ok) { if (ok) render(d, app, user); else renderTestBlocked(app); });
+      });
     });
   }).catch(function (e) { showError((e && e.message) || 'Unbekannter Fehler.'); });
 })();
