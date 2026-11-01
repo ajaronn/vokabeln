@@ -3,3 +3,4 @@
 -Es soll alles immer in den drei Sprachen der Website übersetzt sein.
 -Dateien einzeln rausgeben, nie als zip.
 -Anleitung komplett, als Datei, rausgeben.
+-Verbrauche wenig Nutzungslimit
