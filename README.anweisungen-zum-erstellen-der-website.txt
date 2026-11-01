@@ -1,3 +1,5 @@
 -läuft über GitHub mit Supabase.
 -"Karteikasten" soll auf allen Sprachen gleich sein.
 -Es soll alles immer in den drei Sprachen der Website übersetzt sein.
+-Dateien einzeln rausgeben, nie als zip.
+-Anleitung komplett, als Datei, rausgeben.
